@@ -223,6 +223,7 @@
         background: linear-gradient(145deg, rgba(200, 179, 138, 0.45), rgba(200, 179, 138, 0.08));
         box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
         max-width: 84ch;
+        position: relative;
       }
 
       .diagram-card-inner {
@@ -251,6 +252,93 @@
         border-top: 1px solid rgba(200, 179, 138, 0.18);
       }
 
+      .diagram-expand-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 4;
+        border: 1px solid rgba(200, 179, 138, 0.4);
+        background: rgba(10, 11, 14, 0.75);
+        color: #e6dccb;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.74rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .diagram-expand-btn:hover {
+        border-color: rgba(200, 179, 138, 0.72);
+        color: #fff2db;
+      }
+
+      .diagram-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(3, 3, 4, 0.8);
+        backdrop-filter: blur(3px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 160ms ease-out;
+      }
+
+      .diagram-modal.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .diagram-modal-shell {
+        width: min(1450px, 96vw);
+        max-height: 92vh;
+        overflow: auto;
+        border-radius: 14px;
+        border: 1px solid rgba(200, 179, 138, 0.36);
+        background: linear-gradient(180deg, rgba(16, 17, 21, 0.97), rgba(10, 11, 14, 0.97));
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+        position: relative;
+        padding: 14px;
+      }
+
+      .diagram-modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border: 1px solid rgba(200, 179, 138, 0.5);
+        background: rgba(10, 11, 14, 0.8);
+        color: #e9dfd0;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .diagram-modal-close:hover {
+        border-color: rgba(200, 179, 138, 0.8);
+        color: #fff3dd;
+      }
+
+      .diagram-modal-body {
+        margin-top: 28px;
+      }
+
+      .diagram-modal-body .diagram-card {
+        max-width: none;
+        margin: 0;
+      }
+
+      .diagram-modal-body .diagram-card .mermaid svg {
+        max-width: 100%;
+        height: auto;
+      }
+
       .note {
         margin-top: 20px;
         padding: 12px 14px;
@@ -265,6 +353,27 @@
         .hero,
         .content {
           padding: 24px 20px;
+        }
+
+        .diagram-expand-btn {
+          top: 8px;
+          right: 8px;
+          font-size: 0.68rem;
+          padding: 5px 9px;
+        }
+
+        .diagram-modal {
+          padding: 10px;
+        }
+
+        .diagram-modal-shell {
+          width: 100%;
+          max-height: 95vh;
+          padding: 10px;
+        }
+
+        .diagram-modal-body {
+          margin-top: 34px;
         }
       }
     </style>
@@ -650,9 +759,79 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></p
         </section>
       </article>
     </main>
+    <div class="diagram-modal" id="diagram-modal" hidden aria-hidden="true">
+      <div class="diagram-modal-shell" role="dialog" aria-modal="true" aria-label="Enlarged diagram">
+        <button type="button" class="diagram-modal-close" id="diagram-modal-close" aria-label="Close diagram">Close</button>
+        <div class="diagram-modal-body" id="diagram-modal-body"></div>
+      </div>
+    </div>
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+      mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose" });
+      await mermaid.run();
+
+      const modal = document.getElementById("diagram-modal");
+      const modalBody = document.getElementById("diagram-modal-body");
+      const modalClose = document.getElementById("diagram-modal-close");
+      let previousBodyOverflow = "";
+
+      const closeDiagramModal = () => {
+        if (!modal || !modalBody) {
+          return;
+        }
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        modal.hidden = true;
+        modalBody.innerHTML = "";
+        document.body.style.overflow = previousBodyOverflow;
+      };
+
+      const openDiagramModal = (figure) => {
+        if (!modal || !modalBody || !figure) {
+          return;
+        }
+        const clone = figure.cloneNode(true);
+        clone.querySelectorAll(".diagram-expand-btn").forEach((btn) => btn.remove());
+        modalBody.innerHTML = "";
+        modalBody.appendChild(clone);
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        requestAnimationFrame(() => modal.classList.add("open"));
+      };
+
+      document.querySelectorAll(".diagram-card").forEach((figure) => {
+        if (figure.querySelector(".diagram-expand-btn")) {
+          return;
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "diagram-expand-btn";
+        button.textContent = "Enlarge";
+        button.setAttribute("aria-label", "Open enlarged diagram");
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          openDiagramModal(figure);
+        });
+        figure.appendChild(button);
+      });
+
+      if (modalClose) {
+        modalClose.addEventListener("click", closeDiagramModal);
+      }
+      if (modal) {
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) {
+            closeDiagramModal();
+          }
+        });
+      }
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && modal && !modal.hidden) {
+          closeDiagramModal();
+        }
+      });
     </script>
   </body>
 </html>
