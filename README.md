@@ -48,6 +48,7 @@
 - Blog index: https://kubekattle.github.io/ktl/blog/index.html
 - Build Docker Images Safely with `ktl build`: https://kubekattle.github.io/ktl/blog/ktl-build-safe-builds.html
 - `ktl stack` DAG Workflows: Where It Beats Argo and Helmfile: https://kubekattle.github.io/ktl/blog/ktl-stack-dag-vs-argo.html
+- `ktl`: Blazing-Fast Deploys (plan viz + sealing + sandbox): https://kubekattle.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html
 
 ---
 

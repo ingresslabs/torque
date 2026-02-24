@@ -3,17 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ktl Stack Concurrency with Plan Visualization</title>
+    <title>ktl: Blazing-Fast Deploys with Plan Visualization, Seals, and Sandbox Builds</title>
     <meta
       name="description"
-      content="How to combine ktl apply plan --visualize with ktl stack DAG concurrency for faster and safer multi-release deployments."
+      content="How to run blazing-fast but controlled deployments with ktl using plan visualization, adaptive stack concurrency, sealed bundles, and sandboxed builds."
     />
     <link rel="canonical" href="https://kubekattle.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html" />
     <meta property="og:type" content="article" />
-    <meta property="og:title" content="ktl Stack Concurrency with Plan Visualization" />
+    <meta property="og:title" content="ktl: Blazing-Fast Deploys" />
     <meta
       property="og:description"
-      content="A practical deploy pattern: review change blast radius in ktl plan visualization, then execute DAG-aware concurrent rollouts with ktl stack."
+      content="A technical rollout model: visualize first, verify security, seal plans, then run DAG-aware concurrent deploys."
     />
     <meta property="og:url" content="https://kubekattle.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html" />
     <meta property="og:site_name" content="ktl" />
@@ -89,16 +89,16 @@
         color: var(--ink);
         font-family: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
         font-weight: 500;
-        font-size: clamp(2.2rem, 5.9vw, 3.5rem);
-        line-height: 1.14;
+        font-size: clamp(2.3rem, 6.1vw, 3.8rem);
+        line-height: 1.13;
         letter-spacing: 0.01em;
-        max-width: 18ch;
+        max-width: 16ch;
         text-wrap: balance;
       }
 
       .deck {
         margin: 14px 0 0;
-        max-width: 58ch;
+        max-width: 60ch;
         color: #b7ae9f;
         font-size: 1rem;
       }
@@ -216,6 +216,41 @@
 
       tr:last-child td { border-bottom: 0; }
 
+      .diagram-card {
+        margin: 14px 0 24px;
+        padding: 1px;
+        border-radius: 14px;
+        background: linear-gradient(145deg, rgba(200, 179, 138, 0.45), rgba(200, 179, 138, 0.08));
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+        max-width: 84ch;
+      }
+
+      .diagram-card-inner {
+        border-radius: 13px;
+        background:
+          radial-gradient(circle at 0% 0%, rgba(200, 179, 138, 0.11), transparent 38%),
+          linear-gradient(180deg, #0d0e12, #090a0d);
+      }
+
+      .mermaid {
+        margin: 12px 0 20px;
+        padding: 16px 18px;
+        border-radius: 12px 12px 0 0;
+        border: 0;
+        background: transparent;
+        overflow-x: auto;
+        max-width: none;
+      }
+
+      .diagram-card figcaption {
+        margin: 0;
+        padding: 9px 14px 12px;
+        font-size: 0.84rem;
+        letter-spacing: 0.04em;
+        color: #c7bca9;
+        border-top: 1px solid rgba(200, 179, 138, 0.18);
+      }
+
       .note {
         margin-top: 20px;
         padding: 12px 14px;
@@ -239,70 +274,88 @@
       <article class="article">
         <header class="hero">
           <a class="back" href="./index.html">Back to blog index</a>
-          <h1>Pair <code>ktl stack</code> Concurrency with <code>apply plan --visualize</code></h1>
+          <h1><code>ktl</code>: Blazing-Fast Deploys</h1>
           <div class="hero-quick">
-            <span class="hero-pill">11 min read</span>
+            <span class="hero-pill">14 min read</span>
             <span class="hero-pill">Updated February 24, 2026</span>
           </div>
           <p class="deck">
-            Use a two-layer deploy model: visualize release-level blast radius first, then execute dependency-safe
-            concurrent rollouts across the stack.
+            A practical operating model: visualize the blast radius first, run adaptive DAG concurrency second,
+            harden builds with sandboxing, and seal runs for reproducible CI handoff.
           </p>
           <p class="meta">Published February 24, 2026</p>
         </header>
 
         <section class="content">
           <p>
-            Parallel deploys are only useful if operators can still answer two questions quickly: What is changing,
-            and why did rollout behavior change? The strongest pattern in <code>ktl</code> is combining
-            <code>ktl apply plan --visualize</code> with <code>ktl stack</code> DAG concurrency.
+            Fast deploys fail in production when speed is added without execution control. <code>ktl</code> works
+            because it combines four technical layers into one runbook: plan visualization, dependency-safe concurrent
+            scheduling, security checks, and reproducible sealed execution.
           </p>
 
-          <h2>The Two-Layer Model</h2>
+          <h2>System Architecture in One View</h2>
+<figure class="diagram-card">
+  <div class="diagram-card-inner">
+    <div class="mermaid">flowchart LR
+  A[Git change] --> B[ktl apply plan --visualize]
+  B --> C[Plan HTML or JSON artifact]
+  C --> D[Helmer standalone viewer]
+  C --> E[Reviewer approval]
+  E --> F[ktl stack seal]
+  F --> G[plan.json + inputs.tar.gz + attestation]
+  G --> H[ktl stack apply --from-bundle]
+  H --> I[Adaptive DAG rollout in cluster]
+    </div>
+    <figcaption>Review first, seal intent, then execute the exact run plan.</figcaption>
+  </div>
+</figure>
+
+          <h2>Plan Visualization: Built-in and Standalone</h2>
           <p>
-            Layer 1 is release-level visualization. Layer 2 is stack-level execution. You use both in the same runbook:
+            Use <code>ktl apply plan --visualize</code> to generate an interactive rollout artifact before apply.
+            This gives you explicit create/update/delete scope and diff context before any cluster mutation.
           </p>
-          <ul>
-            <li>First, generate HTML plan views for critical releases and share them in PR or CI artifacts.</li>
-            <li>Then execute the full stack with DAG-aware concurrency and adaptive backoff controls.</li>
-          </ul>
-
-<pre><code># Layer 1: review the change surface
-ktl apply plan \
+<pre><code>ktl apply plan \
   --chart ./charts/api \
   --release api \
   --namespace platform \
   -f ./values/prod/api.yaml \
   --visualize \
-  --output ./artifacts/plan-api.html
+  --output ./artifacts/plan-api.html</code></pre>
 
-# Optional regression guard against a previous plan
-ktl apply plan \
-  --chart ./charts/api \
-  --release api \
-  --namespace platform \
-  -f ./values/prod/api.yaml \
-  --compare-to ./baselines/api-plan.json \
-  --baseline ./baselines/api-plan.new.json
-
-# Layer 2: run the whole graph
-ktl stack apply --config ./stacks/prod --yes</code></pre>
-
-          <h2>Why This Beats Plain Parallel Flags</h2>
           <p>
-            A fixed parallel number alone is not enough in real clusters. <code>ktl stack</code> executes only ready
-            nodes in DAG order, and can adjust worker target when failures indicate pressure (rate limits, transport
-            errors, 5xx behavior).
-          </p>
-          <p>
-            Pairing this with plan visualization means reviewers see expected resource changes before rollout, while
-            operators keep high throughput during execution.
+            If you want plan visualization as a standalone tool outside the deploy runner, use
+            <a href="https://github.com/kubekattle/helmer">Helmer</a>. Helmer is useful when reviewers, SREs, or
+            security teams need direct access to plan artifacts without invoking deployment commands.
           </p>
 
-          <h2>Recommended Runner Guardrails</h2>
+          <h2>Adaptive Stack Concurrency That Stays Stable</h2>
           <p>
-            Keep concurrency controls in <code>stack.yaml</code> so behavior is consistent between laptop and CI:
+            <code>ktl stack</code> does not just run parallel jobs. It schedules only dependency-ready nodes and can
+            adapt concurrency based on real failure classes (for example rate limits or transport instability).
           </p>
+<figure class="diagram-card">
+  <div class="diagram-card-inner">
+    <div class="mermaid">flowchart TD
+  Q[Ready queue] --> B{Budget checks}
+  B --> N[maxParallelPerNamespace]
+  B --> K[maxParallelKind]
+  B --> P[parallelismGroupLimit]
+  N --> R[Run release]
+  K --> R
+  P --> R
+  R --> O{Outcome}
+  O -->|Success| U[Ramp target up]
+  O -->|Rate limit or 5xx| D[Shrink target]
+  O -->|Timeout or conflict| M[Mild backoff]
+  U --> Q
+  D --> Q
+  M --> Q
+    </div>
+    <figcaption>Concurrency is dynamic and bounded, not a single static parallelism number.</figcaption>
+  </div>
+</figure>
+
 <pre><code>apiVersion: ktl.dev/v1
 kind: Stack
 name: prod
@@ -322,113 +375,161 @@ runner:
     window: 20
     rampAfterSuccesses: 2
     rampMaxFailureRate: 0.30
-    cooldownSevere: 4
+    cooldownSevere: 4</code></pre>
 
-releases:
-  - name: api
-    chart: ./charts/api
-  - name: worker
-    chart: ./charts/worker
-    needs: [api]</code></pre>
-
-          <h2>Competitive Landscape: Where <code>ktl</code> Can Be Technically Better</h2>
+          <h2>Security Layer: Verifier and Sandbox Builds</h2>
           <p>
-            No single tool wins every workload. The practical question is whether your deploy system understands
-            Kubernetes rollout dependencies and failure signals deeply enough to optimize speed without sacrificing
-            safety.
+            Security checks should be first-class deploy inputs, not post-facto audit tasks.
+            <a href="https://github.com/kubekattle/verifier">Verifier</a> can be used as the policy and compliance
+            layer around rendered manifests and deployment intent.
           </p>
+          <p>
+            For build-time hardening, <code>ktl build</code> provides explicit sandbox controls that are especially
+            useful in CI:
+          </p>
+          <ul>
+            <li><code>--sandbox</code> to enforce sandbox execution (fail if unavailable).</li>
+            <li><code>--sandbox-config</code> to pin runtime policy.</li>
+            <li><code>--sandbox-bin</code> to select sandbox runtime binary.</li>
+            <li><code>--sandbox-bind</code> for explicit host:guest mounts.</li>
+            <li><code>--sandbox-probe-path</code> to validate path visibility before build.</li>
+            <li><code>--sandbox-workdir</code> to control working directory inside sandbox.</li>
+            <li><code>--sandbox-logs</code> for runtime diagnostics in stderr and websocket mirror.</li>
+            <li><code>--secure</code> to combine hermetic mode, sandbox, attestations, policy, and secret checks.</li>
+          </ul>
+<pre><code>ktl build . \
+  -t ghcr.io/acme/api:prod \
+  --sandbox \
+  --sandbox-config ./sandbox/linux-ci.cfg \
+  --sandbox-probe-path "$HOME/.docker/config.json" \
+  --sandbox-logs \
+  --secure \
+  --policy ./policy \
+  --secrets block</code></pre>
+
+          <h2>Sealed Plans for Reproducible Deploys</h2>
+          <p>
+            <code>ktl stack seal</code> turns a selected plan into a portable execution package so CI and operators run
+            exactly the same intent.
+          </p>
+          <ul>
+            <li><code>--out</code> writes sealed artifacts to a controlled directory.</li>
+            <li><code>--bundle</code> and <code>--bundle-file</code> include chart and values inputs.</li>
+            <li><code>--plan-file</code> and <code>--attestation-file</code> standardize artifact names.</li>
+            <li><code>--command</code> records target run mode: <code>apply</code> or <code>delete</code>.</li>
+            <li><code>--concurrency</code> and <code>--fail-mode</code> capture recommended runtime behavior.</li>
+          </ul>
+<pre><code># create a sealed bundle for CI handoff
+ktl stack seal \
+  --config ./stacks/prod \
+  --command apply \
+  --concurrency 6 \
+  --fail-mode fail-fast \
+  --bundle-file bundle.tgz \
+  --out ./artifacts/sealed-prod
+
+# execute sealed intent later
+ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></pre>
+
+<figure class="diagram-card">
+  <div class="diagram-card-inner">
+    <div class="mermaid">sequenceDiagram
+  participant Dev as Developer
+  participant CI as CI pipeline
+  participant Sec as Verifier checks
+  participant Ops as Deploy runner
+  participant K8s as Kubernetes
+
+  Dev->>CI: ktl stack seal --bundle --out artifacts
+  CI->>Sec: Validate rendered artifacts and policy
+  Sec-->>CI: pass or fail
+  CI->>Ops: Publish sealed bundle
+  Ops->>K8s: ktl stack apply --from-bundle ...
+  K8s-->>Ops: Events and status stream
+    </div>
+    <figcaption>Seal once, verify once, execute repeatably.</figcaption>
+  </div>
+</figure>
+
+          <h2>Competition: Why <code>ktl</code> Can Be Better</h2>
           <div class="compare">
             <table>
               <thead>
                 <tr>
                   <th>Alternative</th>
-                  <th>What it does well</th>
-                  <th>Why <code>ktl</code> can be better technically</th>
-                  <th>When the alternative is better</th>
+                  <th>Strength</th>
+                  <th>Where ktl is stronger technically</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Argo CD / Flux (GitOps controllers)</td>
-                  <td>Continuous in-cluster reconciliation from Git.</td>
-                  <td>Run-scoped DAG execution, adaptive concurrency, and explicit resume/rerun behavior during incidents.</td>
-                  <td>When you want controller-owned reconciliation as the primary operating model.</td>
+                  <td>Argo CD / Flux</td>
+                  <td>Continuous in-cluster reconciliation.</td>
+                  <td>Run-scoped DAG execution, explicit resume/rerun behavior, and plan-first artifact workflow.</td>
                 </tr>
                 <tr>
                   <td>Helmfile</td>
-                  <td>Simple multi-release orchestration around Helm.</td>
-                  <td>Adaptive worker control, per-namespace/per-kind/group concurrency limits, and stronger run-state recovery.</td>
-                  <td>When basic static orchestration is enough and runtime controls are not needed.</td>
+                  <td>Light multi-release orchestration.</td>
+                  <td>Adaptive concurrency controls, scoped budgets, and stronger run-state persistence.</td>
                 </tr>
                 <tr>
                   <td>Raw Helm + scripts</td>
-                  <td>Maximum flexibility and zero abstraction tax.</td>
-                  <td>DAG validation, shared runner behavior, plan visualization artifacts, and lower script entropy across teams.</td>
-                  <td>When teams intentionally maintain custom orchestration code.</td>
+                  <td>Maximum flexibility.</td>
+                  <td>Lower script entropy plus built-in visualization, sealing, and recovery semantics.</td>
                 </tr>
                 <tr>
                   <td>Centralized CI/CD only</td>
-                  <td>Governance, approvals, and audit at pipeline level.</td>
-                  <td>Cluster-aware scheduling and rollback-aware recovery happen in the deploy engine, not only in pipeline stage wiring.</td>
-                  <td>When strict central control outweighs operator speed and local reproducibility.</td>
+                  <td>Approvals and governance.</td>
+                  <td>Kubernetes-aware scheduling and failure-class adaptation happen inside the deploy engine, not only in pipeline stage design.</td>
                 </tr>
                 <tr>
                   <td>Terraform Helm provider</td>
-                  <td>Unified infra + app declarations in one IaC flow.</td>
-                  <td>Better release-run observability and faster iteration for application rollouts with deploy-specific diagnostics.</td>
-                  <td>When infra lifecycle consistency is the top priority over deploy runtime ergonomics.</td>
+                  <td>Infra and app lifecycle in one IaC workflow.</td>
+                  <td>Richer deploy-run observability and faster application rollout loops.</td>
                 </tr>
                 <tr>
                   <td>Tilt / Skaffold</td>
-                  <td>Excellent inner-loop development and rapid local feedback.</td>
-                  <td>Deterministic, CI-parity stack execution for promotion paths and production-grade rollout controls.</td>
-                  <td>When the main goal is continuous local file-watch development loops.</td>
+                  <td>Excellent inner-loop development.</td>
+                  <td>More deterministic promotion and production rollout controls with CI parity.</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h2>Technical Reasons <code>ktl</code> Often Wins</h2>
-          <ul>
-            <li>DAG-ready queue scheduling executes only dependency-satisfied nodes instead of pipeline-order guesses.</li>
-            <li>Adaptive concurrency reacts to rate limits, 5xx, transport, and timeout patterns to reduce rollout turbulence.</li>
-            <li>Concurrency budgets can be scoped by namespace, resource kind, and parallelism groups for blast-radius control.</li>
-            <li><code>ktl apply plan --visualize</code> produces shareable artifacts for pre-apply review and compare-to regression checks.</li>
-            <li>Run state persistence enables practical <code>--resume</code> and rerun-failed flows without replaying the whole deploy graph.</li>
-            <li>One CLI model works on laptops and CI runners, reducing environment-specific orchestration drift.</li>
-          </ul>
+          <h2>Reference Workflow</h2>
+<pre><code># 1) visualize release changes
+ktl apply plan --visualize --chart ./charts/api --release api --namespace platform
 
-          <h2>Pipeline Pattern That Scales</h2>
-          <p>
-            A practical sequence for teams with approval gates:
-          </p>
-          <ul>
-            <li>PR stage: run <code>ktl apply plan --visualize</code> for changed releases, publish HTML artifacts.</li>
-            <li>Approval stage: reviewers inspect rendered diffs and comparison deltas.</li>
-            <li>Deploy stage: run <code>ktl stack apply</code> with config-defined concurrency guardrails.</li>
-            <li>Incident stage: run <code>ktl stack apply --resume --yes</code> after fixing root cause.</li>
-          </ul>
+# 2) optional standalone review in Helmer
+# https://github.com/kubekattle/helmer
 
-<pre><code># after fixing a failed release
-ktl stack apply --config ./stacks/prod --resume --yes
+# 3) run security checks with Verifier
+# https://github.com/kubekattle/verifier
 
-# follow run status
-ktl stack status --config ./stacks/prod --follow</code></pre>
+# 4) seal stack intent
+ktl stack seal --config ./stacks/prod --bundle-file bundle.tgz --out ./artifacts/sealed-prod
+
+# 5) execute sealed deploy in CI
+ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></pre>
 
           <h2>Final Take</h2>
           <p>
-            If your deploy model needs both speed and confidence, the combination is straightforward:
-            <code>apply plan --visualize</code> for what will change, and <code>stack</code> DAG concurrency for how
-            rollout executes under load. This gives a better balance than either fixed parallel orchestration or
-            fully centralized pipeline-only execution.
+            Blazing-fast deploys are not about raw parallelism. They come from predictable intent, bounded concurrency,
+            security-aware inputs, and reproducible execution. <code>ktl</code> gives you that complete path in one
+            operating model.
           </p>
 
           <p class="note">
-            Suggested starting point: set <code>runner.concurrency</code> to 4-8, turn on
-            <code>progressiveConcurrency</code>, and cap <code>StatefulSet</code> parallelism to 1.
+            Quick baseline: run <code>apply plan --visualize</code>, enforce sandbox with
+            <code>ktl build --secure</code>, seal with <code>ktl stack seal</code>, then deploy via
+            <code>ktl stack apply --from-bundle</code>.
           </p>
         </section>
       </article>
     </main>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+    </script>
   </body>
 </html>
