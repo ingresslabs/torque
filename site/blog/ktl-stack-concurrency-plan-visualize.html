@@ -331,45 +331,72 @@ releases:
     chart: ./charts/worker
     needs: [api]</code></pre>
 
-          <h2>Comparison: Helmfile and Centralized CI/CD</h2>
+          <h2>Competitive Landscape: Where <code>ktl</code> Can Be Technically Better</h2>
+          <p>
+            No single tool wins every workload. The practical question is whether your deploy system understands
+            Kubernetes rollout dependencies and failure signals deeply enough to optimize speed without sacrificing
+            safety.
+          </p>
           <div class="compare">
             <table>
               <thead>
                 <tr>
-                  <th>Concern</th>
-                  <th>ktl model</th>
-                  <th>Helmfile-style orchestration</th>
-                  <th>Centralized CI/CD only</th>
+                  <th>Alternative</th>
+                  <th>What it does well</th>
+                  <th>Why <code>ktl</code> can be better technically</th>
+                  <th>When the alternative is better</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Concurrency behavior</td>
-                  <td>DAG-safe plus adaptive controls and scope limits.</td>
-                  <td>Usually fixed parallelism, less runtime adaptation.</td>
-                  <td>Parallelism mostly at pipeline job/stage level.</td>
+                  <td>Argo CD / Flux (GitOps controllers)</td>
+                  <td>Continuous in-cluster reconciliation from Git.</td>
+                  <td>Run-scoped DAG execution, adaptive concurrency, and explicit resume/rerun behavior during incidents.</td>
+                  <td>When you want controller-owned reconciliation as the primary operating model.</td>
                 </tr>
                 <tr>
-                  <td>Pre-apply review quality</td>
-                  <td><code>apply plan --visualize</code> gives shareable interactive diff/graph views.</td>
-                  <td>Depends on external tooling/scripts.</td>
-                  <td>Depends on platform dashboards and custom jobs.</td>
+                  <td>Helmfile</td>
+                  <td>Simple multi-release orchestration around Helm.</td>
+                  <td>Adaptive worker control, per-namespace/per-kind/group concurrency limits, and stronger run-state recovery.</td>
+                  <td>When basic static orchestration is enough and runtime controls are not needed.</td>
                 </tr>
                 <tr>
-                  <td>Failure recovery</td>
-                  <td>Resume/rerun-failed workflows with stack state context.</td>
-                  <td>Often manual rerun selection.</td>
-                  <td>Often replay entire pipeline stages.</td>
+                  <td>Raw Helm + scripts</td>
+                  <td>Maximum flexibility and zero abstraction tax.</td>
+                  <td>DAG validation, shared runner behavior, plan visualization artifacts, and lower script entropy across teams.</td>
+                  <td>When teams intentionally maintain custom orchestration code.</td>
                 </tr>
                 <tr>
-                  <td>Operator feedback loop</td>
-                  <td>Local and CI parity with stack console and event stream.</td>
-                  <td>CLI output only, less integrated runtime context.</td>
-                  <td>Good governance, slower interactive debugging loop.</td>
+                  <td>Centralized CI/CD only</td>
+                  <td>Governance, approvals, and audit at pipeline level.</td>
+                  <td>Cluster-aware scheduling and rollback-aware recovery happen in the deploy engine, not only in pipeline stage wiring.</td>
+                  <td>When strict central control outweighs operator speed and local reproducibility.</td>
+                </tr>
+                <tr>
+                  <td>Terraform Helm provider</td>
+                  <td>Unified infra + app declarations in one IaC flow.</td>
+                  <td>Better release-run observability and faster iteration for application rollouts with deploy-specific diagnostics.</td>
+                  <td>When infra lifecycle consistency is the top priority over deploy runtime ergonomics.</td>
+                </tr>
+                <tr>
+                  <td>Tilt / Skaffold</td>
+                  <td>Excellent inner-loop development and rapid local feedback.</td>
+                  <td>Deterministic, CI-parity stack execution for promotion paths and production-grade rollout controls.</td>
+                  <td>When the main goal is continuous local file-watch development loops.</td>
                 </tr>
               </tbody>
             </table>
           </div>
+
+          <h2>Technical Reasons <code>ktl</code> Often Wins</h2>
+          <ul>
+            <li>DAG-ready queue scheduling executes only dependency-satisfied nodes instead of pipeline-order guesses.</li>
+            <li>Adaptive concurrency reacts to rate limits, 5xx, transport, and timeout patterns to reduce rollout turbulence.</li>
+            <li>Concurrency budgets can be scoped by namespace, resource kind, and parallelism groups for blast-radius control.</li>
+            <li><code>ktl apply plan --visualize</code> produces shareable artifacts for pre-apply review and compare-to regression checks.</li>
+            <li>Run state persistence enables practical <code>--resume</code> and rerun-failed flows without replaying the whole deploy graph.</li>
+            <li>One CLI model works on laptops and CI runners, reducing environment-specific orchestration drift.</li>
+          </ul>
 
           <h2>Pipeline Pattern That Scales</h2>
           <p>
