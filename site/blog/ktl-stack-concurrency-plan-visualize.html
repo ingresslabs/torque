@@ -280,17 +280,17 @@
             <span class="hero-pill">Updated February 24, 2026</span>
           </div>
           <p class="deck">
-            A practical operating model: visualize the blast radius first, run adaptive DAG concurrency second,
-            harden builds with sandboxing, and seal runs for reproducible CI handoff.
+            A deployment model for teams that need high throughput with controlled risk:
+            visualize changes first, execute DAG-aware concurrency second, and keep artifacts reproducible.
           </p>
           <p class="meta">Published February 24, 2026</p>
         </header>
 
         <section class="content">
           <p>
-            Fast deploys fail in production when speed is added without execution control. <code>ktl</code> works
-            because it combines four technical layers into one runbook: plan visualization, dependency-safe concurrent
-            scheduling, security checks, and reproducible sealed execution.
+            Speed alone is not useful if operators cannot explain what changed or replay the same run later.
+            <code>ktl</code> is useful because it combines plan visualization, dependency-aware scheduling, security
+            controls, and sealed execution artifacts in one CLI workflow.
           </p>
 
           <h2>System Architecture in One View</h2>
@@ -327,6 +327,10 @@
             If you want plan visualization as a standalone tool outside the deploy runner, use
             <a href="https://github.com/kubekattle/helmer">Helmer</a>. Helmer is useful when reviewers, SREs, or
             security teams need direct access to plan artifacts without invoking deployment commands.
+          </p>
+          <p>
+            In practice this shortens review loops: the deploy author can generate the artifact once, and reviewers
+            can inspect it without reproducing local chart context.
           </p>
 
           <h2>Adaptive Stack Concurrency That Stays Stable</h2>
@@ -397,7 +401,11 @@ runner:
             <li><code>--sandbox-logs</code> for runtime diagnostics in stderr and websocket mirror.</li>
             <li><code>--secure</code> to combine hermetic mode, sandbox, attestations, policy, and secret checks.</li>
           </ul>
-<pre><code>ktl build . \
+<pre><code># optional environment probe before sandboxed build
+ktl build sandbox doctor --context .
+
+# hardened build
+ktl build . \
   -t ghcr.io/acme/api:prod \
   --sandbox \
   --sandbox-config ./sandbox/linux-ci.cfg \
@@ -451,14 +459,65 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></p
   </div>
 </figure>
 
-          <h2>Competition: Why <code>ktl</code> Can Be Better</h2>
+          <h2>Why This Model Fits Air-Gapped and Restricted Environments</h2>
+          <p>
+            Air-gapped environments usually need four properties: minimal moving parts, deterministic inputs, offline
+            auditability, and clear promotion boundaries between connected and isolated zones. <code>ktl</code> maps
+            well to this because execution can be driven from sealed artifacts rather than live internet dependencies.
+          </p>
+          <ul>
+            <li>Single CLI execution model: run from controlled runners without requiring an always-on in-cluster controller.</li>
+            <li>Sealed bundles package plan + charts + values for reproducible transfer into isolated networks.</li>
+            <li>Bundle signing and verification support chain-of-custody before apply.</li>
+            <li>Hermetic sandboxed builds reduce accidental network egress and tighten build host exposure.</li>
+            <li>SQLite-backed run history and capture outputs support offline incident review and audits.</li>
+          </ul>
+
+<figure class="diagram-card">
+  <div class="diagram-card-inner">
+    <div class="mermaid">flowchart LR
+  subgraph C[Connected zone]
+    P[Plan and build stage]
+    S[ktl stack seal]
+    G[ktl stack sign]
+    P --> S --> G
+  end
+  G --> T[Artifact transfer]
+  subgraph A[Air-gapped zone]
+    V[ktl stack verify]
+    R[ktl stack apply --from-bundle]
+    V --> R
+  end
+    </div>
+    <figcaption>Connected-to-isolated promotion with verifiable bundle handoff.</figcaption>
+  </div>
+</figure>
+
+<pre><code># connected zone: produce and sign
+ktl stack keygen --out ./keys/ed25519.json
+ktl stack seal \
+  --config ./stacks/prod \
+  --command apply \
+  --bundle-file prod-bundle.tgz \
+  --out ./artifacts/sealed-prod
+ktl stack sign \
+  --bundle ./artifacts/sealed-prod/prod-bundle.tgz \
+  --key ./keys/ed25519.json
+
+# air-gapped zone: verify and execute
+ktl stack verify \
+  --bundle ./artifacts/sealed-prod/prod-bundle.tgz \
+  --pub ./keys/ed25519.json
+ktl stack apply --from-bundle ./artifacts/sealed-prod/prod-bundle.tgz --yes</code></pre>
+
+          <h2>Trade-offs vs Alternatives</h2>
           <div class="compare">
             <table>
               <thead>
                 <tr>
                   <th>Alternative</th>
                   <th>Strength</th>
-                  <th>Where ktl is stronger technically</th>
+                  <th>Where <code>ktl</code> is often stronger</th>
                 </tr>
               </thead>
               <tbody>
@@ -514,9 +573,9 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></p
 
           <h2>Final Take</h2>
           <p>
-            Blazing-fast deploys are not about raw parallelism. They come from predictable intent, bounded concurrency,
-            security-aware inputs, and reproducible execution. <code>ktl</code> gives you that complete path in one
-            operating model.
+            The main value is not one feature in isolation. It is the combination of plan artifacts, adaptive rollout
+            control, security gates, and sealed reproducibility. That combination is especially useful when teams need
+            both high deployment throughput and strict operational constraints.
           </p>
 
           <p class="note">
