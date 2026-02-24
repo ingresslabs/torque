@@ -293,6 +293,70 @@
             controls, and sealed execution artifacts in one CLI workflow.
           </p>
 
+          <h2>AI Operations: Assistive, Not Fully Autonomous</h2>
+          <p>
+            <code>ktl analyze</code> is effective for AI-assisted diagnosis because it gathers pod status, events, and
+            logs into one analysis flow. But full autonomous remediation is usually not acceptable in production today.
+            Operational reality still requires approval boundaries, context checks, and blast-radius control.
+          </p>
+          <p>
+            A practical model is semi-automatic execution: AI proposes diagnosis and candidate fix, then a human or a
+            policy gate approves execution. In <code>ktl</code> terms, that means defaulting to
+            <code>--ai</code> for diagnosis and using <code>--fix</code> only behind approval.
+          </p>
+<pre><code># diagnosis-first flow
+ktl analyze pod/api-7d9c6b8f5b-abcde -n platform --ai --provider openai --model gpt-4o
+
+# optional guarded remediation (use with caution)
+ktl analyze pod/api-7d9c6b8f5b-abcde -n platform --ai --fix
+
+# broad outage triage
+ktl analyze --cluster --ai</code></pre>
+
+<figure class="diagram-card">
+  <div class="diagram-card-inner">
+    <div class="mermaid">flowchart LR
+  A[Symptom or alert] --> B[ktl analyze --ai]
+  B --> C[Diagnosis and fix proposal]
+  C --> D{Approval gate}
+  D -->|Approved| E[Execute guarded fix]
+  D -->|Rejected| F[Manual adjustment]
+  E --> G[Validate with logs/status]
+  F --> G
+    </div>
+    <figcaption>Operator-in-the-loop remediation flow for production reliability.</figcaption>
+  </div>
+</figure>
+
+          <h2>Logs Features That Help AI Agents Debug Faster</h2>
+          <p>
+            AI debugging quality depends on log shape and context quality. <code>ktl logs</code> helps by combining
+            multi-pod tailing, event correlation, structured filtering, and replayable capture in one stream.
+          </p>
+          <ul>
+            <li><code>--json</code> for machine-parsable logs.</li>
+            <li><code>--events</code> to include Kubernetes events in the same timeline.</li>
+            <li><code>--filter key=value</code> for JSON field filtering (for example <code>level=error</code>).</li>
+            <li><code>--highlight</code> for fast terminal scanning when humans and agents collaborate.</li>
+            <li><code>--capture</code> for SQLite-backed replay and offline analysis.</li>
+            <li><code>--ws-listen</code> to expose a raw websocket log feed to external consumers.</li>
+            <li><code>--deps --config</code> to include stack dependency logs during incident triage.</li>
+          </ul>
+<pre><code># machine-readable stream for agent parsing
+ktl logs deploy/api -n platform --json --since 15m --tail 200 --filter level=error
+
+# correlate app logs with cluster events
+ktl logs deploy/api -n platform --events --highlight "BackOff|Failed|panic"
+
+# capture an incident for offline AI replay
+ktl logs deploy/api -n platform --events --capture ./captures/incident.sqlite
+
+# expose feed to external agent consumers
+ktl logs deploy/api -n platform --json --ws-listen :9090
+
+# include dependencies from stack config during root-cause analysis
+ktl logs deploy/api --deps --config ./stacks/prod -n platform</code></pre>
+
           <h2>System Architecture in One View</h2>
 <figure class="diagram-card">
   <div class="diagram-card-inner">
