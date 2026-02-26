@@ -468,6 +468,40 @@ verify verify.yaml --compare-to ./baseline.json</code></pre>
             shipping again under time pressure.
           </p>
 
+          <h2>7) Tunnel superpower: debug local code against real cluster dependencies</h2>
+          <p>
+            After logs identify the failing path, teams often need one more step: run a local fix while keeping real
+            backend dependencies from the cluster. That is where <code>ktl tunnel</code> is uniquely useful.
+          </p>
+
+          <p>
+            Instead of hand-wiring multiple <code>port-forward</code> sessions, <code>ktl tunnel</code> can open dependency
+            tunnels from stack config, inject env vars from a live workload, and start your local debug command once
+            everything is ready.
+          </p>
+
+<pre><code># Local debug loop with remote dependencies + runtime env
+ktl tunnel frontend \
+  --deps \
+  --config ./stack.yaml \
+  --env-from deployment/frontend \
+  --exec "npm run dev"</code></pre>
+
+          <p>
+            For resilience debugging, tunnel can also inject network chaos so you can reproduce issues that only appear
+            under degraded links.
+          </p>
+
+<pre><code># Simulate bad network while testing retry logic
+ktl tunnel backend \
+  --latency 400ms \
+  --error-rate 0.15</code></pre>
+
+          <p>
+            In practice, this combination is powerful: <code>ktl logs</code> finds the failure, <code>ktl tunnel</code>
+            gives a realistic local reproduction path, and <code>verify</code> ensures the rollout fix is policy-safe.
+          </p>
+
           <h2>Practical playbook</h2>
           <p>
             If you are migrating from pure <code>kubectl logs</code> usage, this sequence works well:
@@ -475,6 +509,7 @@ verify verify.yaml --compare-to ./baseline.json</code></pre>
           <ul>
             <li>Start with <code>deploy/&lt;name&gt;</code> lens in one service that has frequent rollouts.</li>
             <li>Add <code>--events</code> as default during incidents.</li>
+            <li>Use <code>ktl tunnel --deps --env-from --exec</code> to reproduce and validate local fixes faster.</li>
             <li>Turn on <code>--capture</code> for production-only troubleshooting sessions.</li>
             <li>Introduce <code>--ws-listen</code> or <code>--remote-agent</code> for distributed response teams.</li>
           </ul>
