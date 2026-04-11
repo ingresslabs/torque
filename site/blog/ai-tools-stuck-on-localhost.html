@@ -444,6 +444,31 @@
             </figcaption>
           </figure>
 
+          <h2>A built-in editor should finish the loop</h2>
+          <p>
+            The file explorer is only half the story. If the tool can browse remote machines, it should also edit remote
+            files directly in the same browser workspace. Opening a config, changing it, reviewing the diff, and asking
+            AI to explain, refactor, or fix a block should not require jumping out to another app.
+          </p>
+
+          <p>
+            This is where advanced AI features actually matter. Inline edits, patch suggestions, config validation,
+            command-aware fixes, and context from the current host or cluster turn the editor into an operating surface,
+            not just a text box. That is much more useful than copying file contents into chat and hoping nothing gets
+            lost on the way back.
+          </p>
+
+          <figure class="media-shot">
+            <img
+              src="../assets/ai-tools-remote-editor.png"
+              alt="Built-in browser editor for a remote file, with sensitive values redacted."
+              loading="lazy"
+            />
+            <figcaption>
+              A remote editor becomes much stronger when AI actions live next to the file instead of outside it.
+            </figcaption>
+          </figure>
+
           <h2>A transcript is not history</h2>
           <p>
             Another missing piece is recording. A chat transcript is not enough. It tells you what the assistant said,
@@ -500,6 +525,7 @@
           <ul>
             <li>Tmux-style split screens inside the browser.</li>
             <li>An integrated file explorer across local, <code>ssh</code>, and cluster contexts.</li>
+            <li>A built-in remote editor with inline AI actions for real files, not pasted snippets.</li>
             <li>First-class remote connections over <code>ssh</code>.</li>
             <li>Direct Kubernetes API views for pods, logs, events, and rollout state.</li>
             <li>Persistent sessions that survive reloads and reconnect cleanly.</li>
