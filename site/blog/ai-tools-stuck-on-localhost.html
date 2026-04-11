@@ -391,6 +391,27 @@
             I want a tmux-style split screen inside the browser because that is how this work is actually done.
           </p>
 
+          <h2>A real file explorer changes the workflow</h2>
+          <p>
+            One feature that would immediately make a tool feel more serious is a real file explorer. Not a tiny repo
+            sidebar. A proper explorer that works across local files, remote hosts over <code>ssh</code>, and
+            Kubernetes-backed runtime paths in the same workspace.
+          </p>
+
+          <p>
+            This matters because engineers do not work only from prompts and terminals. They jump between source trees,
+            config files, manifests, logs, generated outputs, and temporary artifacts. A strong file explorer makes the
+            tool feel operational, not cosmetic. It also makes the product unique because most AI tools still treat files
+            as passive context instead of an active surface for navigation, preview, and action.
+          </p>
+
+          <figure class="media-slot">
+            <p class="media-label">Screenshot Placeholder</p>
+            <p class="media-hint">
+              File explorer showing local repo, remote <code>ssh</code> host, and Kubernetes-related files in one view.
+            </p>
+          </figure>
+
           <h2>A transcript is not history</h2>
           <p>
             Another missing piece is recording. A chat transcript is not enough. It tells you what the assistant said,
@@ -438,6 +459,7 @@
           </p>
           <ul>
             <li>Tmux-style split screens inside the browser.</li>
+            <li>An integrated file explorer across local, <code>ssh</code>, and cluster contexts.</li>
             <li>First-class remote connections over <code>ssh</code>.</li>
             <li>Direct Kubernetes API views for pods, logs, events, and rollout state.</li>
             <li>Persistent sessions that survive reloads and reconnect cleanly.</li>
