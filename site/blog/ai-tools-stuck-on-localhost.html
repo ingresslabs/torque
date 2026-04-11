@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Why AI Coding Tools Still Feel Stuck on Localhost</title>
+    <meta
+      name="description"
+      content="A direct take on why Codex, Claude, and other chat-first AI tools still fall short for serious CLI, SSH, and Kubernetes workflows."
+    />
+    <link rel="canonical" href="https://kubekattle.github.io/ktl/blog/ai-tools-stuck-on-localhost.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Why AI Coding Tools Still Feel Stuck on Localhost" />
+    <meta
+      property="og:description"
+      content="Modern AI work is CLI-driven and remote, but most AI tools still behave like single-window localhost assistants."
+    />
+    <meta property="og:url" content="https://kubekattle.github.io/ktl/blog/ai-tools-stuck-on-localhost.html" />
+    <meta property="og:site_name" content="ktl" />
+    <style>
+      :root {
+        --ink: #f2ede3;
+        --text: #d8d2c7;
+        --muted: #a49c90;
+        --paper: #070709;
+        --line: rgba(200, 179, 138, 0.2);
+        --line-strong: rgba(200, 179, 138, 0.38);
+        --accent: #c8b38a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background:
+          radial-gradient(circle at 0% 0%, rgba(200, 179, 138, 0.12), transparent 34%),
+          radial-gradient(circle at 100% 100%, rgba(200, 179, 138, 0.06), transparent 42%),
+          linear-gradient(180deg, #050507 0%, var(--paper) 48%, #050507 100%);
+        color: var(--text);
+      }
+
+      body {
+        font-family: "Avenir Next", "Avenir", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        line-height: 1.72;
+        letter-spacing: 0.005em;
+      }
+
+      .frame {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 46px 24px 90px;
+      }
+
+      .article {
+        background: linear-gradient(180deg, rgba(20, 21, 24, 0.96), rgba(13, 14, 17, 0.96));
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        box-shadow:
+          0 30px 70px rgba(0, 0, 0, 0.48),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+      }
+
+      .hero {
+        position: relative;
+        padding: 42px 48px 34px;
+        border-bottom: 1px solid var(--line);
+        background:
+          radial-gradient(circle at 18% 0%, rgba(200, 179, 138, 0.14), transparent 46%),
+          linear-gradient(165deg, rgba(29, 30, 34, 0.96) 0%, rgba(20, 21, 25, 0.92) 62%, rgba(13, 14, 17, 0.92) 100%);
+      }
+
+      .back {
+        display: inline-block;
+        margin-bottom: 18px;
+        text-decoration: none;
+        color: var(--muted);
+        font-size: 0.86rem;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .back:hover {
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
+        font-weight: 500;
+        font-size: clamp(2.2rem, 6vw, 3.7rem);
+        line-height: 1.14;
+        letter-spacing: 0.01em;
+        max-width: 16ch;
+        text-wrap: balance;
+      }
+
+      h1 code {
+        color: var(--accent);
+        background: rgba(200, 179, 138, 0.1);
+        border: 1px solid rgba(200, 179, 138, 0.22);
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+
+      .deck {
+        margin: 14px 0 0;
+        max-width: 60ch;
+        color: #b7ae9f;
+        font-size: 1rem;
+      }
+
+      .hero-quick {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .hero-pill {
+        display: inline-block;
+        border: 1px solid rgba(200, 179, 138, 0.28);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #c6bdae;
+        background: rgba(200, 179, 138, 0.06);
+      }
+
+      .meta {
+        margin-top: 16px;
+        font-size: 0.84rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .content {
+        padding: 38px 48px 52px;
+      }
+
+      h2 {
+        margin: 52px 0 12px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        font-family: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
+        font-weight: 500;
+        font-size: 1.62rem;
+        line-height: 1.25;
+        color: var(--ink);
+      }
+
+      p {
+        margin: 0 0 16px;
+        font-size: 1.02rem;
+        max-width: 70ch;
+      }
+
+      ul {
+        margin: 10px 0 18px;
+        padding-left: 24px;
+        max-width: 70ch;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      code {
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        font-size: 0.93em;
+        background: rgba(200, 179, 138, 0.1);
+        color: #f0e8da;
+        border: 1px solid rgba(200, 179, 138, 0.2);
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+
+      pre {
+        margin: 12px 0 20px;
+        padding: 16px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--line-strong);
+        background: #0b0c0f;
+        overflow-x: auto;
+        max-width: 84ch;
+      }
+
+      pre code {
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: #efe7d8;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        color: #f1e6d2;
+      }
+
+      .compare {
+        margin: 18px 0 24px;
+        border: 1px solid var(--line-strong);
+        border-radius: 14px;
+        overflow: hidden;
+        max-width: 84ch;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.96rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        background: rgba(200, 179, 138, 0.08);
+        color: var(--ink);
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .media-slot {
+        margin: 18px 0 24px;
+        padding: 18px 20px;
+        border: 1px dashed rgba(200, 179, 138, 0.42);
+        border-radius: 16px;
+        background:
+          linear-gradient(180deg, rgba(200, 179, 138, 0.06), rgba(200, 179, 138, 0.03)),
+          rgba(11, 12, 15, 0.9);
+        max-width: 84ch;
+      }
+
+      .media-label {
+        margin: 0 0 6px;
+        color: var(--ink);
+        font-size: 0.84rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .media-hint {
+        margin: 0;
+        color: #c8c0b2;
+        font-size: 0.95rem;
+        max-width: none;
+      }
+
+      .note {
+        margin-top: 20px;
+        padding: 12px 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        background: rgba(200, 179, 138, 0.08);
+        color: #e7dfcf;
+        max-width: 84ch;
+      }
+
+      @media (max-width: 760px) {
+        .hero,
+        .content {
+          padding: 24px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame">
+      <article class="article">
+        <header class="hero">
+          <a class="back" href="./index.html">Back to Blog</a>
+          <h1>Why AI Coding Tools Still Feel Stuck on Localhost</h1>
+          <div class="hero-quick">
+            <span class="hero-pill">7 min read</span>
+            <span class="hero-pill">Updated April 11, 2026</span>
+          </div>
+          <p class="deck">
+            I like the models. I do not like the box they come in. Modern AI work is mostly CLI-driven, remote, and
+            collaborative, but most AI tools still assume one laptop, one repo, and one small chat window.
+          </p>
+          <p class="meta">Published April 11, 2026</p>
+        </header>
+
+        <section class="content">
+          <p>
+            I have spent real time with <code>Codex</code>, <code>Claude</code>, and other chat-based AI tools. They are
+            useful. They can write code, explain errors, summarize diffs, and speed up local development.
+          </p>
+
+          <p>
+            The disappointment comes later, when you try to use them for serious engineering. Modern AI usage is not
+            mostly about chatting in a browser. It is about terminals, logs, remote hosts, Kubernetes APIs, deployment
+            state, and long-running sessions. Most tools still stop at localhost.
+          </p>
+
+          <figure class="media-slot">
+            <p class="media-label">Screenshot Placeholder</p>
+            <p class="media-hint">
+              Browser AI workspace with split panes, terminal, and Kubernetes status.
+            </p>
+          </figure>
+
+          <h2>The model is not the problem. The surface is.</h2>
+          <p>
+            I am not disappointed by model quality. I am disappointed by product design. Most AI tools still feel like
+            chat apps with a terminal attached, or terminals with a chat box glued on top. That is fine for a small
+            script on your laptop. It is not enough for real operations.
+          </p>
+
+          <div class="compare">
+            <table>
+              <thead>
+                <tr>
+                  <th>What serious AI work needs</th>
+                  <th>What most chat-first tools offer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Multi-pane workflow with persistent context</td>
+                  <td>One main chat view and maybe one terminal tab</td>
+                </tr>
+                <tr>
+                  <td>First-class remote execution over <code>ssh</code></td>
+                  <td>Mostly local shell access or manual workarounds</td>
+                </tr>
+                <tr>
+                  <td>Kubernetes-aware browsing, logs, and object state</td>
+                  <td>Paste <code>kubectl</code> output back into chat</td>
+                </tr>
+                <tr>
+                  <td>Real session history and replay</td>
+                  <td>Prompt transcript without operator context</td>
+                </tr>
+                <tr>
+                  <td>Team sharing, recording, and broadcast modes</td>
+                  <td>Personal workspace only</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>CLI is where the real work happens</h2>
+          <p>
+            For engineers, platform teams, and operators, the command line is still the center of gravity. That is where
+            you run tests, tail logs, diff configs, inspect processes, restart services, and verify what changed. AI is
+            now part of that flow, but the interface has not caught up.
+          </p>
+
+          <p>
+            This is a normal workflow. Yet most AI products still behave as if the real action is the prompt box. It is
+            not. The prompt box is just one control in a much larger operating surface.
+          </p>
+
+          <figure class="media-slot">
+            <p class="media-label">Video Placeholder</p>
+            <p class="media-hint">
+              Demo: local shell to <code>ssh</code> to Kubernetes without losing context.
+            </p>
+          </figure>
+
+          <h2>Localhost is only the first five minutes</h2>
+          <p>
+            Current tools are mostly good for localhost development. That is useful, but it is only the beginning. The
+            moment you need to connect to a remote machine, inspect a container, follow a rollout, or debug a cluster
+            issue, the experience falls apart.
+          </p>
+
+          <p>
+            I want browser-native remote connection over <code>ssh</code>. I want direct Kubernetes API access in the same
+            workspace, not a copy-paste loop. I want to see logs, pod status, events, files, and commands side by side.
+            I want a tmux-style split screen inside the browser because that is how this work is actually done.
+          </p>
+
+          <h2>A transcript is not history</h2>
+          <p>
+            Another missing piece is recording. A chat transcript is not enough. It tells you what the assistant said,
+            not what the engineer ran, what changed on screen, or how the session evolved. Serious AI tooling should
+            record command history, screen state, context switches, and replayable timelines.
+          </p>
+
+          <figure class="media-slot">
+            <p class="media-label">Screenshot Placeholder</p>
+            <p class="media-hint">
+              Timeline view with command history, bookmarks, and playback.
+            </p>
+          </figure>
+
+          <h2>Profiles should be products, not prompt hacks</h2>
+          <p>
+            People also work in different modes. Sometimes I want a strict reviewer. Sometimes I want a fast debugger.
+            Sometimes I want an infra operator that assumes Kubernetes, logs, and rollout safety. Today this is usually
+            handled with prompt tricks and manual setup. That is weak.
+          </p>
+
+          <p>
+            A serious tool should have a real profile wizard for different AI personas: coding assistant, incident
+            responder, release engineer, cluster troubleshooter, documentation editor. Each profile should carry the
+            right tools, permissions, defaults, layout, and guardrails.
+          </p>
+
+          <h2>Broadcast and multi-screen are not edge features</h2>
+          <p>
+            AI work is often collaborative even when one person is typing. I want broadcasting over multiple screens, a
+            wall mode for incident response, and read-only follow mode for teammates. The assistant view, terminal view,
+            and cluster view should be shareable independently.
+          </p>
+
+          <figure class="media-slot">
+            <p class="media-label">Video Placeholder</p>
+            <p class="media-hint">
+              Collaboration view with operator, reviewer, and wall display.
+            </p>
+          </figure>
+
+          <h2>What I actually want</h2>
+          <p>
+            The wishlist is not complicated. It is just closer to how engineers already work.
+          </p>
+          <ul>
+            <li>Tmux-style split screens inside the browser.</li>
+            <li>First-class remote connections over <code>ssh</code>.</li>
+            <li>Direct Kubernetes API views for pods, logs, events, and rollout state.</li>
+            <li>Persistent sessions that survive reloads and reconnect cleanly.</li>
+            <li>Command history, screen recording, and replayable session timelines.</li>
+            <li>A profile wizard for different AI personas and operator roles.</li>
+            <li>Broadcast mode for second screens, war rooms, and review sessions.</li>
+            <li>Better audit trails around who did what, where, and why.</li>
+          </ul>
+
+          <h2>Final take</h2>
+          <p>
+            I am not disappointed because <code>Codex</code>, <code>Claude</code>, or other AI systems are useless. They
+            are not. I am disappointed because the surrounding products are still too small for the job. They are good at
+            helping one person code on one machine. They are still weak at helping a team operate real systems.
+          </p>
+
+          <p>
+            The next step for AI is not only better benchmarks. It is better runtime surfaces: browser-based, split-pane,
+            remote-capable, history-aware, and built for real CLI work. Until that happens, most of these tools will stay
+            impressive and incomplete at the same time.
+          </p>
+
+          <p class="note">
+            The gap is no longer model intelligence. The gap is whether the interface is built for actual engineering
+            work instead of demo-friendly chat.
+          </p>
+
+          <p>
+            See the rest of the ktl site at
+            <a href="https://kubekattle.github.io/ktl/">https://kubekattle.github.io/ktl/</a>.
+          </p>
+        </section>
+      </article>
+    </main>
+  </body>
+</html>
