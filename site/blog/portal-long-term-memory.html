@@ -388,44 +388,52 @@
 
           <ul>
             <li>
-              <code>Task</code> cells define the objective, pain point, and constraints. They are needed so every other
-              cell has a stable top-level goal.
+              <code>Research</code> cells are Portal's hypothesis and checklist layer. They exist to turn a vague topic
+              into a research brief that can be reviewed, checked, and applied back into the note instead of staying as
+              loose chat output.
             </li>
             <li>
-              <code>Plan</code> cells break the task into steps, checks, and decision points. They are needed to make
-              execution reviewable instead of improvisational.
+              <code>Red Pencil</code> cells are the adversarial editing layer. In the codebase they run as
+              <code>redpencil</code> and audit a draft for faults, unsupported claims, weak structure, and repair
+              suggestions before the result is applied.
             </li>
             <li>
-              <code>Prompt</code> cells hold reusable instructions for the model. They are needed so prompt tuning is
-              separated from evidence and execution.
+              <code>Debate</code> cells are the discussion cells in practice. Portal names them
+              <code>debate</code>, and they force a Pro case, Con case, Critic synthesis, final recommendation, and
+              unresolved risks so discussion produces a decision trail instead of vibes.
             </li>
             <li>
-              <code>Command</code> cells preserve the exact command, output, exit state, and host. They are needed for
-              replay, debugging, and auditability.
+              <code>Idea</code> cells are not only brainstorming widgets. The implementation validates kill criteria and
+              can build a downstream chain into linked <code>research</code>, <code>risk</code>, and
+              <code>execution</code> cells, so one startup thesis or operating idea can fan out into real follow-up
+              work.
             </li>
             <li>
-              <code>Reference</code> cells pin URLs, repo paths, manifests, tickets, commits, pods, or dashboards.
-              They are needed to keep the source context stable.
+              <code>Terminal</code> cells preserve the exact command, output, exit code, duration, host context, and
+              artifacts. They are needed for replay, debugging, and auditability, and they map directly to Portal's
+              note cell execution APIs.
             </li>
             <li>
               <code>Agent</code> cells run the actual work. They are needed when execution must move to the right
               surface, whether that is the current machine, a remote host over <code>ssh</code>, or an autoscaled
-              Kubernetes pod.
+              Kubernetes pod. In Portal the structured agent path carries explicit <code>plan</code>,
+              <code>verify</code>, and <code>explain</code> fields instead of hiding that contract inside prose.
             </li>
             <li>
-              <code>Eval</code> and <code>Summary</code> cells record what passed, what failed, and what should happen
-              next. They are needed to turn raw outputs into a decision.
+              <code>Verify</code> and <code>Eval</code> are first-class review layers around those cells. The note cell
+              runtime stores <code>verify_status</code>, while the eval harness is designed to run dataset-driven
+              regression checks against note cells and capture structured evidence before rollout.
             </li>
           </ul>
 
           <p>
-            The useful part is how these cells link together. A <code>Plan</code> cell should point back to the
-            <code>Task</code> cell it is trying to satisfy. A <code>Prompt</code> cell should link to the
-            <code>Reference</code> cells that define the target file, pod, or document. An <code>Agent</code> or
-            <code>Command</code> cell should link to the prompt, profile, and references it used. Then an
-            <code>Eval</code> or <code>Summary</code> cell should link back to the exact execution cells that produced
-            the result. That gives Portal a readable chain from goal to plan to action to verification instead of one
-            long mixed transcript.
+            The useful part is how these cells link together. An <code>idea</code> cell can create the downstream
+            <code>research</code>, <code>risk</code>, and <code>execution</code> chain directly. A
+            <code>research</code> cell can produce a brief that feeds a <code>debate</code> cell. A
+            <code>redpencil</code> cell can take routed draft text and push an audited weakness map back into the same
+            notebook. Then <code>terminal</code> and <code>agent</code> cells provide the execution trace, while
+            <code>verify</code> fields and eval runs turn outputs into something you can actually gate, review, and
+            compare over time. That is much closer to a real operating notebook than a single prompt box.
           </p>
 
           <figure class="media-shot">
