@@ -216,30 +216,18 @@
         border-top: 1px solid rgba(200, 179, 138, 0.18);
       }
 
-      .media-slot {
+      .media-shot {
         margin: 18px 0 24px;
-        padding: 18px 20px;
-        border: 1px dashed rgba(200, 179, 138, 0.42);
-        border-radius: 16px;
-        background:
-          linear-gradient(180deg, rgba(200, 179, 138, 0.06), rgba(200, 179, 138, 0.03)),
-          rgba(11, 12, 15, 0.9);
         max-width: 84ch;
       }
 
-      .media-label {
-        margin: 0 0 6px;
-        color: var(--ink);
-        font-size: 0.84rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-
-      .media-hint {
-        margin: 0;
-        color: #c8c0b2;
-        font-size: 0.95rem;
-        max-width: none;
+      .media-shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 16px;
+        border: 1px solid var(--line-strong);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
       }
 
       .note {
@@ -400,12 +388,13 @@
             action without rebuilding context from memory.
           </p>
 
-          <div class="media-slot">
-            <p class="media-label">Screenshot Placeholder</p>
-            <p class="media-hint">
-              Notes view showing linked text, prompt, terminal, reference, and agent cells in one notebook surface.
-            </p>
-          </div>
+          <figure class="media-shot">
+            <img
+              src="../assets/portal-notes-linked-cells.png"
+              alt="Notes view showing linked text, prompt, terminal, reference, and agent cells in one notebook surface."
+              loading="lazy"
+            />
+          </figure>
 
           <p>
             This is similar to Jupyter notebooks in the important way: the document is not only prose, it is a graph of
