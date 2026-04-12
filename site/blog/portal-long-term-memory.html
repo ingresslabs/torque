@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portal Long-Term Memory: Shared Profiles Over SSH, Kubernetes, and S3</title>
+    <meta
+      name="description"
+      content="A technical note on how Portal treats long-term memory as shared profile state backed by local databases and S3-mounted storage."
+    />
+    <link rel="canonical" href="https://kubekattle.github.io/ktl/blog/portal-long-term-memory.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Portal Long-Term Memory: Shared Profiles Over SSH, Kubernetes, and S3" />
+    <meta
+      property="og:description"
+      content="Portal keeps AI profiles portable by syncing secrets and profile state through local databases and S3-backed shares."
+    />
+    <meta property="og:url" content="https://kubekattle.github.io/ktl/blog/portal-long-term-memory.html" />
+    <meta property="og:site_name" content="ktl" />
+    <style>
+      :root {
+        --ink: #f2ede3;
+        --text: #d8d2c7;
+        --muted: #a49c90;
+        --paper: #070709;
+        --line: rgba(200, 179, 138, 0.2);
+        --line-strong: rgba(200, 179, 138, 0.38);
+        --accent: #c8b38a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background:
+          radial-gradient(circle at 0% 0%, rgba(200, 179, 138, 0.12), transparent 34%),
+          radial-gradient(circle at 100% 100%, rgba(200, 179, 138, 0.06), transparent 42%),
+          linear-gradient(180deg, #050507 0%, var(--paper) 48%, #050507 100%);
+        color: var(--text);
+      }
+
+      body {
+        font-family: "Avenir Next", "Avenir", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        line-height: 1.72;
+        letter-spacing: 0.005em;
+      }
+
+      .frame {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 46px 24px 90px;
+      }
+
+      .article {
+        background: linear-gradient(180deg, rgba(20, 21, 24, 0.96), rgba(13, 14, 17, 0.96));
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        box-shadow:
+          0 30px 70px rgba(0, 0, 0, 0.48),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+      }
+
+      .hero {
+        position: relative;
+        padding: 42px 48px 34px;
+        border-bottom: 1px solid var(--line);
+        background:
+          radial-gradient(circle at 18% 0%, rgba(200, 179, 138, 0.14), transparent 46%),
+          linear-gradient(165deg, rgba(29, 30, 34, 0.96) 0%, rgba(20, 21, 25, 0.92) 62%, rgba(13, 14, 17, 0.92) 100%);
+      }
+
+      .back {
+        display: inline-block;
+        margin-bottom: 18px;
+        text-decoration: none;
+        color: var(--muted);
+        font-size: 0.86rem;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .back:hover {
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
+        font-weight: 500;
+        font-size: clamp(2.2rem, 6vw, 3.6rem);
+        line-height: 1.14;
+        letter-spacing: 0.01em;
+        max-width: 15ch;
+        text-wrap: balance;
+      }
+
+      h1 code {
+        color: var(--accent);
+        background: rgba(200, 179, 138, 0.1);
+        border: 1px solid rgba(200, 179, 138, 0.22);
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+
+      .deck {
+        margin: 14px 0 0;
+        max-width: 61ch;
+        color: #b7ae9f;
+        font-size: 1rem;
+      }
+
+      .hero-quick {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .hero-pill {
+        display: inline-block;
+        border: 1px solid rgba(200, 179, 138, 0.28);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #c6bdae;
+        background: rgba(200, 179, 138, 0.06);
+      }
+
+      .meta {
+        margin-top: 16px;
+        font-size: 0.84rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .content {
+        padding: 38px 48px 52px;
+      }
+
+      h2 {
+        margin: 52px 0 12px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        font-family: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
+        font-weight: 500;
+        font-size: 1.62rem;
+        line-height: 1.25;
+        color: var(--ink);
+      }
+
+      p {
+        margin: 0 0 16px;
+        font-size: 1.02rem;
+        max-width: 70ch;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      a:hover {
+        color: #f1e6d2;
+      }
+
+      code {
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        font-size: 0.93em;
+        background: rgba(200, 179, 138, 0.1);
+        color: #f0e8da;
+        border: 1px solid rgba(200, 179, 138, 0.2);
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+
+      .diagram-card {
+        margin: 18px 0 24px;
+        padding: 1px;
+        border-radius: 14px;
+        background: linear-gradient(145deg, rgba(200, 179, 138, 0.45), rgba(200, 179, 138, 0.08));
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+        max-width: 84ch;
+      }
+
+      .diagram-card-inner {
+        border-radius: 13px;
+        background:
+          radial-gradient(circle at 0% 0%, rgba(200, 179, 138, 0.11), transparent 38%),
+          linear-gradient(180deg, #0d0e12, #090a0d);
+      }
+
+      .mermaid {
+        margin: 12px 0 20px;
+        padding: 16px 18px;
+        border-radius: 12px 12px 0 0;
+        border: 0;
+        background: transparent;
+        overflow-x: auto;
+        max-width: none;
+      }
+
+      .diagram-card figcaption {
+        margin: 0;
+        padding: 9px 14px 12px;
+        font-size: 0.84rem;
+        letter-spacing: 0.04em;
+        color: #c7bca9;
+        border-top: 1px solid rgba(200, 179, 138, 0.18);
+      }
+
+      .note {
+        margin-top: 20px;
+        padding: 12px 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        background: rgba(200, 179, 138, 0.08);
+        color: #e7dfcf;
+        max-width: 84ch;
+      }
+
+      @media (max-width: 760px) {
+        .hero,
+        .content {
+          padding: 24px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame">
+      <article class="article">
+        <header class="hero">
+          <a class="back" href="./index.html">Back to Blog</a>
+          <h1><code>Portal</code> Long-Term Memory Over SSH, Kubernetes, and S3</h1>
+          <div class="hero-quick">
+            <span class="hero-pill">5 min read</span>
+            <span class="hero-pill">Updated April 12, 2026</span>
+          </div>
+          <p class="deck">
+            In the last post, <a href="./ai-tools-stuck-on-localhost.html">Why AI Coding Tools Still Feel Stuck on Localhost</a>,
+            I argued that most AI products fail once work moves beyond one laptop. Memory is part of that same problem.
+            If context cannot follow the operator across hosts, the assistant is still trapped in one window.
+          </p>
+          <p class="meta">Published April 12, 2026</p>
+        </header>
+
+        <section class="content">
+          <p>
+            Portal treats long-term memory as durable profile state, not as a longer chat transcript. That distinction
+            matters. A transcript can summarize what was said. It cannot reliably carry API keys, endpoint maps, tool
+            defaults, local caches, or execution-specific context across <code>ssh</code> sessions and Kubernetes jobs.
+          </p>
+
+          <p>
+            In Portal, a profile such as <code>researcher</code>, <code>scientist</code>, or <code>devops</code> is a
+            portable working envelope. It can include model/provider selection, API keys, cluster targets, shell
+            defaults, and other sensitive runtime settings. Each active host keeps a local database for fast reads and
+            writes, while an S3-mounted share acts as the sync layer between machines. The result is simple: move the
+            work, keep the profile.
+          </p>
+
+          <figure class="diagram-card">
+            <div class="diagram-card-inner">
+              <div class="mermaid">flowchart LR
+  subgraph Profiles[Shared AI profiles]
+    R[researcher]
+    S[scientist]
+    D[devops]
+  end
+  Profiles --> L[(local profile DB)]
+  L --> X[(S3-mounted share)]
+  X --> L
+  X --> H[SSH host]
+  X --> K[Kubernetes worker]
+  X --> B[Browser session]
+              </div>
+              <figcaption>Portal stores active profile state locally for speed and mirrors it through S3 for cross-host continuity.</figcaption>
+            </div>
+          </figure>
+
+          <h2>Why local database first</h2>
+          <p>
+            Local state is not an implementation detail. It is the only way to make memory feel operational instead of
+            fragile. Reads stay fast, profile activation works even if the network is noisy, and the runtime can update
+            small pieces of state without rebuilding a full prompt. This is also where secret material is staged before
+            the tool opens a remote shell, attaches to a pod, or starts an agent job.
+          </p>
+
+          <p>
+            S3 is not used as a replacement for local state. It is the handoff plane. When a profile changes on one
+            host, Portal writes to the local database, syncs the updated secret and metadata set into the mounted S3
+            share, and lets other hosts reconcile from the same source. That makes profile behavior consistent across
+            laptop, SSH node, and Kubernetes-backed execution.
+          </p>
+
+          <figure class="diagram-card">
+            <div class="diagram-card-inner">
+              <div class="mermaid">sequenceDiagram
+  participant U as Operator
+  participant P as Portal
+  participant DB as Local DB
+  participant S3 as S3 share
+  participant R as SSH or K8s runtime
+
+  U->>P: activate devops profile
+  P->>DB: load local profile state
+  DB-->>P: keys, settings, targets
+  P->>S3: pull latest shared revision
+  S3-->>P: synced profile bundle
+  P->>R: mount secrets and runtime config
+  R-->>U: session starts with full profile context
+              </div>
+              <figcaption>Profile activation resolves local state first, then converges with the shared S3-backed profile bundle.</figcaption>
+            </div>
+          </figure>
+
+          <h2>Secrets become part of continuity</h2>
+          <p>
+            This is the practical part many AI products avoid. Long-term memory is only useful if sensitive information
+            can move safely with the workload. Portal copies and syncs API keys and other secret material as part of the
+            profile, so the same persona can operate on different hosts without manual re-entry or private copy-paste
+            loops. The memory unit is the profile, not the browser tab.
+          </p>
+
+          <p>
+            That also keeps prompts smaller and more deterministic. The model does not need to "remember" where the
+            profile lives or which credential belongs to which tool. Portal resolves that in the control plane, mounts
+            the right secret set for the active profile, and exposes the same identity whether execution happens over
+            <code>ssh</code> or through the Kubernetes API.
+          </p>
+
+          <figure class="diagram-card">
+            <div class="diagram-card-inner">
+              <div class="mermaid">flowchart TD
+  A[Profile update on host A] --> B[(local DB write)]
+  B --> C[(S3 sync)]
+  C --> D[host B reconcile]
+  C --> E[Kubernetes runner reconcile]
+  D --> F[researcher profile available]
+  E --> G[devops profile available]
+              </div>
+              <figcaption>One profile update can propagate across different execution surfaces without rebuilding context from scratch.</figcaption>
+            </div>
+          </figure>
+
+          <p>
+            The hard requirement is obvious: this design only works if access control, encryption, and mount scope are
+            treated as first-class parts of the system. But the architectural point is bigger than the storage choice.
+            Long-term memory for remote AI work is not a bigger context window. It is durable, syncable operator state.
+          </p>
+
+          <p class="note">
+            The previous post argued that serious AI tooling needs to escape localhost. Shared profile memory is one of
+            the missing pieces. Without it, every remote hop forces the operator to rebuild identity, tools, and secrets
+            by hand.
+          </p>
+        </section>
+      </article>
+    </main>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+    </script>
+  </body>
+</html>
