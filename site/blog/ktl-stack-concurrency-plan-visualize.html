@@ -252,27 +252,6 @@
         border-top: 1px solid rgba(200, 179, 138, 0.18);
       }
 
-      .diagram-expand-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 4;
-        border: 1px solid rgba(200, 179, 138, 0.4);
-        background: rgba(10, 11, 14, 0.75);
-        color: #e6dccb;
-        border-radius: 999px;
-        padding: 6px 10px;
-        font-size: 0.74rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        cursor: pointer;
-      }
-
-      .diagram-expand-btn:hover {
-        border-color: rgba(200, 179, 138, 0.72);
-        color: #fff2db;
-      }
-
       .diagram-modal {
         position: fixed;
         inset: 0;
@@ -305,26 +284,6 @@
         padding: 14px;
       }
 
-      .diagram-modal-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        border: 1px solid rgba(200, 179, 138, 0.5);
-        background: rgba(10, 11, 14, 0.8);
-        color: #e9dfd0;
-        border-radius: 999px;
-        padding: 6px 12px;
-        font-size: 0.78rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        cursor: pointer;
-      }
-
-      .diagram-modal-close:hover {
-        border-color: rgba(200, 179, 138, 0.8);
-        color: #fff3dd;
-      }
-
       .diagram-modal-body {
         margin-top: 28px;
       }
@@ -355,13 +314,6 @@
           padding: 24px 20px;
         }
 
-        .diagram-expand-btn {
-          top: 8px;
-          right: 8px;
-          font-size: 0.68rem;
-          padding: 5px 9px;
-        }
-
         .diagram-modal {
           padding: 10px;
         }
@@ -383,11 +335,8 @@
     <main class="frame">
       <article class="article">
         <header class="hero">
-          <a class="back" href="./index.html">Back to blog index</a>
+          <a class="back" href="./index.html" aria-label="Back to blog index">&larr;</a>
           <h1><code>ktl</code>: Blazing-Fast Deploys</h1>
-          <div class="hero-quick">
-            <span class="hero-pill">14 min read</span>
-          </div>
           <p class="deck">
             A deployment model for teams that need high throughput with controlled risk:
             visualize changes first, execute DAG-aware concurrency second, and keep artifacts reproducible.
@@ -756,18 +705,31 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></p
     </main>
     <div class="diagram-modal" id="diagram-modal" hidden aria-hidden="true">
       <div class="diagram-modal-shell" role="dialog" aria-modal="true" aria-label="Enlarged diagram">
-        <button type="button" class="diagram-modal-close" id="diagram-modal-close" aria-label="Close diagram">Close</button>
         <div class="diagram-modal-body" id="diagram-modal-body"></div>
       </div>
     </div>
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose" });
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "base",
+        securityLevel: "loose",
+        themeVariables: {
+          background: "#fbf8ef",
+          primaryColor: "#fffaf0",
+          primaryTextColor: "#18202a",
+          primaryBorderColor: "#697487",
+          secondaryColor: "#edf2f7",
+          tertiaryColor: "#f3ead8",
+          lineColor: "#697487",
+          textColor: "#18202a",
+          fontFamily: '"Avenir Next", "Helvetica Neue", Arial, sans-serif',
+        },
+      });
       await mermaid.run();
 
       const modal = document.getElementById("diagram-modal");
       const modalBody = document.getElementById("diagram-modal-body");
-      const modalClose = document.getElementById("diagram-modal-close");
       let previousBodyOverflow = "";
 
       const closeDiagramModal = () => {
@@ -786,7 +748,6 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></p
           return;
         }
         const clone = figure.cloneNode(true);
-        clone.querySelectorAll(".diagram-expand-btn").forEach((btn) => btn.remove());
         modalBody.innerHTML = "";
         modalBody.appendChild(clone);
         previousBodyOverflow = document.body.style.overflow;
@@ -797,24 +758,21 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/bundle.tgz --yes</code></p
       };
 
       document.querySelectorAll(".diagram-card").forEach((figure) => {
-        if (figure.querySelector(".diagram-expand-btn")) {
-          return;
-        }
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "diagram-expand-btn";
-        button.textContent = "Enlarge";
-        button.setAttribute("aria-label", "Open enlarged diagram");
-        button.addEventListener("click", (event) => {
-          event.preventDefault();
+        figure.tabIndex = 0;
+        figure.setAttribute("role", "button");
+        figure.setAttribute("aria-label", "Open enlarged diagram");
+        figure.addEventListener("dblclick", () => {
           openDiagramModal(figure);
         });
-        figure.appendChild(button);
+        figure.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openDiagramModal(figure);
+          }
+        });
       });
 
-      if (modalClose) {
-        modalClose.addEventListener("click", closeDiagramModal);
-      }
+      modalBody?.addEventListener("dblclick", closeDiagramModal);
       if (modal) {
         modal.addEventListener("click", (event) => {
           if (event.target === modal) {

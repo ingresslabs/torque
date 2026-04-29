@@ -222,50 +222,6 @@
         color: #c1b8a9;
       }
 
-      .mini-toc {
-        position: sticky;
-        top: 16px;
-        z-index: 5;
-        margin: 0 0 22px;
-        padding: 10px;
-        border: 1px solid var(--line-strong);
-        border-radius: 12px;
-        background: linear-gradient(180deg, rgba(18, 19, 22, 0.98), rgba(13, 14, 17, 0.98));
-        max-width: 84ch;
-      }
-
-      .mini-toc-title {
-        margin: 0 0 8px;
-        font-size: 0.74rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-
-      .mini-toc-links {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .mini-toc a {
-        text-decoration: none;
-        font-size: 0.82rem;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: #d2c9bb;
-        border: 1px solid rgba(200, 179, 138, 0.22);
-        border-radius: 999px;
-        padding: 5px 10px;
-        background: rgba(200, 179, 138, 0.05);
-      }
-
-      .mini-toc a.active {
-        color: #f6ecdc;
-        border-color: rgba(200, 179, 138, 0.58);
-        background: rgba(200, 179, 138, 0.16);
-      }
-
       .diagram-card {
         margin: 14px 0 24px;
         padding: 1px;
@@ -307,9 +263,6 @@
           padding: 24px 20px;
         }
 
-        .mini-toc {
-          top: 8px;
-        }
       }
     </style>
     <link rel="stylesheet" href="./blog.css" />
@@ -318,11 +271,8 @@
     <main class="frame">
       <article class="article">
         <header class="hero">
-          <a class="back" href="./index.html">Back to Blog</a>
+          <a class="back" href="./index.html" aria-label="Back to blog index">&larr;</a>
           <h1><code>ktl stack</code> DAG Workflows: Where It Beats Argo and Helmfile</h1>
-          <div class="hero-quick">
-            <span class="hero-pill">13 min read</span>
-          </div>
           <p class="deck">
             If your main pain is ordered multi-release deploys, fast retries, and CI-first reproducibility,
             <code>ktl stack</code> can be a better fit than controller-first tools. Here is where the DAG model
@@ -331,15 +281,6 @@
         </header>
 
         <section class="content">
-          <nav class="mini-toc" aria-label="Section Navigation">
-            <p class="mini-toc-title">In This Post</p>
-            <div class="mini-toc-links">
-              <a href="#decision-matrix">Decision Matrix</a>
-              <a href="#recovery-flow">Recovery Flow</a>
-              <a href="#ci-patterns">CI Patterns</a>
-            </div>
-          </nav>
-
           <h2>The Real Problem Teams Hit</h2>
           <p>
             Most teams do not struggle with "how to run Helm". They struggle with orchestration under change:
@@ -712,37 +653,21 @@ ktl stack apply --config ./stacks/prod --resume --yes</code></pre>
     </main>
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "dark" });
-
-      const tocLinks = Array.from(document.querySelectorAll(".mini-toc a"));
-      const sections = tocLinks
-        .map((link) => document.querySelector(link.getAttribute("href")))
-        .filter(Boolean);
-
-      if (sections.length > 0) {
-        const setActive = (id) => {
-          tocLinks.forEach((link) => {
-            const match = link.getAttribute("href") === `#${id}`;
-            link.classList.toggle("active", match);
-          });
-        };
-
-        setActive(sections[0].id);
-
-        const observer = new IntersectionObserver(
-          (entries) => {
-            const visible = entries
-              .filter((entry) => entry.isIntersecting)
-              .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-            if (visible[0]?.target?.id) {
-              setActive(visible[0].target.id);
-            }
-          },
-          { rootMargin: "-25% 0px -60% 0px", threshold: [0.2, 0.5, 0.8] },
-        );
-
-        sections.forEach((section) => observer.observe(section));
-      }
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          background: "#fbf8ef",
+          primaryColor: "#fffaf0",
+          primaryTextColor: "#18202a",
+          primaryBorderColor: "#697487",
+          secondaryColor: "#edf2f7",
+          tertiaryColor: "#f3ead8",
+          lineColor: "#697487",
+          textColor: "#18202a",
+          fontFamily: '"Avenir Next", "Helvetica Neue", Arial, sans-serif',
+        },
+      });
     </script>
   </body>
 </html>
