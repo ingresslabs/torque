@@ -1,6 +1,10 @@
 # ktl
 
-`ktl` is a Kubernetes-focused CLI for logs, Helm workflows, and BuildKit builds.
+When all you’ve got is legacy Jenkins and air-gapped environments.
+
+ktl is a Kubernetes CLI that turns deployments into reviewable artifacts. It can tail pods, render Helm charts, build with BuildKit, run stack DAGs, and output HTML or JSON for humans or CI.
+
+Its core strength is a built-in safety loop: Helmer (https://github.com/kubekattle/helmer) previews Helm plans with diffs before apply, Verifier (https://github.com/kubekattle/verifier) enforces policy across charts, manifests, and live namespaces, and ktl build --secure enables sandboxed, reproducible builds with attestations. It’s essentially Helmfile plus a deploy recorder, with reproducibility and auditability front and center—even in legacy Jenkins and air-gapped environments.
 
 <p align="center">
   <img src="docs/assets/logo/ktl-logo-lockup.png" alt="ktl emblem" width="960">
