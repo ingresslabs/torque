@@ -3476,7 +3476,7 @@ const file_ktl_api_v1_agent_proto_rawDesc = "" +
 	"\rsandbox_binds\x18\x18 \x03(\tR\fsandboxBinds\x12'\n" +
 	"\x0fsandbox_workdir\x18\x19 \x01(\tR\x0esandboxWorkdir\x12!\n" +
 	"\fsandbox_logs\x18\x1a \x01(\bR\vsandboxLogs\x12\x19\n" +
-	"\blog_file\x18\x1b \x01(\tR\alogFile\x12/\n" +
+	"\x08log_file\x18\x1b \x01(\tR\alogFile\x12/\n" +
 	"\x13remove_intermediate\x18\x1c \x01(\bR\x12removeIntermediate\x12\x14\n" +
 	"\x05quiet\x18\x1d \x01(\bR\x05quiet\x12%\n" +
 	"\x0edocker_context\x18\x1e \x01(\tR\rdockerContext\"\x82\x01\n" +

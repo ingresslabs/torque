@@ -3,6 +3,7 @@ PKG ?= ./cmd/ktl
 BIN_DIR ?= bin
 DIST_DIR ?= dist
 GO ?= go
+PERL ?= perl
 GOTEST ?= $(GO) test
 GOVET ?= $(GO) vet
 HOST_GOOS := $(shell $(GO) env GOOS)
@@ -425,6 +426,8 @@ proto: ## Generate gRPC/protobuf stubs under pkg/api
 	GOBIN=$(PROTO_BIN) $(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
 	GOBIN=$(PROTO_BIN) $(GO) install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION)
 	PATH="$(PROTO_BIN):$$PATH" $(BUF) generate
+	# Normalize the descriptor escape before log_file for clean text searches.
+	$(PERL) -0pi -e 's/"\\\x62\x6c\x6f\x67_file/"\\x08log_file/g' pkg/api/ktl/api/v1/agent.pb.go
 
 proto-lint: ## Lint protobuf definitions
 	$(BUF) lint
