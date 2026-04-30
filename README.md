@@ -4,7 +4,7 @@ When all you’ve got is legacy Jenkins and air-gapped environments.
 
 ktl is a Kubernetes CLI that turns deployments into reviewable artifacts. It can tail pods, render Helm charts, build with BuildKit, run stack DAGs, and output HTML or JSON for humans or CI.
 
-Its core strength is a built-in safety loop: Helmer (https://github.com/kubekattle/helmer) previews Helm plans with diffs before apply, Verifier (https://github.com/kubekattle/verifier) enforces policy across charts, manifests, and live namespaces, and ktl build --secure enables sandboxed, reproducible builds with attestations. It’s essentially Helmfile plus a deploy recorder, with reproducibility and auditability front and center—even in legacy Jenkins and air-gapped environments.
+Its core strength is a built-in safety loop: [Helmer](./cmd/helmer) previews Helm plans with diffs before apply, [Verifier](./cmd/verifier) enforces policy across charts, manifests, and live namespaces, and `ktl build --secure` enables sandboxed, reproducible builds with attestations. It’s essentially Helmfile plus a deploy recorder, with reproducibility and auditability front and center—even in legacy Jenkins and air-gapped environments.
 
 <p align="center">
   <img src="docs/assets/logo/ktl-logo-lockup.png" alt="ktl emblem" width="960">
@@ -52,7 +52,20 @@ Its core strength is a built-in safety loop: Helmer (https://github.com/kubekatt
 - `ktl logs`: Rollout-Aware Debugging Beyond `kubectl logs`: https://kubekattle.github.io/ktl/blog/ktl-logs-rollout-aware-debugging.html
 - `ktl`: Blazing-Fast Deploys (plan viz + sealing + sandbox): https://kubekattle.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html
 - Build Docker Images Safely with `ktl build`: https://kubekattle.github.io/ktl/blog/ktl-build-safe-builds.html
+- Putting nsjail in Front of BuildKit: https://kubekattle.github.io/ktl/blog/buildkit-nsjail-sandbox.html
 - `ktl stack` DAG Workflows: Where It Beats Argo and Helmfile: https://kubekattle.github.io/ktl/blog/ktl-stack-dag-vs-argo.html
+
+---
+
+## Toolkit Binaries
+
+| Binary | Purpose |
+| --- | --- |
+| `ktl` | Main Kubernetes workflow CLI. |
+| `helmer` | Standalone Helm plan preview and visualization CLI. |
+| `verifier` | Standalone policy verifier for charts, manifests, and namespaces. |
+| `verify` | Compatibility verifier binary kept for existing CI scripts. |
+| `package` | Chart/package artifact helper. |
 
 ---
 
@@ -108,6 +121,8 @@ make release
 Other binaries:
 
 ```bash
+go install ./cmd/helmer
+go install ./cmd/verifier
 go install ./cmd/verify
 go install ./cmd/package
 ```
@@ -153,11 +168,11 @@ ktl stack verify --config stack.yaml
 
 ### Configuration Verification
 
-The standalone `verify` tool checks your manifests against policies and best practices.
-`verify` is built and distributed as a separate binary, so you can install and run it independently from `ktl`.
+The standalone `verifier` tool checks your manifests against policies and best practices.
+`verifier` is built and distributed as a separate binary, so you can install and run it independently from `ktl`. The older `verify` binary remains available for existing CI scripts.
 
 Security scanning is important because deployment failures are not only availability issues; they are often policy and
-hardening issues. Running `verify` as a standard gate helps catch risky settings (privileged workloads, broad RBAC,
+hardening issues. Running `verifier` as a standard gate helps catch risky settings (privileged workloads, broad RBAC,
 weak pod security posture) before rollout.
 
 <p align="center">
@@ -165,23 +180,23 @@ weak pod security posture) before rollout.
 </p>
 
 ```bash
-go install ./cmd/verify
+go install ./cmd/verifier
 
 # Verify a Helm chart
-verify --chart ./chart --release my-app -n default
+verifier --chart ./chart --release my-app -n default
 
 # Verify a manifest
-verify --manifest ./rendered.yaml
+verifier --manifest ./rendered.yaml
 
 # Verify a live namespace
-verify --namespace default --context my-context
+verifier --namespace default --context my-context
 
 # Discover and inspect builtin security/policy rules
-verify rules list
-verify rules show k8s/container_is_privileged
+verifier rules list
+verifier rules show k8s/container_is_privileged
 
 # Compare current report to a baseline
-verify verify.yaml --compare-to ./baseline.json
+verifier verify.yaml --compare-to ./baseline.json
 ```
 
 ---
@@ -196,6 +211,8 @@ verify verify.yaml --compare-to ./baseline.json
 
 - Recipes: `docs/recipes.md`
 - Architecture: `docs/architecture.md`
+- Helmer standalone CLI: `docs/helmer.md`
+- Verifier standalone CLI: `docs/verifier.md`
 - Troubleshooting: `docs/troubleshooting.md`
 - Contributor guardrails: `AGENTS.md`
 

@@ -197,9 +197,31 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 			ID:       "doc:config-atlas",
 			Kind:     "doc",
 			Title:    "Config atlas",
-			Subtitle: "stack.yaml, verify YAML, sandbox profiles",
+			Subtitle: "stack.yaml, verifier YAML, sandbox profiles",
 			Content:  md,
-			Tags:     []string{"doc", "config", "stack", "verify", "sandbox"},
+			Tags:     []string{"doc", "config", "stack", "verifier", "verify", "sandbox"},
+		})
+	}
+
+	if md := strings.TrimSpace(ktldocs.HelmerMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:helmer",
+			Kind:     "doc",
+			Title:    "Helmer",
+			Subtitle: "Standalone Helm plan preview CLI",
+			Content:  md,
+			Tags:     []string{"doc", "helmer", "helm", "plan", "visualize"},
+		})
+	}
+
+	if md := strings.TrimSpace(ktldocs.VerifierMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:verifier",
+			Kind:     "doc",
+			Title:    "Verifier",
+			Subtitle: "Standalone policy verifier CLI",
+			Content:  md,
+			Tags:     []string{"doc", "verifier", "verify", "policy", "security"},
 		})
 	}
 

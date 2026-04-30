@@ -23,20 +23,23 @@ mkdir -p "${OUT_DIR}"
 work="$(mktemp -d)"
 trap 'rm -rf "${work}"' EXIT
 
-bin="${work}/ktl"
-echo ">> building ktl ${VERSION} for ${TARGETOS}/${TARGETARCH}"
-GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" CGO_ENABLED=0 \
-  go build -trimpath -buildvcs=false -ldflags "${LDFLAGS}" -o "${bin}" ./cmd/ktl
-
 root="${work}/root"
 install -d "${root}/usr/bin"
-install -m 0755 "${bin}" "${root}/usr/bin/ktl"
+
+tools=(ktl helmer verifier verify package)
+for tool in "${tools[@]}"; do
+  bin="${work}/${tool}"
+  echo ">> building ${tool} ${VERSION} for ${TARGETOS}/${TARGETARCH}"
+  GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" CGO_ENABLED=0 \
+    go build -trimpath -buildvcs=false -ldflags "${LDFLAGS}" -o "${bin}" "./cmd/${tool}"
+  install -m 0755 "${bin}" "${root}/usr/bin/${tool}"
+done
 
 name="ktl"
 maintainer="${MAINTAINER:-ktl maintainers}"
 license="${LICENSE:-Apache-2.0}"
 url="${URL:-https://github.com/kubekattle/ktl}"
-desc="${DESCRIPTION:-ktl: Kubernetes toolbelt (BuildKit builds + Helm apply UI)}"
+desc="${DESCRIPTION:-ktl: Kubernetes toolkit with BuildKit builds, Helm plan previews, policy verification, and packaging helpers}"
 
 deb_arch="${TARGETARCH}"
 rpm_arch="${TARGETARCH}"
@@ -56,7 +59,11 @@ fpm -s dir -t deb \
   --description "${desc}" \
   -C "${root}" \
   --package "${OUT_DIR}/${name}_${VERSION}_${deb_arch}.deb" \
-  usr/bin/ktl
+  usr/bin/ktl \
+  usr/bin/helmer \
+  usr/bin/verifier \
+  usr/bin/verify \
+  usr/bin/package
 
 echo ">> packaging rpm (${rpm_arch})"
 fpm -s dir -t rpm \
@@ -69,7 +76,11 @@ fpm -s dir -t rpm \
   --description "${desc}" \
   -C "${root}" \
   --package "${OUT_DIR}/${name}-${VERSION}-1.${rpm_arch}.rpm" \
-  usr/bin/ktl
+  usr/bin/ktl \
+  usr/bin/helmer \
+  usr/bin/verifier \
+  usr/bin/verify \
+  usr/bin/package
 
 echo ">> wrote:"
 ls -la "${OUT_DIR}" | sed -n '1,200p'

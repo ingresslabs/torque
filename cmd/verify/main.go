@@ -14,6 +14,7 @@ import (
 	"github.com/kubekattle/ktl/internal/verify"
 	cfgpkg "github.com/kubekattle/ktl/internal/verify/config"
 	"github.com/kubekattle/ktl/internal/verify/engine"
+	"github.com/kubekattle/ktl/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -38,6 +39,15 @@ func newRootCommand() *cobra.Command {
 	var rulesPath string
 
 	cmd := newVerifyCommand(&kubeconfigPath, &kubeContext, &logLevel, &noColor, &rulesPath)
+	runVerify := cmd.RunE
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if showVersion {
+			info := version.Get()
+			fmt.Fprintf(cmd.OutOrStdout(), "verify %s\n", info.Version)
+			return nil
+		}
+		return runVerify(cmd, args)
+	}
 	cmd.SilenceUsage = true
 	cmd.SilenceErrors = false
 	cmd.CompletionOptions.DisableDefaultCmd = true

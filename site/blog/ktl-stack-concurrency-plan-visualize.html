@@ -442,7 +442,7 @@ ktl logs deploy/api --deps --config ./stacks/prod -n platform</code></pre>
 
           <p>
             If you want plan visualization as a standalone tool outside the deploy runner, use
-            <a href="https://github.com/kubekattle/helmer">Helmer</a>. Helmer is useful when reviewers, SREs, or
+            <a href="https://github.com/kubekattle/ktl/tree/main/cmd/helmer">Helmer</a>. Helmer is useful when reviewers, SREs, or
             security teams need direct access to plan artifacts without invoking deployment commands.
           </p>
           <p>
@@ -501,12 +501,13 @@ runner:
           <h2>Security Layer: Verifier and Sandbox Builds</h2>
           <p>
             Security checks should be first-class deploy inputs, not post-facto audit tasks.
-            <a href="https://github.com/kubekattle/verifier">Verifier</a> can be used as the policy and compliance
+            <a href="https://github.com/kubekattle/ktl/tree/main/cmd/verifier">Verifier</a> can be used as the policy and compliance
             layer around rendered manifests and deployment intent.
           </p>
           <p>
             For build-time hardening, <code>ktl build</code> provides explicit sandbox controls that are especially
-            useful in CI:
+            useful in CI. The deeper nsjail pattern is covered in
+            <a href="./buildkit-nsjail-sandbox.html">Putting nsjail in Front of BuildKit</a>.
           </p>
           <ul>
             <li><code>--sandbox</code> to enforce sandbox execution (fail if unavailable).</li>
@@ -677,10 +678,10 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/prod-bundle.tgz --yes</cod
 ktl apply plan --visualize --chart ./charts/api --release api --namespace platform
 
 # 2) optional standalone review in Helmer
-# https://github.com/kubekattle/helmer
+# https://github.com/kubekattle/ktl/tree/main/cmd/helmer
 
 # 3) run security checks with Verifier
-# https://github.com/kubekattle/verifier
+# https://github.com/kubekattle/ktl/tree/main/cmd/verifier
 
 # 4) seal stack intent
 ktl stack seal --config ./stacks/prod --bundle-file bundle.tgz --out ./artifacts/sealed-prod

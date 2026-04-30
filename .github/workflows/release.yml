@@ -52,7 +52,7 @@ jobs:
             -X github.com/kubekattle/ktl/internal/version.GitTreeState=clean \
             -X github.com/kubekattle/ktl/internal/version.BuildDate=${build_date}"
           mkdir -p dist
-          for tool in ktl verify package; do
+          for tool in ktl helmer verifier verify package; do
             outdir="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}"
             mkdir -p "${outdir}"
             GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} CGO_ENABLED=0 \
@@ -85,7 +85,7 @@ jobs:
           set -euo pipefail
           syft="${{ steps.syft.outputs.cmd }}"
           tag="${{ github.ref_name }}"
-          for tool in ktl verify package; do
+          for tool in ktl helmer verifier verify package; do
             bin="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}/${tool}"
             spdx="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}.sbom.spdx.json"
             cdx="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}.sbom.cdx.json"
@@ -154,6 +154,20 @@ jobs:
         with:
           subject-path: dist/verify-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
           sbom-path: dist/verify-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
+
+      - name: Attest SBOM (helmer)
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
+        continue-on-error: true
+        with:
+          subject-path: dist/helmer-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
+          sbom-path: dist/helmer-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
+
+      - name: Attest SBOM (verifier)
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
+        continue-on-error: true
+        with:
+          subject-path: dist/verifier-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
+          sbom-path: dist/verifier-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
       - name: Attest SBOM (package)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3

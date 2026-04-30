@@ -17,4 +17,10 @@ var (
 
 	//go:embed troubleshooting.md
 	TroubleshootingMD string
+
+	//go:embed helmer.md
+	HelmerMD string
+
+	//go:embed verifier.md
+	VerifierMD string
 )

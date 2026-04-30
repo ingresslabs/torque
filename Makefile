@@ -17,7 +17,7 @@ LDFLAGS ?= -s -w \
 	-X github.com/kubekattle/ktl/internal/version.GitTreeState=$(GIT_TREE_STATE) \
 	-X github.com/kubekattle/ktl/internal/version.BuildDate=$(BUILD_DATE)
 RELEASE_PLATFORMS ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
-RELEASE_TOOLS ?= $(BINARY) verify package
+RELEASE_TOOLS ?= $(BINARY) helmer verifier verify package
 RELEASE_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(foreach tool,$(RELEASE_TOOLS),$(DIST_DIR)/$(tool)-$(subst /,-,$(platform))))
 GH ?= gh
 RELEASE_TAG ?= $(VERSION)
@@ -43,6 +43,10 @@ CAPTURE_BINARY ?= capture
 CAPTURE_PKG ?= ./cmd/capture
 VERIFY_BINARY ?= verify
 VERIFY_PKG ?= ./cmd/verify
+HELMER_BINARY ?= helmer
+HELMER_PKG ?= ./cmd/helmer
+VERIFIER_BINARY ?= verifier
+VERIFIER_PKG ?= ./cmd/verifier
 PACKAGECLI_BINARY ?= package
 PACKAGECLI_PKG ?= ./cmd/package
 LOGS_BINARY ?= logs
@@ -52,7 +56,7 @@ LOGS_LDFLAGS ?= $(LDFLAGS) -X github.com/kubekattle/ktl/cmd/ktl.buildMode=$(LOGS
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build build-% build-capture build-verify build-packagecli build-logs build-all install install-capture install-verify install-packagecli install-all release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog test test-short test-integration fmt lint tidy verify preflight docs site site-check proto proto-lint clean loc print-% test-ci smoke-package-verify verify-charts-e2e testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
+.PHONY: help build build-% build-capture build-helmer build-verifier build-verify build-packagecli build-logs build-all install install-capture install-helmer install-verifier install-verify install-packagecli install-all release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog test test-short test-integration fmt lint tidy verify preflight docs site site-check proto proto-lint clean loc print-% test-ci smoke-package-verify verify-charts-e2e testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
 PACKAGE_IMAGE ?= ktl-packager
 PACKAGE_PLATFORMS ?= linux/amd64
 
@@ -75,6 +79,16 @@ build-verify: ## Build verify for the current platform into ./bin/verify
 	@echo ">> building $(VERIFY_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(VERIFY_BINARY) $(VERIFY_PKG)
+
+build-helmer: ## Build helmer for the current platform into ./bin/helmer
+	@echo ">> building $(HELMER_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
+	@mkdir -p $(BIN_DIR)
+	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(HELMER_BINARY) $(HELMER_PKG)
+
+build-verifier: ## Build verifier for the current platform into ./bin/verifier
+	@echo ">> building $(VERIFIER_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
+	@mkdir -p $(BIN_DIR)
+	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(VERIFIER_BINARY) $(VERIFIER_PKG)
 
 build-packagecli: ## Build package CLI for the current platform into ./bin/package
 	@echo ">> building $(PACKAGECLI_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
@@ -113,6 +127,8 @@ build-%: ## Build ktl for <os>-<arch> into ./bin/ktl-<os>-<arch>[.exe]
 	echo ">> building $(BINARY) for $$os/$$arch -> $$out"; \
 	GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $$out $(PKG)
 
+build-all: build build-helmer build-verifier build-verify build-packagecli ## Build ktl and standalone toolkit binaries
+
 install: ## Install ktl into GOPATH/bin or GOBIN
 	@echo ">> installing $(BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PKG)
@@ -125,12 +141,22 @@ install-verify: ## Install verify into GOPATH/bin or GOBIN
 	@echo ">> installing $(VERIFY_BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(VERIFY_PKG)
 
+install-helmer: ## Install helmer into GOPATH/bin or GOBIN
+	@echo ">> installing $(HELMER_BINARY) ($(VERSION))"
+	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(HELMER_PKG)
+
+install-verifier: ## Install verifier into GOPATH/bin or GOBIN
+	@echo ">> installing $(VERIFIER_BINARY) ($(VERSION))"
+	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(VERIFIER_PKG)
+
 install-packagecli: ## Install package CLI into GOPATH/bin or GOBIN
 	@echo ">> installing $(PACKAGECLI_BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PACKAGECLI_PKG)
 
-install-all: ## Install ktl, verify, and package
+install-all: ## Install ktl and standalone toolkit binaries
 	$(MAKE) install
+	$(MAKE) install-helmer
+	$(MAKE) install-verifier
 	$(MAKE) install-verify
 	$(MAKE) install-packagecli
 
@@ -139,15 +165,11 @@ release: ## Cross-build release artifacts into ./dist
 	@mkdir -p $(DIST_DIR)
 	@for platform in $(RELEASE_PLATFORMS); do \
 		os=$${platform%/*}; arch=$${platform#*/}; \
-		out="$(DIST_DIR)/$(BINARY)-$$os-$$arch"; \
-		if [ "$$os" = "windows" ]; then out="$$out.exe"; fi; \
-		echo "   - $$os/$$arch -> $$out"; \
-		GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -trimpath -ldflags '$(LDFLAGS)' -o $$out $(PKG); \
-		for tool in verify package; do \
-			out2="$(DIST_DIR)/$$tool-$$os-$$arch"; \
-			if [ "$$os" = "windows" ]; then out2="$$out2.exe"; fi; \
-			echo "   - $$os/$$arch -> $$out2"; \
-			GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -trimpath -ldflags '$(LDFLAGS)' -o $$out2 ./cmd/$$tool; \
+		for tool in $(RELEASE_TOOLS); do \
+			out="$(DIST_DIR)/$$tool-$$os-$$arch"; \
+			if [ "$$os" = "windows" ]; then out="$$out.exe"; fi; \
+			echo "   - $$os/$$arch -> $$out"; \
+			GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -trimpath -ldflags '$(LDFLAGS)' -o $$out ./cmd/$$tool; \
 		done; \
 	done
 

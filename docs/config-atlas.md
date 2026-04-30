@@ -156,11 +156,11 @@ Notes:
 - Profile overlays: use `profiles.<name>.cli` and `profiles.<name>.defaults` to override per environment (dev/stage/prod).
 - For CLI schema details, see `docs/stack-cli-defaults.md`.
 
-## `verify` YAML (chart render + live checks)
+## Verifier YAML (chart render + live checks)
 
-`verify` supports multiple targets. Two common ones:
+`verifier` supports multiple targets. Two common ones:
 
-Tip: generate a starter config with `verify init chart|namespace` and then customize it.
+Tip: generate a starter config with `verifier init chart|namespace` and then customize it.
 
 ### Verify a chart render (no cluster access)
 
@@ -201,8 +201,8 @@ output:
 
 Tip: CLI overrides are available for baselines:
 ```bash
-verify verify.yaml --baseline ./baseline.json
-verify verify.yaml --compare-to ./baseline.json
+verifier verify.yaml --baseline ./baseline.json
+verifier verify.yaml --compare-to ./baseline.json
 ```
 
 ### Verify a live namespace

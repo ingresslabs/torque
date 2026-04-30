@@ -143,7 +143,7 @@ The tool automatically:
 
 ## Security & Governance
 
-`ktl verify` allows platform engineers to enforce policies:
+`verifier` allows platform engineers to enforce policies:
 - **RBAC**: Ensure no ClusterRoles use wildcards.
 - **PSS**: Enforce Pod Security Standards (Restricted/Baseline).
 - **Custom Rules**: Write your own Rego policies.

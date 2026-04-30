@@ -443,7 +443,8 @@
             On Linux, <code>ktl build</code> can run inside a sandbox runtime (nsjail) with a policy file. Think of this as
             giving the build process a controlled room to work in. It gets only the mounts and runtime capabilities
             it needs, rather than broad host access. That means filesystem visibility is explicit, and high-risk
-            assumptions become visible quickly.
+            assumptions become visible quickly. The full wrapper pattern is covered in
+            <a href="./buildkit-nsjail-sandbox.html">Putting nsjail in Front of BuildKit</a>.
           </p>
 
           <p>
@@ -635,6 +636,7 @@ ls -lh ./out-attest</code></pre>
             Specific references:
             <a href="https://github.com/kubekattle/ktl/blob/main/README.md">build flags</a>,
             <a href="https://github.com/kubekattle/ktl/blob/main/docs/config-atlas.md">sandbox config</a>,
+            <a href="./buildkit-nsjail-sandbox.html">nsjail sandbox pattern</a>,
             <a href="https://github.com/kubekattle/ktl/blob/main/docs/troubleshooting.md">policy and troubleshooting</a>,
             <a href="https://github.com/kubekattle/ktl/blob/main/AGENTS.md">attestation and release flow</a>.
           </p>

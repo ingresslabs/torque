@@ -203,6 +203,35 @@ blockquote {
   box-shadow: none !important;
 }
 
+figure.demo {
+  margin: 28px 0;
+  overflow: hidden;
+}
+
+figure.demo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #111212;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.media-grid figure {
+  margin: 0;
+}
+
+.media-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .diagram-card {
   border: 1px solid rgba(30, 41, 59, 0.16) !important;
   border-radius: 8px !important;
@@ -241,6 +270,27 @@ blockquote {
 .diagram-card svg .label {
   color: var(--blog-diagram-ink) !important;
   fill: var(--blog-diagram-ink) !important;
+  opacity: 1 !important;
+  font-weight: 650 !important;
+}
+
+.diagram-card svg foreignObject,
+.diagram-card svg foreignObject *,
+.diagram-card svg .labelBkg,
+.diagram-card svg .edgeLabel,
+.diagram-card svg .edgeLabel *,
+.diagram-card svg [class*="Label"],
+.diagram-card svg [class*="Label"] * {
+  color: var(--blog-diagram-ink) !important;
+  fill: var(--blog-diagram-ink) !important;
+  opacity: 1 !important;
+}
+
+.diagram-card svg .labelBkg,
+.diagram-card svg .edgeLabel rect,
+.diagram-card svg .cluster rect {
+  fill: var(--blog-diagram-bg) !important;
+  opacity: 1 !important;
 }
 
 .diagram-card svg .node rect,
@@ -294,5 +344,9 @@ th {
   .content {
     padding-left: 20px !important;
     padding-right: 20px !important;
+  }
+
+  .media-grid {
+    grid-template-columns: 1fr;
   }
 }

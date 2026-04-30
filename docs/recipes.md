@@ -155,12 +155,12 @@ ktl apply plan --chart ./chart --release foo -n default --baseline ./plan.json
 ktl apply plan --chart ./chart --release foo -n default --compare-to ./plan.json
 ```
 
-## Regression-proof verify
+## Regression-proof verifier
 
 Do this:
 ```bash
-verify verify.yaml --baseline ./baseline.json
-verify verify.yaml --compare-to ./baseline.json
+verifier verify.yaml --baseline ./baseline.json
+verifier verify.yaml --compare-to ./baseline.json
 ```
 
 ## Share an `apply plan` visualization
@@ -209,7 +209,7 @@ ktl stack audit --output html > stack-audit.html
 ktl build --context . --tag ghcr.io/acme/app:dev --ws-listen :9085
 ```
 
-## Verify: validate a chart render in CI
+## Verifier: validate a chart render in CI
 
 ```bash
 cat > verify-chart-render.yaml <<'YAML'
@@ -232,7 +232,7 @@ output:
   report: "-"
 YAML
 
-verify verify-chart-render.yaml
+verifier verify-chart-render.yaml
 
 # Package a chart then verify the archive
 package ./chart --output dist/chart.sqlite

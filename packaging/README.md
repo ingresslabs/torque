@@ -1,6 +1,6 @@
 # Packaging (deb/rpm)
 
-This directory contains a Docker-based packaging workflow that builds Linux `deb` and `rpm` packages for `ktl` without requiring Ruby/FPM tooling on the host.
+This directory contains a Docker-based packaging workflow that builds Linux `deb` and `rpm` packages for the ktl toolkit without requiring Ruby/FPM tooling on the host.
 
 ## Usage
 
@@ -9,6 +9,14 @@ make package
 ```
 
 Artifacts are written into `./dist/` and should not be committed.
+
+The packages install:
+
+- `ktl`
+- `helmer`
+- `verifier`
+- `verify`
+- `package`
 
 ## Customization
 

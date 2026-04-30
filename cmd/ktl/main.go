@@ -28,6 +28,7 @@ import (
 	"github.com/kubekattle/ktl/internal/config"
 	"github.com/kubekattle/ktl/internal/featureflags"
 	"github.com/kubekattle/ktl/internal/logging"
+	"github.com/kubekattle/ktl/internal/version"
 	"github.com/kubekattle/ktl/internal/workflows/buildsvc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -122,6 +123,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	var remoteTLSClientKey string
 	var remoteTLSServerName string
 	globalProfile := "dev"
+	var showVersion bool
 
 	cmd := &cobra.Command{
 		Use:           "ktl <command>",
@@ -171,6 +173,11 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if showVersion {
+				info := version.Get()
+				fmt.Fprintf(cmd.OutOrStdout(), "ktl %s\n", info.Version)
+				return nil
+			}
 			if len(args) > 0 && looksLikeSubcommandToken(args[0]) {
 				fmt.Fprintf(cmd.ErrOrStderr(), "unknown command %q for %q\n\n", args[0], cmd.Name())
 			}
@@ -192,6 +199,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	cmd.PersistentFlags().IntVar(&kubeLogLevel, "kube-log-level", 0, "Kubernetes client-go verbosity (klog -v); at >=6 enables HTTP request/response tracing; can also set KTL_KUBE_LOG_LEVEL")
 	cmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colored output")
 	cmd.PersistentFlags().Var(newEnumStringValue(&globalProfile, "dev", "ci", "secure", "remote"), "profile", "Execution profile: dev, ci, secure, or remote (sets sensible defaults for supported commands)")
+	cmd.Flags().BoolVar(&showVersion, "version", false, "Print version and exit")
 	cmd.PersistentFlags().StringSliceVar(&featureFlagValues, "feature", nil, "Enable experimental ktl features (repeat or pass comma-separated names)")
 	if err := cmd.PersistentFlags().MarkHidden("feature"); err != nil {
 		cobra.CheckErr(err)
