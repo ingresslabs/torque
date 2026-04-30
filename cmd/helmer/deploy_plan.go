@@ -23,9 +23,9 @@ import (
 
 	_ "embed"
 
-	"github.com/kubekattle/ktl/internal/helmer/deploy"
-	"github.com/kubekattle/ktl/internal/helmer/kube"
-	"github.com/kubekattle/ktl/internal/helmer/ui"
+	"github.com/ingresslabs/ktl/internal/helmer/deploy"
+	"github.com/ingresslabs/ktl/internal/helmer/kube"
+	"github.com/ingresslabs/ktl/internal/helmer/ui"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/cobra"
 	"helm.sh/helm/v3/pkg/action"

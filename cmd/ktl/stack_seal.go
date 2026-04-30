@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/stack"
-	"github.com/kubekattle/ktl/internal/version"
+	"github.com/ingresslabs/ktl/internal/stack"
+	"github.com/ingresslabs/ktl/internal/version"
 	"github.com/spf13/cobra"
 )
 

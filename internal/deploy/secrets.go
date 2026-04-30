@@ -1,6 +1,6 @@
 package deploy
 
-import "github.com/kubekattle/ktl/internal/secretstore"
+import "github.com/ingresslabs/ktl/internal/secretstore"
 
 // SecretOptions configures deploy-time secret resolution.
 type SecretOptions struct {

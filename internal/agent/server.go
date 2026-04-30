@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/logging"
-	"github.com/kubekattle/ktl/internal/workflows/buildsvc"
-	apiv1 "github.com/kubekattle/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/ktl/internal/logging"
+	"github.com/ingresslabs/ktl/internal/workflows/buildsvc"
+	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"

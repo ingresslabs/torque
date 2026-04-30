@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/kube"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 )

@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kubekattle/ktl/pkg/buildkit"
+	"github.com/ingresslabs/ktl/pkg/buildkit"
 )
 
 func getSandboxInjector() sandboxInjector {

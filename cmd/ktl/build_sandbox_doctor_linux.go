@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/workflows/buildsvc"
+	"github.com/ingresslabs/ktl/internal/workflows/buildsvc"
 	"github.com/spf13/cobra"
 )
 

@@ -15,7 +15,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/kube"
 	"github.com/spf13/cobra"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chartutil"

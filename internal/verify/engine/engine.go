@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/appconfig"
-	"github.com/kubekattle/ktl/internal/kube"
-	"github.com/kubekattle/ktl/internal/telemetry"
-	"github.com/kubekattle/ktl/internal/verify"
-	cfgpkg "github.com/kubekattle/ktl/internal/verify/config"
+	"github.com/ingresslabs/ktl/internal/appconfig"
+	"github.com/ingresslabs/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/telemetry"
+	"github.com/ingresslabs/ktl/internal/verify"
+	cfgpkg "github.com/ingresslabs/ktl/internal/verify/config"
 )
 
 type Options struct {

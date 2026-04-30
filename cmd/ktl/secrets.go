@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/kube"
-	"github.com/kubekattle/ktl/internal/secretstore"
+	"github.com/ingresslabs/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/secretstore"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

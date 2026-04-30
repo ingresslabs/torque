@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kubekattle/ktl/internal/config"
-	"github.com/kubekattle/ktl/internal/featureflags"
+	"github.com/ingresslabs/ktl/internal/config"
+	"github.com/ingresslabs/ktl/internal/featureflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"

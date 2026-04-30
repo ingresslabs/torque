@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	appcompose "github.com/kubekattle/ktl/pkg/compose"
+	appcompose "github.com/ingresslabs/ktl/pkg/compose"
 )
 
 type fakeComposeRunner struct {

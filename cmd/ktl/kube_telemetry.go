@@ -5,7 +5,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 
-	"github.com/kubekattle/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/kube"
 )
 
 func attachKubeTelemetry(settings *cli.EnvSettings, client *kube.Client) {

@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/kubekattle/ktl/internal/tailer"
+	"github.com/ingresslabs/ktl/internal/tailer"
 )
 
 type buildConsoleObserver struct {

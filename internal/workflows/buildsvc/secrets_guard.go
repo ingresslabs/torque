@@ -13,7 +13,7 @@ import (
 
 	"github.com/compose-spec/compose-go/v2/loader"
 	composetypes "github.com/compose-spec/compose-go/v2/types"
-	"github.com/kubekattle/ktl/internal/secrets"
+	"github.com/ingresslabs/ktl/internal/secrets"
 )
 
 type secretsGuard struct {

@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/appconfig"
-	"github.com/kubekattle/ktl/internal/verify"
+	"github.com/ingresslabs/ktl/internal/appconfig"
+	"github.com/ingresslabs/ktl/internal/verify"
 	"github.com/spf13/cobra"
 )
 

@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/kube"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	"k8s.io/cli-runtime/pkg/genericclioptions"

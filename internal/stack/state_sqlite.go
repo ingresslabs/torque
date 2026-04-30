@@ -13,7 +13,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/kubekattle/ktl/internal/version"
+	"github.com/ingresslabs/ktl/internal/version"
 )
 
 const stackStateSQLiteRelPath = ".ktl/stack/state.sqlite"

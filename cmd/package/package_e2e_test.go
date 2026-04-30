@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/kubekattle/ktl/internal/appconfig"
+	"github.com/ingresslabs/ktl/internal/appconfig"
 )
 
 // TestPackageChartsSmoke walks the bundled test charts and ensures the package

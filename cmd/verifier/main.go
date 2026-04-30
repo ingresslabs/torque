@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/ui"
-	"github.com/kubekattle/ktl/internal/verify"
-	cfgpkg "github.com/kubekattle/ktl/internal/verify/config"
-	"github.com/kubekattle/ktl/internal/verify/engine"
-	"github.com/kubekattle/ktl/internal/version"
+	"github.com/ingresslabs/ktl/internal/ui"
+	"github.com/ingresslabs/ktl/internal/verify"
+	cfgpkg "github.com/ingresslabs/ktl/internal/verify/config"
+	"github.com/ingresslabs/ktl/internal/verify/engine"
+	"github.com/ingresslabs/ktl/internal/version"
 	"github.com/spf13/cobra"
 )
 

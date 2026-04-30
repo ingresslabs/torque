@@ -8,14 +8,14 @@
       name="description"
       content="How to run blazing-fast but controlled deployments with ktl using plan visualization, adaptive stack concurrency, sealed bundles, and sandboxed builds."
     />
-    <link rel="canonical" href="https://kubekattle.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html" />
+    <link rel="canonical" href="https://ingresslabs.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="ktl: Blazing-Fast Deploys" />
     <meta
       property="og:description"
       content="A technical rollout model: visualize first, verify security, seal plans, then run DAG-aware concurrent deploys."
     />
-    <meta property="og:url" content="https://kubekattle.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html" />
+    <meta property="og:url" content="https://ingresslabs.github.io/ktl/blog/ktl-stack-concurrency-plan-visualize.html" />
     <meta property="og:site_name" content="ktl" />
     <style>
       :root {
@@ -442,7 +442,7 @@ ktl logs deploy/api --deps --config ./stacks/prod -n platform</code></pre>
 
           <p>
             If you want plan visualization as a standalone tool outside the deploy runner, use
-            <a href="https://github.com/kubekattle/ktl/tree/main/cmd/helmer">Helmer</a>. Helmer is useful when reviewers, SREs, or
+            <a href="https://github.com/ingresslabs/ktl/tree/main/cmd/helmer">Helmer</a>. Helmer is useful when reviewers, SREs, or
             security teams need direct access to plan artifacts without invoking deployment commands.
           </p>
           <p>
@@ -501,7 +501,7 @@ runner:
           <h2>Security Layer: Verifier and Sandbox Builds</h2>
           <p>
             Security checks should be first-class deploy inputs, not post-facto audit tasks.
-            <a href="https://github.com/kubekattle/ktl/tree/main/cmd/verifier">Verifier</a> can be used as the policy and compliance
+            <a href="https://github.com/ingresslabs/ktl/tree/main/cmd/verifier">Verifier</a> can be used as the policy and compliance
             layer around rendered manifests and deployment intent.
           </p>
           <p>
@@ -678,10 +678,10 @@ ktl stack apply --from-bundle ./artifacts/sealed-prod/prod-bundle.tgz --yes</cod
 ktl apply plan --visualize --chart ./charts/api --release api --namespace platform
 
 # 2) optional standalone review in Helmer
-# https://github.com/kubekattle/ktl/tree/main/cmd/helmer
+# https://github.com/ingresslabs/ktl/tree/main/cmd/helmer
 
 # 3) run security checks with Verifier
-# https://github.com/kubekattle/ktl/tree/main/cmd/verifier
+# https://github.com/ingresslabs/ktl/tree/main/cmd/verifier
 
 # 4) seal stack intent
 ktl stack seal --config ./stacks/prod --bundle-file bundle.tgz --out ./artifacts/sealed-prod

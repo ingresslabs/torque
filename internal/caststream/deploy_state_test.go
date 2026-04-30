@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/kubekattle/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/deploy"
 )
 
 func TestDeployStateReplayOrdering(t *testing.T) {

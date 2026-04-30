@@ -21,10 +21,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubekattle/ktl/internal/api/convert"
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/kube"
-	apiv1 "github.com/kubekattle/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/ktl/internal/api/convert"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/kube"
+	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
 )
 
 // DeployServer exposes deploy apply/destroy workflows over gRPC.

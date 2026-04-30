@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kubekattle/ktl/internal/stack"
+	"github.com/ingresslabs/ktl/internal/stack"
 )
 
 func TestStackPlan_RejectsGitIncludeDepsWithoutGitRange(t *testing.T) {

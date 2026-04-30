@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/kubekattle/ktl/internal/tailer"
+	"github.com/ingresslabs/ktl/internal/tailer"
 	"golang.org/x/term"
 )
 

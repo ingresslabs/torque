@@ -23,11 +23,11 @@ import (
 
 	_ "embed"
 
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/kube"
-	"github.com/kubekattle/ktl/internal/secretstore"
-	"github.com/kubekattle/ktl/internal/telemetry"
-	"github.com/kubekattle/ktl/internal/ui"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/secretstore"
+	"github.com/ingresslabs/ktl/internal/telemetry"
+	"github.com/ingresslabs/ktl/internal/ui"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/cobra"
 	"helm.sh/helm/v3/pkg/action"

@@ -1,4 +1,4 @@
-module github.com/kubekattle/ktl
+module github.com/ingresslabs/ktl
 
 go 1.25.9
 
