@@ -66,7 +66,6 @@ ktl stack verify --config stack.yaml
 ## Docs
 
 - Docs site: https://ingresslabs.github.io/ktl/
-- Blog: https://ingresslabs.github.io/ktl/blog/index.html
 - Recipes: [docs/recipes.md](docs/recipes.md)
 - Architecture: [docs/architecture.md](docs/architecture.md)
 - Config atlas: [docs/config-atlas.md](docs/config-atlas.md)
