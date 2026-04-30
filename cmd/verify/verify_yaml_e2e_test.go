@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kubekattle/ktl/internal/appconfig"
+	"github.com/ingresslabs/ktl/internal/appconfig"
 )
 
 func TestVerifyInlineManifest_Shortcut(t *testing.T) {

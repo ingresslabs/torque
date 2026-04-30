@@ -8,7 +8,7 @@ import (
 	"github.com/moby/buildkit/client"
 	digest "github.com/opencontainers/go-digest"
 
-	"github.com/kubekattle/ktl/pkg/buildkit"
+	"github.com/ingresslabs/ktl/pkg/buildkit"
 )
 
 func TestServiceHeatmapCollectorSummary(t *testing.T) {

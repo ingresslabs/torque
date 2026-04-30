@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/containerd/console"
-	"github.com/kubekattle/ktl/internal/csvutil"
-	"github.com/kubekattle/ktl/pkg/buildkit"
+	"github.com/ingresslabs/ktl/internal/csvutil"
+	"github.com/ingresslabs/ktl/pkg/buildkit"
 	"github.com/mattn/go-shellwords"
 )
 

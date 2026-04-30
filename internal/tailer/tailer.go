@@ -26,7 +26,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-logr/logr"
-	"github.com/kubekattle/ktl/internal/config"
+	"github.com/ingresslabs/ktl/internal/config"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

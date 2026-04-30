@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/deploy"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	helmkube "helm.sh/helm/v3/pkg/kube"

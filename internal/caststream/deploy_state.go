@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kubekattle/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/deploy"
 )
 
 // deployState caches the most recent deploy webcast events so late-joining

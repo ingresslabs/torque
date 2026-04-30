@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/secretstore"
+	"github.com/ingresslabs/ktl/internal/secretstore"
 	"github.com/pmezard/go-difflib/difflib"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"

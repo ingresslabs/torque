@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/deploy"
-	apiv1 "github.com/kubekattle/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
 )
 
 // DeployApplyConfig mirrors the CLI flags needed to run a deploy apply.

@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/helpui"
-	"github.com/kubekattle/ktl/internal/logging"
+	"github.com/ingresslabs/ktl/internal/helpui"
+	"github.com/ingresslabs/ktl/internal/logging"
 	"github.com/spf13/cobra"
 )
 

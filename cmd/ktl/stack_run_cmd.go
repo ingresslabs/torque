@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/caststream"
-	"github.com/kubekattle/ktl/internal/castutil"
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/stack"
-	"github.com/kubekattle/ktl/internal/tailer"
-	"github.com/kubekattle/ktl/internal/ui"
+	"github.com/ingresslabs/ktl/internal/caststream"
+	"github.com/ingresslabs/ktl/internal/castutil"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/stack"
+	"github.com/ingresslabs/ktl/internal/tailer"
+	"github.com/ingresslabs/ktl/internal/ui"
 	"github.com/spf13/cobra"
 )
 

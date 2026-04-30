@@ -38,7 +38,7 @@ This fragmentation leads to context switching, inconsistent environments between
 ## Installation
 
 ```bash
-go install github.com/kubekattle/ktl@latest
+go install github.com/ingresslabs/ktl@latest
 ```
 
 ## Quick Start

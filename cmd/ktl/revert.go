@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/kube"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/kube"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap/zapcore"
 	"helm.sh/helm/v3/pkg/action"

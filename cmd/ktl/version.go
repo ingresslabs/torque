@@ -6,7 +6,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/kubekattle/ktl/internal/version"
+	"github.com/ingresslabs/ktl/internal/version"
 	"github.com/spf13/cobra"
 )
 

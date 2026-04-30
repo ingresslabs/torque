@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubekattle/ktl/internal/envcatalog"
+	"github.com/ingresslabs/ktl/internal/envcatalog"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )

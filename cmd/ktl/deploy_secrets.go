@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/secretstore"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/secretstore"
 )
 
 type deploySecretConfig struct {

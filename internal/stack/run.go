@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/deploy"
 	"golang.org/x/sync/semaphore"
 )
 

@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/api/convert"
-	"github.com/kubekattle/ktl/internal/deploy"
-	"github.com/kubekattle/ktl/internal/grpcutil"
-	apiv1 "github.com/kubekattle/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/ktl/internal/api/convert"
+	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/ktl/internal/grpcutil"
+	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )

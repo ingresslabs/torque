@@ -38,7 +38,7 @@ done
 name="ktl"
 maintainer="${MAINTAINER:-ktl maintainers}"
 license="${LICENSE:-Apache-2.0}"
-url="${URL:-https://github.com/kubekattle/ktl}"
+url="${URL:-https://github.com/ingresslabs/ktl}"
 desc="${DESCRIPTION:-ktl: Kubernetes toolkit with BuildKit builds, Helm plan previews, policy verification, and packaging helpers}"
 
 deb_arch="${TARGETARCH}"

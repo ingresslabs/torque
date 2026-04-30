@@ -14,7 +14,7 @@ import (
 	_ "embed"
 
 	"github.com/go-logr/logr"
-	"github.com/kubekattle/ktl/internal/version"
+	"github.com/ingresslabs/ktl/internal/version"
 	"github.com/spf13/cobra"
 )
 

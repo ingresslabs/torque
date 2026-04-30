@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/ui"
+	"github.com/ingresslabs/ktl/internal/ui"
 	"github.com/mattn/go-runewidth"
 )
 

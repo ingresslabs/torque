@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/appconfig"
+	"github.com/ingresslabs/ktl/internal/appconfig"
 	"github.com/spf13/cobra"
 )
 

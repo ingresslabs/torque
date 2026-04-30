@@ -13,8 +13,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubekattle/ktl/internal/agent"
-	"github.com/kubekattle/ktl/internal/workflows/buildsvc"
+	"github.com/ingresslabs/ktl/internal/agent"
+	"github.com/ingresslabs/ktl/internal/workflows/buildsvc"
 )
 
 func main() {

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubekattle/ktl/internal/ui"
+	"github.com/ingresslabs/ktl/internal/ui"
 )
 
 type StatusOptions struct {

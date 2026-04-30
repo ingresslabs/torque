@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/stack"
+	"github.com/ingresslabs/ktl/internal/stack"
 	"github.com/spf13/cobra"
 )
 

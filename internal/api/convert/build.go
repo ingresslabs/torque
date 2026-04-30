@@ -9,8 +9,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/kubekattle/ktl/internal/workflows/buildsvc"
-	apiv1 "github.com/kubekattle/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/ktl/internal/workflows/buildsvc"
+	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
 )
 
 // BuildOptionsToProto converts build options into a protobuf payload.
