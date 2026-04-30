@@ -7,8 +7,6 @@ mkdir -p "$OUT_DIR"
 
 ICON="$OUT_DIR/ktl-logo-icon.png"
 ICON_SMALL="$OUT_DIR/ktl-logo-icon-256.png"
-LOCKUP="$OUT_DIR/ktl-logo-lockup.png"
-LOCKUP_DARK="$OUT_DIR/ktl-logo-lockup-dark.png"
 MARK_PNG="$OUT_DIR/.ktl-logo-mark-render.png"
 
 BLUE="#326CE5"
@@ -16,7 +14,6 @@ BLUE_SOFT="#6B9EFF"
 SURFACE="#ffffff"
 SURFACE_SOFT="#fcfdff"
 BORDER="#d9e6ff"
-DARK="#0f172a"
 
 # Draw mark directly to avoid SVG raster inconsistencies.
 magick -size 920x920 xc:none \
@@ -38,18 +35,6 @@ magick -size 1024x1024 xc:none \
 
 magick "$ICON" -resize 256x256 "$ICON_SMALL"
 
-# Light lockup
-magick -size 1900x640 xc:none \
-  \( "$MARK_PNG" -resize 396x396 \) -gravity center -compose Over -composite \
-  "$LOCKUP"
-
-# Dark lockup
-magick -size 1900x640 xc:none \
-  -fill "$DARK" -stroke none -draw "roundrectangle 120,84 1780,556 80,80" \
-  -stroke "#274163" -strokewidth 3 -fill none -draw "roundrectangle 120,84 1780,556 80,80" \
-  \( "$MARK_PNG" -resize 396x396 \) -gravity center -compose Over -composite \
-  "$LOCKUP_DARK"
-
 rm -f "$MARK_PNG"
 
-printf 'Generated:\n- %s\n- %s\n- %s\n- %s\n' "$ICON" "$ICON_SMALL" "$LOCKUP" "$LOCKUP_DARK"
+printf 'Generated:\n- %s\n- %s\n' "$ICON" "$ICON_SMALL"

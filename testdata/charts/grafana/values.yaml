@@ -280,7 +280,6 @@ hostAliases: []
 ingress:
   enabled: false
   # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
-  # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
   # ingressClassName: nginx
   # Values can be templated
   annotations: {}
@@ -499,7 +498,7 @@ admin:
   passwordKey: admin-password
 
 ## Define command to be executed at startup by grafana container
-## Needed if using `vault-env` to manage secrets (ref: https://banzaicloud.com/blog/inject-secrets-into-pods-vault/)
+## Needed if using `vault-env` to manage secrets.
 ## Default is "run.sh" as defined in grafana's Dockerfile
 # command:
 # - "sh"

@@ -3,10 +3,6 @@
 Kubernetes workflow CLI for teams that need reviewable deploys, useful logs, BuildKit builds, and policy checks in the same toolchain.
 
 <p align="center">
-  <img src="docs/assets/logo/ktl-logo-lockup.png" alt="ktl" width="760">
-</p>
-
-<p align="center">
   <a href="https://ingresslabs.github.io/ktl/">
     <img src="docs/assets/ktl-showcase.gif" alt="ktl showcase" width="900">
   </a>
