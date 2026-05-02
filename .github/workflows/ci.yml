@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["main", "dev"]
+    branches: ["main", "dev", "devel"]
   pull_request:
-    branches: ["main", "dev"]
+    branches: ["main", "dev", "devel"]
   workflow_dispatch:
     inputs:
       integration:
