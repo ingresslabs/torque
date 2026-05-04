@@ -12,7 +12,7 @@ import (
 )
 
 func TestVerifyKubeRelease_WarningEventFilters(t *testing.T) {
-	client := &kube.Client{Clientset: fake.NewSimpleClientset()}
+	client := &kube.Client{Clientset: fake.NewClientset()}
 	ns := "ns"
 	release := "rel"
 	manifest := `

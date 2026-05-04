@@ -84,7 +84,7 @@ spec:
 }
 
 func TestPopulateQuotaLive(t *testing.T) {
-	client := fake.NewSimpleClientset(&corev1.ResourceQuota{
+	client := fake.NewClientset(&corev1.ResourceQuota{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "rq",
 			Namespace: "demo",

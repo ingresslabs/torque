@@ -10,7 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 )
 
 func EvaluateRules(ctx context.Context, rules Ruleset, objects []map[string]any, commonDirs []string) ([]Finding, error) {
@@ -111,6 +112,7 @@ func EvaluateRulesWithSelectors(ctx context.Context, rules Ruleset, objects []ma
 		ruleModules["rule.rego"] = string(ruleMod)
 
 		opts := []func(*rego.Rego){
+			rego.SetRegoVersion(ast.RegoV0),
 			rego.Query("data.Cx.CxPolicy"),
 			rego.Input(input),
 		}

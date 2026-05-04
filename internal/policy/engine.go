@@ -11,7 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 )
 
 type Mode string
@@ -69,6 +70,7 @@ func EvaluateWithQuery(ctx context.Context, bundle *Bundle, input BuildInput, qu
 		query = "data.ktl.build"
 	}
 	opts := []func(*rego.Rego){
+		rego.SetRegoVersion(ast.RegoV0),
 		rego.Query(query),
 		rego.Input(input),
 	}
