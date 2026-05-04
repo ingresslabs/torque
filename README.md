@@ -57,6 +57,28 @@ ktl logs 'api-.*' -n prod --capture ./logs.sqlite --tail 100
 
 Runs build -> plan -> apply -> capture -> logs.
 
+## Ship Examples
+
+Ship one release with review and evidence gates:
+
+```bash
+ktl build . --tag ghcr.io/acme/api:dev --capture ./build.sqlite
+verifier --chart ./chart --release api -n prod --format json --report verify.json
+ktl apply plan --chart ./chart --release api -n prod \
+  --verify-report verify.json --build-capture ./build.sqlite \
+  --github-comment --output plan.md
+ktl apply --chart ./chart --release api -n prod \
+  --require-verified verify.json --capture ./apply.sqlite --yes
+```
+
+Ship a dependency-ordered stack:
+
+```bash
+ktl stack plan --config ./stacks/prod --bundle ./stack-plan.tgz
+ktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
+ktl stack status --config ./stacks/prod --follow
+```
+
 ## Features
 
 - Golden deploy workflow with one trusted loop.

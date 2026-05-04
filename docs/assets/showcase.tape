@@ -1,7 +1,7 @@
 Output ktl-showcase.gif
 
 Set Shell "bash"
-Set FontSize 18
+Set FontSize 22
 Set Width 1200
 Set Height 620
 Set Theme "Dracula"
