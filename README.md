@@ -17,10 +17,25 @@ debugging without a running service.
 
 ## Demos
 
+<details open>
+<summary>Build, plan, apply, and logs</summary>
 <p align="center"><kbd><img src=".github/readme/ktl-showcase.gif" alt="ktl build, plan, apply, and logs workflow" width="820"></kbd></p>
+</details>
+
+<details open>
+<summary>Security and evidence gates</summary>
 <p align="center"><kbd><img src=".github/readme/ktl-security.gif" alt="ktl security and evidence workflow" width="820"></kbd></p>
+</details>
+
+<details open>
+<summary>Verifier report</summary>
 <p align="center"><kbd><img src=".github/readme/verifier-demo.gif" alt="verifier report demo" width="820"></kbd></p>
+</details>
+
+<details open>
+<summary>ktl compared with split tooling</summary>
 <p align="center"><kbd><img src=".github/readme/ktl-compare.gif" alt="ktl compared with helmfile and separate Kubernetes tooling" width="820"></kbd></p>
+</details>
 
 ## Quick Start
 
