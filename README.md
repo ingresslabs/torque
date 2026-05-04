@@ -15,6 +15,20 @@ apply, capture evidence, and inspect what happened. Captures, verifier reports,
 and chart archives are portable SQLite artifacts for CI, review, and later
 debugging without a running service.
 
+## Demos
+
+<p align="center">
+  <img src=".github/readme/ktl-showcase.gif" alt="ktl build, plan, apply, and logs workflow" width="820">
+</p>
+
+<p align="center">
+  <img src=".github/readme/ktl-security.gif" alt="ktl security and evidence workflow" width="820">
+</p>
+
+<p align="center">
+  <img src=".github/readme/verifier-demo.gif" alt="verifier report demo" width="820">
+</p>
+
 ## Quick Start
 
 ```bash

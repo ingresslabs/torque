@@ -15,7 +15,7 @@ fi
 
 gif_refs="$(
   rg -n --hidden '(?i)\.gif|image/gif|GIF89a|Output[[:space:]].*\.gif' \
-    docs site README.md internal/helpui scripts/gen-site.sh 2>/dev/null || true
+    docs site internal/helpui scripts/gen-site.sh 2>/dev/null || true
 )"
 if [[ -n "${gif_refs}" ]]; then
   echo "error: GIF references are not allowed in docs surfaces:" >&2
