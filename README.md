@@ -17,17 +17,10 @@ debugging without a running service.
 
 ## Demos
 
-<p align="center">
-  <img src=".github/readme/ktl-showcase.gif" alt="ktl build, plan, apply, and logs workflow" width="820">
-</p>
-
-<p align="center">
-  <img src=".github/readme/ktl-security.gif" alt="ktl security and evidence workflow" width="820">
-</p>
-
-<p align="center">
-  <img src=".github/readme/verifier-demo.gif" alt="verifier report demo" width="820">
-</p>
+<p align="center"><kbd><img src=".github/readme/ktl-showcase.gif" alt="ktl build, plan, apply, and logs workflow" width="820"></kbd></p>
+<p align="center"><kbd><img src=".github/readme/ktl-security.gif" alt="ktl security and evidence workflow" width="820"></kbd></p>
+<p align="center"><kbd><img src=".github/readme/verifier-demo.gif" alt="verifier report demo" width="820"></kbd></p>
+<p align="center"><kbd><img src=".github/readme/ktl-compare.gif" alt="ktl compared with helmfile and separate Kubernetes tooling" width="820"></kbd></p>
 
 ## Quick Start
 
@@ -61,30 +54,6 @@ ktl apply --chart ./chart --release api -n prod \
 ktl stack plan --config ./stacks/prod --bundle ./stack-plan.tgz
 ktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
 ktl stack status --config ./stacks/prod --follow
-```
-
-## Stack Dependency Examples
-
-Basic chain:
-
-```bash
-ktl stack plan --config testdata/stack/e2e/01-basic-chain
-ktl stack plan --config testdata/stack/e2e/01-basic-chain --output json
-```
-
-Fanout and fanin:
-
-```bash
-ktl stack plan --config testdata/stack/e2e/02-fanout
-ktl stack plan --config testdata/stack/e2e/03-fanin
-```
-
-Large graph and invalid configs:
-
-```bash
-ktl stack plan --config testdata/stack/e2e/10-large-graph --bundle ./dist/stack-large-graph.tgz
-ktl stack plan --config testdata/stack/e2e/x1-cycle-detect
-ktl stack plan --config testdata/stack/e2e/x2-missing-dep
 ```
 
 ## Features
