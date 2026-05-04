@@ -29,4 +29,7 @@ var (
 
 	//go:embed assets/ktl-showcase.gif
 	KTLShowcaseGIF []byte
+
+	//go:embed assets/ktl-security.gif
+	KTLSecurityGIF []byte
 )

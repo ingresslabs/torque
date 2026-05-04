@@ -107,9 +107,14 @@
         flex: 1;
         text-align: right;
       }
-      .showcase {
+      .showcases {
         width: min(900px, 100%);
         margin: 18px auto 0;
+        display: grid;
+        gap: 14px;
+      }
+      .showcase {
+        margin: 0;
       }
       .showcase img {
         display: block;
@@ -207,7 +212,7 @@
           width: 100%;
           justify-content: flex-start;
         }
-        .showcase { margin-top: 14px; }
+        .showcases { margin-top: 14px; }
       }
       @media (max-width: 480px) {
         .chrome { padding: 28px 10px 44px; }
@@ -442,8 +447,13 @@
             </div>
             <div class="helpMeta">{{.Version}}</div>
           </div>
-          <div class="showcase" aria-label="ktl fast delivery demo">
-            <img src="assets/ktl-showcase.gif" alt="ktl terminal demo showing build, plan, apply, stack, build stream, and logs" width="1200" height="620" decoding="async" />
+          <div class="showcases" aria-label="ktl demos">
+            <figure class="showcase">
+              <img src="assets/ktl-showcase.gif" alt="ktl terminal demo showing build, plan, apply, stack, build stream, and logs" width="1200" height="620" decoding="async" />
+            </figure>
+            <figure class="showcase">
+              <img src="assets/ktl-security.gif" alt="ktl terminal demo showing verifier gates, strict sandbox builds, SBOM provenance, secret discovery, and verified apply" width="1200" height="620" decoding="async" />
+            </figure>
           </div>
         </div>
 

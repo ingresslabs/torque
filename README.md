@@ -34,6 +34,17 @@ review, or inspected later without a running `ktl` service.
   <code>stack plan</code>, and <code>logs</code> form a fast reviewable delivery loop.
 </p>
 
+<p align="center">
+  <a href="https://ingresslabs.github.io/ktl/">
+    <img src="docs/assets/ktl-security.gif" alt="ktl security features demo" width="900">
+  </a>
+</p>
+
+<p align="center">
+  <strong>Security demo:</strong> verifier reports, strict build sandboxing,
+  SBOM/provenance, secret discovery, and verified deploy gates.
+</p>
+
 ## Deliver
 
 ```bash

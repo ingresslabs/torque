@@ -291,11 +291,20 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
-	sort.Slice(entries, func(i, j int) bool {
+	sort.SliceStable(entries, func(i, j int) bool {
 		if entries[i].Kind != entries[j].Kind {
 			return entries[i].Kind < entries[j].Kind
 		}
-		return entries[i].Title < entries[j].Title
+		if entries[i].Title != entries[j].Title {
+			return entries[i].Title < entries[j].Title
+		}
+		if entries[i].ID != entries[j].ID {
+			return entries[i].ID < entries[j].ID
+		}
+		if entries[i].Subtitle != entries[j].Subtitle {
+			return entries[i].Subtitle < entries[j].Subtitle
+		}
+		return entries[i].Content < entries[j].Content
 	})
 
 	return Index{
