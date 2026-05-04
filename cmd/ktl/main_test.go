@@ -153,6 +153,32 @@ func TestRootHasRevertCommand(t *testing.T) {
 	}
 }
 
+func TestRootHasShipCommand(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte("{}\n"), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	t.Setenv("KTL_CONFIG", cfgPath)
+
+	root := newRootCommand()
+	var shipCmd *cobra.Command
+	for _, cmd := range root.Commands() {
+		if cmd.Name() == "ship" {
+			shipCmd = cmd
+			break
+		}
+	}
+	if shipCmd == nil {
+		t.Fatalf("expected root to include ship command")
+	}
+	if f := shipCmd.Flags().Lookup("chart"); f == nil {
+		t.Fatalf("expected ship to have --chart flag")
+	}
+	if f := shipCmd.Flags().Lookup("build"); f == nil {
+		t.Fatalf("expected ship to have --build flag")
+	}
+}
+
 func TestRootHelpSubcommandOrder(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "config.yaml")
 	if err := os.WriteFile(cfgPath, []byte("{}\n"), 0o600); err != nil {
@@ -175,6 +201,7 @@ func TestRootHelpSubcommandOrder(t *testing.T) {
 		"\nSubcommands:\n",
 		"  init",
 		"  build",
+		"  ship",
 		"  apply",
 		"  delete",
 		"  revert",

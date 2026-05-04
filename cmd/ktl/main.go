@@ -218,6 +218,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	logsCmd := newLogsCommand(opts, &kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr, &remoteToken, &remoteTLS, &remoteTLSInsecureSkipVerify, &remoteTLSCA, &remoteTLSClientCert, &remoteTLSClientKey, &remoteTLSServerName, &mirrorBusAddr)
 	initCmd := newInitCommand(&kubeconfigPath, &kubeContext, &globalProfile)
 	buildCmd := newBuildCommandWithService(buildService, &globalProfile, &logLevel, &kubeconfigPath, &kubeContext)
+	shipCmd := newShipCommand(buildService, &globalProfile, &logLevel, &kubeconfigPath, &kubeContext, &remoteAgentAddr)
 	analyzeCmd := newAnalyzeCommand(&kubeconfigPath, &kubeContext)
 	listCmd := newListCommand(&kubeconfigPath, &kubeContext)
 	lintCmd := newLintCommand(&kubeconfigPath, &kubeContext)
@@ -233,6 +234,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	cmd.AddCommand(
 		initCmd,
 		buildCmd,
+		shipCmd,
 		analyzeCmd,
 		revertCmd,
 		applyCmd,
@@ -264,9 +266,9 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
   ktl revert --release foo --namespace prod
 
   # Apply chart changes
-	  ktl apply --chart ./chart --release foo --namespace prod`
+	ktl apply --chart ./chart --release foo --namespace prod`
 	decorateCommandHelp(cmd, "Global Flags")
-	bindViper(cmd, initCmd, logsCmd, buildCmd, listCmd, lintCmd, applyCmd, deleteCmd, stackCmd)
+	bindViper(cmd, initCmd, logsCmd, buildCmd, shipCmd, listCmd, lintCmd, applyCmd, deleteCmd, stackCmd)
 
 	_ = cmd.RegisterFlagCompletionFunc("profile", cobra.FixedCompletions([]string{"dev", "ci", "secure", "remote"}, cobra.ShellCompDirectiveNoFileComp))
 	_ = cmd.RegisterFlagCompletionFunc("log-level", cobra.FixedCompletions([]string{"debug", "info", "warn", "error"}, cobra.ShellCompDirectiveNoFileComp))
@@ -286,7 +288,7 @@ Usage:
   {{.UseLine}}
 
 Subcommands:
-{{- range $i, $n := (list "init" "build" "analyze" "apply" "delete" "stack" "revert" "list" "lint" "logs" "env" "secrets" "version" "up" "wait") }}
+{{- range $i, $n := (list "init" "build" "ship" "analyze" "apply" "delete" "stack" "revert" "list" "lint" "logs" "env" "secrets" "version" "up" "wait") }}
 {{- with (indexCommand $.Commands $n) }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end }}
