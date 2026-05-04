@@ -6,7 +6,7 @@
   "descriptionText": "Containers should define a livenessProbe to help Kubernetes restart unhealthy workloads.",
   "descriptionUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-rel-01",
+  "descriptionID": "torque-rel-01",
   "cloudProvider": "common",
   "cwe": "710",
   "riskScore": "3.2"

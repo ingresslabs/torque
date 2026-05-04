@@ -1,0 +1,18 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- restrained helm rim -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="#326CE5" stroke-width="6" opacity="0.96"/>
+  <circle cx="100" cy="100" r="78" fill="none" stroke="#6B9EFF" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- torque T mark -->
+  <line x1="52" y1="58" x2="148" y2="58" stroke="#326CE5" stroke-width="8" stroke-linecap="round"/>
+  <line x1="100" y1="58" x2="100" y2="152" stroke="#326CE5" stroke-width="8" stroke-linecap="round"/>
+  <line x1="76" y1="152" x2="124" y2="152" stroke="#326CE5" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- controlled rotation accents -->
+  <path d="M52 122 C68 151 105 164 135 148" fill="none" stroke="#326CE5" stroke-width="4" stroke-linecap="round" opacity="0.82"/>
+  <path d="M148 78 C132 49 95 36 65 52" fill="none" stroke="#326CE5" stroke-width="4" stroke-linecap="round" opacity="0.82"/>
+
+  <!-- center accent -->
+  <circle cx="100" cy="100" r="6.5" fill="#6B9EFF"/>
+  <circle cx="100" cy="100" r="2.4" fill="#ffffff" opacity="0.95"/>
+</svg>

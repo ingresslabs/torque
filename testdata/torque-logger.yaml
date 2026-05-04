@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: torque-test
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: torque-logger
+  namespace: torque-test
+  labels:
+    app: torque-logger
+spec:
+  restartPolicy: Always
+  initContainers:
+  - name: setup
+    image: busybox
+    command:
+    - /bin/sh
+    - -c
+    args:
+    - echo initializing torque logger
+  containers:
+  - name: alpha
+    image: busybox
+    command:
+    - /bin/sh
+    - -c
+    args:
+    - |
+      while true; do
+        echo "alpha $(date +%s)"
+        sleep 1
+      done
+  - name: beta
+    image: busybox
+    command:
+    - /bin/sh
+    - -c
+    args:
+    - |
+      while true; do
+        echo "beta $(date +%s)"
+        sleep 1
+      done
+

@@ -4,11 +4,11 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-ktl_bin="${KTL_BIN:-./bin/ktl}"
-policy="${KTL_SANDBOX_CONFIG:-$repo_root/sandbox/linux-ci.cfg}"
+torque_bin="${TORQUE_BIN:-./bin/torque}"
+policy="${TORQUE_SANDBOX_CONFIG:-$repo_root/sandbox/linux-ci.cfg}"
 
 baseline_ctx="$repo_root/testdata/sandbox-demo/baseline"
-probe_host_root_file="${PROBE_HOST_ROOT_FILE:-$repo_root/.ktl-sandbox-demo-host-only.txt}"
+probe_host_root_file="${PROBE_HOST_ROOT_FILE:-$repo_root/.torque-sandbox-demo-host-only.txt}"
 probe_ctx_file_rel="probe-visible-in-context.txt"
 probe_ctx_file="$baseline_ctx/$probe_ctx_file_rel"
 
@@ -50,10 +50,10 @@ if [[ "$os" != "linux" ]]; then
   exit 2
 fi
 
-if [[ ! -x "$ktl_bin" ]]; then
+if [[ ! -x "$torque_bin" ]]; then
   need go
   need make
-  yellow "Не найден бинарник ktl по пути $ktl_bin — собираю: make build"
+  yellow "Не найден бинарник torque по пути $torque_bin — собираю: make build"
   make build >/dev/null
 fi
 
@@ -76,19 +76,19 @@ note_fail() { red "FAIL: $*"; fail_count=$((fail_count+1)); }
 cat >&2 <<EOF
 
 ================================================================================
-ДЕМО: ktl build без песочницы vs ktl build в песочнице
+ДЕМО: torque build без песочницы vs torque build в песочнице
 ================================================================================
 
 Что показываем аудитории:
-  1) В обычном режиме ktl на Linux переисполняется в песочнице.
-  2) Если песочницу отключить (KTL_SANDBOX_DISABLE=1), сборка выполняется без этого слоя защиты.
+  1) В обычном режиме torque на Linux переисполняется в песочнице.
+  2) Если песочницу отключить (TORQUE_SANDBOX_DISABLE=1), сборка выполняется без этого слоя защиты.
   3) В permissive-настройках билдера недоверенный Dockerfile может пытаться читать "хостовые" файлы.
-  4) В песочнице ktl такой доступ должен быть ограничен.
+  4) В песочнице torque такой доступ должен быть ограничен.
 
 Площадка: Linux + nsjail.
 
 Используем:
-  ktl:    $ktl_bin
+  torque:    $torque_bin
   policy: $policy
 
 EOF
@@ -98,9 +98,9 @@ if command -v git >/dev/null 2>&1 && [[ -d "$repo_root/.git" ]]; then
 fi
 
 printf "\n[Тест 0] Базовая сборка в песочнице: должны увидеть баннер и вывод\n" >&2
-baseline_out="$("$ktl_bin" build "$baseline_ctx" --sandbox-config "$policy" 2>&1 || true)"
-if printf "%s" "$baseline_out" | contains "Running ktl build inside the sandbox" ; then
-  note_pass "ktl сообщил, что работает внутри песочницы"
+baseline_out="$("$torque_bin" build "$baseline_ctx" --sandbox-config "$policy" 2>&1 || true)"
+if printf "%s" "$baseline_out" | contains "Running torque build inside the sandbox" ; then
+  note_pass "torque сообщил, что работает внутри песочницы"
 else
   note_fail "нет баннера про песочницу (проверьте nsjail/policy/окружение)"
 fi
@@ -111,9 +111,9 @@ else
 fi
 
 printf "\n[Тест 1] Отключаем песочницу: баннера быть не должно, но сборка должна пройти\n" >&2
-nosb_out="$(KTL_SANDBOX_DISABLE=1 "$ktl_bin" build "$baseline_ctx" --sandbox-config "$policy" 2>&1 || true)"
-if printf "%s" "$nosb_out" | contains "Running ktl build inside the sandbox" ; then
-  note_fail "баннер песочницы появился, хотя KTL_SANDBOX_DISABLE=1"
+nosb_out="$(TORQUE_SANDBOX_DISABLE=1 "$torque_bin" build "$baseline_ctx" --sandbox-config "$policy" 2>&1 || true)"
+if printf "%s" "$nosb_out" | contains "Running torque build inside the sandbox" ; then
+  note_fail "баннер песочницы появился, хотя TORQUE_SANDBOX_DISABLE=1"
 else
   note_pass "песочница отключена (баннера нет)"
 fi
@@ -130,27 +130,27 @@ cat >&2 <<EOF
 Мы создаём файл на хосте (в корне репозитория, ВНЕ build context):
   $probe_host_root_file
 
-Дальше просим ktl сделать пробу ДО сборки:
+Дальше просим torque сделать пробу ДО сборки:
   --sandbox-probe-path "$probe_host_root_file"
 
 Ожидаемое поведение:
   - Без песочницы: [probe] stat ...: OK
   - В песочнице:   [probe] stat ...: ... no such file or directory
 
-Почему это важно: песочница меняет "точку зрения" процесса ktl — он не видит произвольные файлы хоста.
+Почему это важно: песочница меняет "точку зрения" процесса torque — он не видит произвольные файлы хоста.
 EOF
 
 printf "demo-probe-host-root-%s\n" "$(date +%s)" >"$probe_host_root_file"
 chmod 0644 "$probe_host_root_file"
 
-nosb_probe_out="$(KTL_SANDBOX_DISABLE=1 "$ktl_bin" build "$baseline_ctx" --sandbox-probe-path "$probe_host_root_file" 2>&1 || true)"
-sandbox_probe_out="$("$ktl_bin" build "$baseline_ctx" --sandbox-config "$policy" --sandbox-probe-path "$probe_host_root_file" 2>&1 || true)"
+nosb_probe_out="$(TORQUE_SANDBOX_DISABLE=1 "$torque_bin" build "$baseline_ctx" --sandbox-probe-path "$probe_host_root_file" 2>&1 || true)"
+sandbox_probe_out="$("$torque_bin" build "$baseline_ctx" --sandbox-config "$policy" --sandbox-probe-path "$probe_host_root_file" 2>&1 || true)"
 
 require_probe_line "$nosb_probe_out" "$probe_host_root_file" || true
 require_probe_line "$sandbox_probe_out" "$probe_host_root_file" || true
 
 if printf "%s" "$nosb_probe_out" | contains "[probe] stat \"$probe_host_root_file\": OK" ; then
-  note_pass "без песочницы ktl видит host-only файл (probe OK)"
+  note_pass "без песочницы torque видит host-only файл (probe OK)"
 else
   note_fail "ожидали probe OK без песочницы, но не увидели"
 fi
@@ -158,7 +158,7 @@ fi
 if printf "%s" "$sandbox_probe_out" | contains "[probe] stat \"$probe_host_root_file\": OK" ; then
   note_fail "в песочнице probe неожиданно OK (файл хоста виден) — политика может пробрасывать лишние пути"
 else
-  note_pass "в песочнице ktl НЕ видит host-only файл (probe не OK) — ожидаемо"
+  note_pass "в песочнице torque НЕ видит host-only файл (probe не OK) — ожидаемо"
 fi
 
 printf "\n[Тест 3] Детерминированный probe: контекст сборки виден и с песочницей, и без\n" >&2
@@ -170,15 +170,15 @@ cat >&2 <<EOF
   - без песочницы (ожидаемо),
   - в песочнице (это важно: песочница не ломает обычный билд).
 
-Важно: внутри песочницы ktl маппит build context в /workspace, поэтому для sandbox-run мы
+Важно: внутри песочницы torque маппит build context в /workspace, поэтому для sandbox-run мы
 проверяем probe по относительному пути (относительно /workspace).
 EOF
 
 printf "demo-probe-context-%s\n" "$(date +%s)" >"$probe_ctx_file"
 chmod 0644 "$probe_ctx_file"
 
-nosb_ctx_probe_out="$(KTL_SANDBOX_DISABLE=1 "$ktl_bin" build "$baseline_ctx" --sandbox-probe-path "$probe_ctx_file" 2>&1 || true)"
-sandbox_ctx_probe_out="$("$ktl_bin" build "$baseline_ctx" --sandbox-config "$policy" --sandbox-probe-path "$probe_ctx_file_rel" 2>&1 || true)"
+nosb_ctx_probe_out="$(TORQUE_SANDBOX_DISABLE=1 "$torque_bin" build "$baseline_ctx" --sandbox-probe-path "$probe_ctx_file" 2>&1 || true)"
+sandbox_ctx_probe_out="$("$torque_bin" build "$baseline_ctx" --sandbox-config "$policy" --sandbox-probe-path "$probe_ctx_file_rel" 2>&1 || true)"
 
 require_probe_line "$nosb_ctx_probe_out" "$probe_ctx_file" || true
 require_probe_line "$sandbox_ctx_probe_out" "$probe_ctx_file_rel" || true
@@ -208,7 +208,7 @@ cat >&2 <<EOF
   - В песочнице с bind:  probe OK
 EOF
 
-sandbox_bind_probe_out="$("$ktl_bin" build "$baseline_ctx" --sandbox-config "$policy" --sandbox-bind "$probe_host_root_file:/workspace/host-only.txt" --sandbox-probe-path "host-only.txt" 2>&1 || true)"
+sandbox_bind_probe_out="$("$torque_bin" build "$baseline_ctx" --sandbox-config "$policy" --sandbox-bind "$probe_host_root_file:/workspace/host-only.txt" --sandbox-probe-path "host-only.txt" 2>&1 || true)"
 require_probe_line "$sandbox_bind_probe_out" "host-only.txt" || true
 if printf "%s" "$sandbox_bind_probe_out" | contains "[probe] stat \"host-only.txt\": OK" ; then
   note_pass "явный --sandbox-bind сработал: host-only файл стал видимым"
@@ -218,7 +218,7 @@ fi
 
 printf "\n[Тест 5] Если песочница не стартует — это должно быть видно через --sandbox-logs\n" >&2
 bad_policy="$repo_root/sandbox/does-not-exist.cfg"
-logs_out="$("$ktl_bin" build "$baseline_ctx" --sandbox-config "$bad_policy" --sandbox-logs 2>&1 || true)"
+logs_out="$("$torque_bin" build "$baseline_ctx" --sandbox-config "$bad_policy" --sandbox-logs 2>&1 || true)"
 if printf "%s" "$logs_out" | contains "sandbox config:" ; then
   note_pass "ошибка политики видна (нет 'тихого' выхода без сообщений)"
 else

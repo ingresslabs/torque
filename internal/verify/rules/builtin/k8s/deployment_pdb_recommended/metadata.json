@@ -6,7 +6,7 @@
   "descriptionText": "Deployments with 3 or more replicas should consider a PodDisruptionBudget. This rule only checks within the same manifest render.",
   "descriptionUrl": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-avail-01",
+  "descriptionID": "torque-avail-01",
   "cloudProvider": "common",
   "cwe": "0",
   "riskScore": "2.0"

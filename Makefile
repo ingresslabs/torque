@@ -1,5 +1,5 @@
-BINARY ?= ktl
-PKG ?= ./cmd/ktl
+BINARY ?= torque
+PKG ?= ./cmd/torque
 BIN_DIR ?= bin
 DIST_DIR ?= dist
 GO ?= go
@@ -13,10 +13,10 @@ GIT_COMMIT ?= $(shell git rev-parse --short=12 HEAD 2>/dev/null || echo unknown)
 GIT_TREE_STATE ?= $(shell test -z "$$(git status --porcelain 2>/dev/null)" && echo clean || echo dirty)
 BUILD_DATE ?= $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 LDFLAGS ?= -s -w \
-	-X github.com/ingresslabs/ktl/internal/version.Version=$(VERSION) \
-	-X github.com/ingresslabs/ktl/internal/version.GitCommit=$(GIT_COMMIT) \
-	-X github.com/ingresslabs/ktl/internal/version.GitTreeState=$(GIT_TREE_STATE) \
-	-X github.com/ingresslabs/ktl/internal/version.BuildDate=$(BUILD_DATE)
+	-X github.com/ingresslabs/torque/internal/version.Version=$(VERSION) \
+	-X github.com/ingresslabs/torque/internal/version.GitCommit=$(GIT_COMMIT) \
+	-X github.com/ingresslabs/torque/internal/version.GitTreeState=$(GIT_TREE_STATE) \
+	-X github.com/ingresslabs/torque/internal/version.BuildDate=$(BUILD_DATE)
 RELEASE_PLATFORMS ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 RELEASE_TOOLS ?= $(BINARY) verifier verify
 RELEASE_TOOL_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(foreach tool,$(RELEASE_TOOLS),$(DIST_DIR)/$(tool)-$(subst /,-,$(platform))))
@@ -44,19 +44,19 @@ VERIFY_BINARY ?= verify
 VERIFY_PKG ?= ./cmd/verify
 VERIFIER_BINARY ?= verifier
 VERIFIER_PKG ?= ./cmd/verifier
-PACKAGECLI_BINARY ?= ktl-package
+PACKAGECLI_BINARY ?= torque-package
 PACKAGECLI_PKG ?= ./cmd/package
 RELEASE_PACKAGECLI_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(DIST_DIR)/$(PACKAGECLI_BINARY)-$(subst /,-,$(platform)))
 RELEASE_ARTIFACTS := $(RELEASE_TOOL_ARTIFACTS) $(RELEASE_PACKAGECLI_ARTIFACTS)
 LOGS_BINARY ?= logs
-LOGS_PKG ?= ./cmd/ktl
+LOGS_PKG ?= ./cmd/torque
 LOGS_BUILD_MODE ?= logs-only
-LOGS_LDFLAGS ?= $(LDFLAGS) -X github.com/ingresslabs/ktl/cmd/ktl.buildMode=$(LOGS_BUILD_MODE)
+LOGS_LDFLAGS ?= $(LDFLAGS) -X github.com/ingresslabs/torque/cmd/torque.buildMode=$(LOGS_BUILD_MODE)
 
 .DEFAULT_GOAL := help
 
 .PHONY: help build build-% build-verifier build-verify build-packagecli build-logs build-all install install-verifier install-verify install-packagecli install-all release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog test test-short test-integration fmt lint tidy verify preflight docs docs-no-gifs site site-check proto proto-lint clean loc print-% test-ci smoke-package-verify verify-charts-e2e testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
-PACKAGE_IMAGE ?= ktl-packager
+PACKAGE_IMAGE ?= torque-packager
 PACKAGE_PLATFORMS ?= linux/amd64
 
 help: ## Show this help menu
@@ -64,7 +64,7 @@ help: ## Show this help menu
 	@LC_ALL=C grep -hE '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS=":.*## "} {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-build: ## Build ktl for the current platform into ./bin/ktl
+build: ## Build torque for the current platform into ./bin/torque
 	@echo ">> building $(BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY) $(PKG)
@@ -79,12 +79,12 @@ build-verifier: ## Build verifier for the current platform into ./bin/verifier
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(VERIFIER_BINARY) $(VERIFIER_PKG)
 
-build-packagecli: ## Build chart archive CLI for the current platform into ./bin/ktl-package
+build-packagecli: ## Build chart archive CLI for the current platform into ./bin/torque-package
 	@echo ">> building $(PACKAGECLI_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(PACKAGECLI_BINARY) $(PACKAGECLI_PKG)
 
-build-logs: ## Build logs-only ktl CLI for the current platform into ./bin/ktl-logs
+build-logs: ## Build logs-only torque CLI for the current platform into ./bin/torque-logs
 	@echo ">> building $(LOGS_BINARY) (logs-only) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LOGS_LDFLAGS)' -o $(BIN_DIR)/$(LOGS_BINARY) $(LOGS_PKG)
@@ -104,7 +104,7 @@ build-cross: ## Build binaries for all supported platforms (linux/amd64, linux/a
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY)-windows-amd64.exe $(PKG)
 	@echo ">> cross-platform build complete"
 
-build-%: ## Build ktl for <os>-<arch> into ./bin/ktl-<os>-<arch>[.exe]
+build-%: ## Build torque for <os>-<arch> into ./bin/torque-<os>-<arch>[.exe]
 	@mkdir -p $(BIN_DIR)
 	@target="$*"; os="$${target%-*}"; arch="$${target#*-}"; \
 	if [ "$$os" = "$$arch" ]; then \
@@ -116,9 +116,9 @@ build-%: ## Build ktl for <os>-<arch> into ./bin/ktl-<os>-<arch>[.exe]
 	echo ">> building $(BINARY) for $$os/$$arch -> $$out"; \
 	GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $$out $(PKG)
 
-build-all: build build-verifier build-verify build-packagecli ## Build ktl and standalone toolkit binaries
+build-all: build build-verifier build-verify build-packagecli ## Build torque and standalone toolkit binaries
 
-install: ## Install ktl into GOPATH/bin or GOBIN
+install: ## Install torque into GOPATH/bin or GOBIN
 	@echo ">> installing $(BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PKG)
 
@@ -130,14 +130,14 @@ install-verifier: ## Install verifier into GOPATH/bin or GOBIN
 	@echo ">> installing $(VERIFIER_BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(VERIFIER_PKG)
 
-install-packagecli: ## Install ktl-package into GOPATH/bin or GOBIN
+install-packagecli: ## Install torque-package into GOPATH/bin or GOBIN
 	@echo ">> installing $(PACKAGECLI_BINARY) ($(VERSION))"
 	@dest="$$($(GO) env GOBIN)"; \
 	if [ -z "$$dest" ]; then dest="$$($(GO) env GOPATH)/bin"; fi; \
 	mkdir -p "$$dest"; \
 	$(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "$$dest/$(PACKAGECLI_BINARY)" $(PACKAGECLI_PKG)
 
-install-all: ## Install ktl and standalone toolkit binaries
+install-all: ## Install torque and standalone toolkit binaries
 	$(MAKE) install
 	$(MAKE) install-verifier
 	$(MAKE) install-verify
@@ -419,7 +419,7 @@ proto: ## Generate gRPC/protobuf stubs under pkg/api
 	GOBIN=$(PROTO_BIN) $(GO) install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION)
 	PATH="$(PROTO_BIN):$$PATH" $(BUF) generate
 	# Normalize the descriptor escape before log_file for clean text searches.
-	$(PERL) -0pi -e 's/"\\\x62\x6c\x6f\x67_file/"\\x08log_file/g' pkg/api/ktl/api/v1/agent.pb.go
+	$(PERL) -0pi -e 's/"\\\x62\x6c\x6f\x67_file/"\\x08log_file/g' pkg/api/torque/api/v1/agent.pb.go
 
 proto-lint: ## Lint protobuf definitions
 	$(BUF) lint

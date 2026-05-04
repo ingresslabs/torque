@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/ui"
-	"github.com/ingresslabs/ktl/internal/verify"
-	cfgpkg "github.com/ingresslabs/ktl/internal/verify/config"
-	"github.com/ingresslabs/ktl/internal/verify/engine"
-	"github.com/ingresslabs/ktl/internal/version"
+	"github.com/ingresslabs/torque/internal/ui"
+	"github.com/ingresslabs/torque/internal/verify"
+	cfgpkg "github.com/ingresslabs/torque/internal/verify/config"
+	"github.com/ingresslabs/torque/internal/verify/engine"
+	"github.com/ingresslabs/torque/internal/version"
 	"github.com/spf13/cobra"
 )
 

@@ -96,11 +96,11 @@ func TestLoadRun_RejectsTamperedEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, err = s.db.Exec(`
-UPDATE ktl_stack_events
+UPDATE torque_stack_events
 SET message = message || ' tampered'
 WHERE id = (
   SELECT id
-  FROM ktl_stack_events
+  FROM torque_stack_events
   WHERE run_id = ? AND node_id != ''
   ORDER BY id ASC
   LIMIT 1
@@ -121,7 +121,7 @@ WHERE id = (
 }
 
 func TestDisasterRecovery_KillAndReplayDoesNotCorruptSQLite(t *testing.T) {
-	if os.Getenv("KTL_STACK_TEST_HELPER") == "1" {
+	if os.Getenv("TORQUE_STACK_TEST_HELPER") == "1" {
 		helperMain(t)
 		return
 	}
@@ -132,8 +132,8 @@ func TestDisasterRecovery_KillAndReplayDoesNotCorruptSQLite(t *testing.T) {
 	// Start a helper process that will block on node 2, then we'll SIGKILL it.
 	cmd := exec.Command(os.Args[0], "-test.run", t.Name(), "-test.v")
 	cmd.Env = append(os.Environ(),
-		"KTL_STACK_TEST_HELPER=1",
-		"KTL_STACK_TEST_ROOT="+root,
+		"TORQUE_STACK_TEST_HELPER=1",
+		"TORQUE_STACK_TEST_ROOT="+root,
 	)
 	var stderr bytes.Buffer
 	cmd.Stdout = io.Discard
@@ -368,9 +368,9 @@ func (r *recordingExecutor) calledNames() []string {
 }
 
 func helperMain(t *testing.T) {
-	root := os.Getenv("KTL_STACK_TEST_ROOT")
+	root := os.Getenv("TORQUE_STACK_TEST_ROOT")
 	if strings.TrimSpace(root) == "" {
-		t.Fatal("missing KTL_STACK_TEST_ROOT")
+		t.Fatal("missing TORQUE_STACK_TEST_ROOT")
 	}
 
 	u, err := Discover(root)
@@ -425,7 +425,7 @@ data:
 		t.Fatal(err)
 	}
 
-	stackYAML := fmt.Sprintf(`apiVersion: ktl.dev/v1
+	stackYAML := fmt.Sprintf(`apiVersion: torque.dev/v1
 kind: Stack
 name: %s
 defaults:

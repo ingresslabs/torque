@@ -16,7 +16,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -112,15 +112,15 @@ func OpenMirrorStore(path string, opts MirrorStoreOptions) (MirrorStore, error) 
 		}
 	}
 
-	queueSize := envInt("KTL_MIRROR_STORE_QUEUE_SIZE", 4096)
+	queueSize := envInt("TORQUE_MIRROR_STORE_QUEUE_SIZE", 4096)
 	if queueSize < 128 {
 		queueSize = 128
 	}
-	batchSize := envInt("KTL_MIRROR_STORE_BATCH_SIZE", 256)
+	batchSize := envInt("TORQUE_MIRROR_STORE_BATCH_SIZE", 256)
 	if batchSize < 16 {
 		batchSize = 16
 	}
-	flushMS := envInt("KTL_MIRROR_STORE_FLUSH_MS", 250)
+	flushMS := envInt("TORQUE_MIRROR_STORE_FLUSH_MS", 250)
 	if flushMS < 25 {
 		flushMS = 25
 	}
@@ -217,7 +217,7 @@ func (s *sqliteMirrorStore) Append(frame *apiv1.MirrorFrame) error {
 	return s.enqueue(context.Background(), func(ctx context.Context, tx *sql.Tx) error {
 		// Ensure the session exists.
 		if _, err := tx.ExecContext(ctx, `
-INSERT OR IGNORE INTO ktl_mirror_sessions(
+INSERT OR IGNORE INTO torque_mirror_sessions(
   session_id,
   created_at_ns,
   last_seen_ns,
@@ -238,7 +238,7 @@ VALUES(?, ?, ?, ?, '', '[]', '', '', '', '', '', '', '{}')
 		}
 		// Update session cursor.
 		if _, err := tx.ExecContext(ctx, `
-UPDATE ktl_mirror_sessions
+UPDATE torque_mirror_sessions
 SET last_seen_ns = max(last_seen_ns, ?),
     last_sequence = max(last_sequence, ?),
     state = max(state, 1)
@@ -248,7 +248,7 @@ WHERE session_id = ?
 		}
 		// Insert the frame.
 		_, err := tx.ExecContext(ctx, `
-INSERT OR IGNORE INTO ktl_mirror_frames(session_id, sequence, received_ns, frame_proto)
+INSERT OR IGNORE INTO torque_mirror_frames(session_id, sequence, received_ns, frame_proto)
 VALUES(?, ?, ?, ?)
 `, sessionID, seq, received, blob)
 		if err != nil {
@@ -258,7 +258,7 @@ VALUES(?, ?, ?, ?)
 			// Keep the last N frames for the session.
 			threshold := int64(seq - maxFramesPerSession)
 			_, _ = tx.ExecContext(ctx, `
-DELETE FROM ktl_mirror_frames
+DELETE FROM torque_mirror_frames
 WHERE session_id = ? AND sequence <= ?
 `, sessionID, threshold)
 		}
@@ -284,7 +284,7 @@ func (s *sqliteMirrorStore) UpsertSessionMeta(ctx context.Context, sessionID str
 
 	// Ensure the session exists.
 	if _, err := s.writeDB.ExecContext(ctx, `
-INSERT OR IGNORE INTO ktl_mirror_sessions(
+INSERT OR IGNORE INTO torque_mirror_sessions(
   session_id,
   created_at_ns,
   last_seen_ns,
@@ -319,7 +319,7 @@ VALUES(?, ?, ?, 0, '', '[]', '', '', '', '', '', '', '{}')
 	tagsJSON, _ := json.Marshal(merged.Tags)
 
 	_, err = s.writeDB.ExecContext(ctx, `
-UPDATE ktl_mirror_sessions
+UPDATE torque_mirror_sessions
 SET last_seen_ns = max(last_seen_ns, ?),
     state = max(state, 1),
     command = ?,
@@ -365,7 +365,7 @@ func (s *sqliteMirrorStore) UpsertSessionStatus(ctx context.Context, sessionID s
 
 	// Ensure the session exists.
 	if _, err := s.writeDB.ExecContext(ctx, `
-INSERT OR IGNORE INTO ktl_mirror_sessions(
+INSERT OR IGNORE INTO torque_mirror_sessions(
   session_id,
   created_at_ns,
   last_seen_ns,
@@ -393,7 +393,7 @@ VALUES(?, ?, ?, 0, '', '[]', '', '', '', '', '', '', '{}')
 	merged.Status = mergeStatus(merged.Status, st)
 
 	_, err = s.writeDB.ExecContext(ctx, `
-UPDATE ktl_mirror_sessions
+UPDATE torque_mirror_sessions
 SET last_seen_ns = max(last_seen_ns, ?),
     state = ?,
     exit_code = ?,
@@ -426,7 +426,7 @@ func (s *sqliteMirrorStore) DeleteSession(ctx context.Context, sessionID string)
 	}
 	deleted := false
 	err := s.enqueueSync(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		res, err := tx.ExecContext(ctx, `DELETE FROM ktl_mirror_sessions WHERE session_id = ?`, sessionID)
+		res, err := tx.ExecContext(ctx, `DELETE FROM torque_mirror_sessions WHERE session_id = ?`, sessionID)
 		if err != nil {
 			return err
 		}
@@ -475,7 +475,7 @@ SELECT
   COALESCE(exit_code, 0),
   COALESCE(error_message, ''),
   COALESCE(completed_at_ns, 0)
-FROM ktl_mirror_sessions
+FROM torque_mirror_sessions
 WHERE session_id = ?
 `, sessionID).Scan(
 		&out.SessionID,
@@ -552,7 +552,7 @@ SELECT
   COALESCE(exit_code, 0),
   COALESCE(error_message, ''),
   COALESCE(completed_at_ns, 0)
-FROM ktl_mirror_sessions
+FROM torque_mirror_sessions
 ORDER BY last_seen_ns DESC
 LIMIT ?
 `, limit)
@@ -631,7 +631,7 @@ func (s *sqliteMirrorStore) Replay(ctx context.Context, sessionID string, fromSe
 	}
 	rows, err := s.readDB.QueryContext(ctx, `
 SELECT sequence, received_ns, frame_proto
-FROM ktl_mirror_frames
+FROM torque_mirror_frames
 WHERE session_id = ? AND sequence >= ?
 ORDER BY sequence
 `, sessionID, fromSequence)
@@ -830,7 +830,7 @@ func initMirrorSQLite(ctx context.Context, db *sql.DB) error {
 		`PRAGMA foreign_keys=ON;`,
 		`PRAGMA synchronous=NORMAL;`,
 		`PRAGMA busy_timeout=5000;`,
-		`CREATE TABLE IF NOT EXISTS ktl_mirror_sessions (
+		`CREATE TABLE IF NOT EXISTS torque_mirror_sessions (
   session_id TEXT PRIMARY KEY,
   created_at_ns INTEGER NOT NULL,
   last_seen_ns INTEGER NOT NULL,
@@ -849,18 +849,18 @@ func initMirrorSQLite(ctx context.Context, db *sql.DB) error {
   error_message TEXT NOT NULL DEFAULT '',
   completed_at_ns INTEGER NOT NULL DEFAULT 0
 );`,
-		`CREATE INDEX IF NOT EXISTS idx_mirror_sessions_last_seen ON ktl_mirror_sessions(last_seen_ns DESC);`,
-		`CREATE TABLE IF NOT EXISTS ktl_mirror_frames (
+		`CREATE INDEX IF NOT EXISTS idx_mirror_sessions_last_seen ON torque_mirror_sessions(last_seen_ns DESC);`,
+		`CREATE TABLE IF NOT EXISTS torque_mirror_frames (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id TEXT NOT NULL,
   sequence INTEGER NOT NULL,
   received_ns INTEGER NOT NULL,
   frame_proto BLOB NOT NULL,
-  FOREIGN KEY(session_id) REFERENCES ktl_mirror_sessions(session_id) ON DELETE CASCADE,
+  FOREIGN KEY(session_id) REFERENCES torque_mirror_sessions(session_id) ON DELETE CASCADE,
   UNIQUE(session_id, sequence)
 );`,
-		`CREATE INDEX IF NOT EXISTS idx_mirror_frames_session_seq ON ktl_mirror_frames(session_id, sequence);`,
-		`CREATE INDEX IF NOT EXISTS idx_mirror_frames_session_received ON ktl_mirror_frames(session_id, received_ns);`,
+		`CREATE INDEX IF NOT EXISTS idx_mirror_frames_session_seq ON torque_mirror_frames(session_id, sequence);`,
+		`CREATE INDEX IF NOT EXISTS idx_mirror_frames_session_received ON torque_mirror_frames(session_id, received_ns);`,
 	}
 	for _, stmt := range stmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
@@ -870,19 +870,19 @@ func initMirrorSQLite(ctx context.Context, db *sql.DB) error {
 
 	// Backfill new columns for older databases (SQLite doesn't support IF NOT EXISTS for ADD COLUMN).
 	alter := []string{
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN command TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN args_json TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN requester TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN cluster TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN kube_context TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN namespace TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN release TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN chart TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN tags_json TEXT;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN state INTEGER NOT NULL DEFAULT 0;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN exit_code INTEGER NOT NULL DEFAULT 0;`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN error_message TEXT NOT NULL DEFAULT '';`,
-		`ALTER TABLE ktl_mirror_sessions ADD COLUMN completed_at_ns INTEGER NOT NULL DEFAULT 0;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN command TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN args_json TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN requester TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN cluster TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN kube_context TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN namespace TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN release TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN chart TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN tags_json TEXT;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN state INTEGER NOT NULL DEFAULT 0;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN exit_code INTEGER NOT NULL DEFAULT 0;`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN error_message TEXT NOT NULL DEFAULT '';`,
+		`ALTER TABLE torque_mirror_sessions ADD COLUMN completed_at_ns INTEGER NOT NULL DEFAULT 0;`,
 	}
 	for _, stmt := range alter {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
@@ -941,15 +941,15 @@ func (s *sqliteMirrorStore) prune(ctx context.Context) error {
 
 	if s.maxSessions > 0 {
 		var count int
-		if err := tx.QueryRowContext(ctx, `SELECT COUNT(1) FROM ktl_mirror_sessions`).Scan(&count); err != nil {
+		if err := tx.QueryRowContext(ctx, `SELECT COUNT(1) FROM torque_mirror_sessions`).Scan(&count); err != nil {
 			return err
 		}
 		excess := count - s.maxSessions
 		if excess > 0 {
 			if _, err := tx.ExecContext(ctx, `
-DELETE FROM ktl_mirror_sessions
+DELETE FROM torque_mirror_sessions
 WHERE session_id IN (
-  SELECT session_id FROM ktl_mirror_sessions ORDER BY last_seen_ns ASC LIMIT ?
+  SELECT session_id FROM torque_mirror_sessions ORDER BY last_seen_ns ASC LIMIT ?
 )`, excess); err != nil {
 				return err
 			}
@@ -967,9 +967,9 @@ WHERE session_id IN (
 			}
 			// Delete a few oldest sessions and re-check.
 			res, err := tx.ExecContext(ctx, `
-DELETE FROM ktl_mirror_sessions
+DELETE FROM torque_mirror_sessions
 WHERE session_id IN (
-  SELECT session_id FROM ktl_mirror_sessions ORDER BY last_seen_ns ASC LIMIT 10
+  SELECT session_id FROM torque_mirror_sessions ORDER BY last_seen_ns ASC LIMIT 10
 )`)
 			if err != nil {
 				return err

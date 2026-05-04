@@ -18,7 +18,7 @@ on:
         type: boolean
         default: false
       e2e_real:
-        description: "Run real-cluster e2e (requires secrets KTL_E2E_KUBECONFIG_B64 and KTL_E2E_NAMESPACE)"
+        description: "Run real-cluster e2e (requires secrets TORQUE_E2E_KUBECONFIG_B64 and TORQUE_E2E_NAMESPACE)"
         required: false
         type: boolean
         default: false
@@ -214,26 +214,26 @@ jobs:
       - name: Validate e2e secrets
         shell: bash
         env:
-          KUBECONFIG_B64: ${{ secrets.KTL_E2E_KUBECONFIG_B64 }}
-          NAMESPACE: ${{ secrets.KTL_E2E_NAMESPACE }}
+          KUBECONFIG_B64: ${{ secrets.TORQUE_E2E_KUBECONFIG_B64 }}
+          NAMESPACE: ${{ secrets.TORQUE_E2E_NAMESPACE }}
         run: |
           set -euo pipefail
           if [[ -z "${KUBECONFIG_B64}" ]]; then
-            echo "missing required secret: KTL_E2E_KUBECONFIG_B64" >&2
+            echo "missing required secret: TORQUE_E2E_KUBECONFIG_B64" >&2
             exit 2
           fi
           if [[ -z "${NAMESPACE}" ]]; then
-            echo "missing required secret: KTL_E2E_NAMESPACE" >&2
+            echo "missing required secret: TORQUE_E2E_NAMESPACE" >&2
             exit 2
           fi
       - name: Decode kubeconfig
         shell: bash
         run: |
           set -euo pipefail
-          echo "${{ secrets.KTL_E2E_KUBECONFIG_B64 }}" | base64 -d > /tmp/ktl-e2e-kubeconfig
-          chmod 600 /tmp/ktl-e2e-kubeconfig
+          echo "${{ secrets.TORQUE_E2E_KUBECONFIG_B64 }}" | base64 -d > /tmp/torque-e2e-kubeconfig
+          chmod 600 /tmp/torque-e2e-kubeconfig
       - name: Testpoint (real-cluster e2e)
         env:
-          KUBECONFIG: /tmp/ktl-e2e-kubeconfig
-          KTL_STACK_VERIFY_E2E_NAMESPACE: ${{ secrets.KTL_E2E_NAMESPACE }}
+          KUBECONFIG: /tmp/torque-e2e-kubeconfig
+          TORQUE_STACK_VERIFY_E2E_NAMESPACE: ${{ secrets.TORQUE_E2E_NAMESPACE }}
         run: ./scripts/testpoint.sh --ci --no-fmt --no-lint --no-unit --no-smoke --e2e-real

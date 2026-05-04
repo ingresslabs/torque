@@ -8,7 +8,7 @@ import (
 
 	"github.com/moby/buildkit/client"
 
-	"github.com/ingresslabs/ktl/pkg/buildkit"
+	"github.com/ingresslabs/torque/pkg/buildkit"
 )
 
 // HeatmapListener receives per-service summaries during compose builds.

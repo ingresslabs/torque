@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generate the static help-ui site under ./site by running the local ktl binary
+# Generate the static help-ui site under ./site by running the local torque binary
 # and scraping its HTML + JSON endpoints.
 #
 # This avoids duplicating help-ui template/index logic in another generator.
@@ -12,19 +12,19 @@ cd "${repo_root}"
 OUT_DIR="${OUT_DIR:-site}"
 INCLUDE_ALL="${INCLUDE_ALL:-0}" # set to 1 to include hidden/internal flags + env vars
 site_bin_dir=""
-if [[ -z "${KTL_BIN:-}" ]]; then
+if [[ -z "${TORQUE_BIN:-}" ]]; then
   site_bin_dir="$(mktemp -d)"
-  KTL_BIN="${site_bin_dir}/ktl"
+  TORQUE_BIN="${site_bin_dir}/torque"
 fi
 
 mkdir -p "${OUT_DIR}"
 touch "${OUT_DIR}/.nojekyll"
 rm -rf "${OUT_DIR}/assets"
 
-if [[ ! -x "${KTL_BIN}" ]]; then
-  echo ">> building ${KTL_BIN}"
-  mkdir -p "$(dirname "${KTL_BIN}")"
-  go build -trimpath -buildvcs=false -o "${KTL_BIN}" ./cmd/ktl
+if [[ ! -x "${TORQUE_BIN}" ]]; then
+  echo ">> building ${TORQUE_BIN}"
+  mkdir -p "$(dirname "${TORQUE_BIN}")"
+  go build -trimpath -buildvcs=false -o "${TORQUE_BIN}" ./cmd/torque
 fi
 
 port="$(
@@ -48,7 +48,7 @@ fi
 
 echo ">> starting help UI on ${base_url}"
 set +e
-"${KTL_BIN}" "${args[@]}" >/tmp/ktl-site.log 2>&1 &
+"${TORQUE_BIN}" "${args[@]}" >/tmp/torque-site.log 2>&1 &
 pid="$!"
 set -e
 
@@ -71,7 +71,7 @@ for i in $(seq 1 80); do
   sleep 0.05
   if [[ "${i}" -eq 80 ]]; then
     echo "help UI did not become ready; log follows:" >&2
-    sed -n '1,200p' /tmp/ktl-site.log >&2 || true
+    sed -n '1,200p' /tmp/torque-site.log >&2 || true
     exit 2
   fi
 done
@@ -83,7 +83,7 @@ echo ">> fetching HTML + index.json"
 curl -fsS "${base_url}/" >"${tmp_html}"
 # Prefer /index.json so the fetched HTML works as a static site without an /api/ router.
 curl -fsS "${base_url}/index.json" >"${tmp_json}"
-python3 - "${tmp_html}" "${KTL_SITE_VERSION_LABEL:-ktl docs}" <<'PY'
+python3 - "${tmp_html}" "${TORQUE_SITE_VERSION_LABEL:-torque docs}" <<'PY'
 import re
 import sys
 from html import escape
@@ -100,7 +100,7 @@ html = re.sub(
 with open(path, "w", encoding="utf-8") as fh:
     fh.write(html)
 PY
-python3 - "${tmp_json}" "${KTL_SITE_GENERATED_AT:-1970-01-01T00:00:00Z}" <<'PY'
+python3 - "${tmp_json}" "${TORQUE_SITE_GENERATED_AT:-1970-01-01T00:00:00Z}" <<'PY'
 import json
 import sys
 

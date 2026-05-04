@@ -1,4 +1,4 @@
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: complex-hooks
 
@@ -14,7 +14,7 @@ hooks:
       type: kubectl
       runOnce: true
       when: always
-      namespace: __KTL_TEST_NAMESPACE__
+      namespace: __TORQUE_TEST_NAMESPACE__
       kubectl:
         args: ["apply", "-f", "./hooks/preapply-configmap.yaml"]
     - name: stack-pre-flaky
@@ -26,16 +26,16 @@ hooks:
         workDir: "./hooks"
         command: ["sh", "flaky.sh"]
         env:
-          HOOK_STATE_DIR: "__KTL_TEST_STATE_DIR__"
+          HOOK_STATE_DIR: "__TORQUE_TEST_STATE_DIR__"
     - name: stack-pre-http
       type: http
       runOnce: true
       when: always
       http:
         method: POST
-        url: "__KTL_TEST_HOOK_SERVER__/stack-pre"
+        url: "__TORQUE_TEST_HOOK_SERVER__/stack-pre"
         headers:
-          X-KTL-Test: stack-pre
+          X-TORQUE-Test: stack-pre
         body: "stack pre apply"
   postApply:
     - name: stack-post-http-success
@@ -43,7 +43,7 @@ hooks:
       runOnce: true
       when: success
       http:
-        url: "__KTL_TEST_HOOK_SERVER__/stack-post"
+        url: "__TORQUE_TEST_HOOK_SERVER__/stack-post"
     - name: stack-post-emit
       type: script
       runOnce: true
@@ -63,12 +63,12 @@ hooks:
       runOnce: true
       when: always
       http:
-        url: "__KTL_TEST_HOOK_SERVER__/stack-post-delete"
+        url: "__TORQUE_TEST_HOOK_SERVER__/stack-post-delete"
 
 releases:
-  - name: __KTL_TEST_RELEASE_A__
-    chart: "__KTL_TEST_CHART__"
-    namespace: __KTL_TEST_NAMESPACE__
+  - name: __TORQUE_TEST_RELEASE_A__
+    chart: "__TORQUE_TEST_CHART__"
+    namespace: __TORQUE_TEST_NAMESPACE__
     apply:
       wait: true
       timeout: 2m
@@ -81,16 +81,16 @@ releases:
             workDir: "./hooks"
             command: ["sh", "rel-pre.sh"]
             env:
-              HOOK_STATE_DIR: "__KTL_TEST_STATE_DIR__"
+              HOOK_STATE_DIR: "__TORQUE_TEST_STATE_DIR__"
       postApply:
         - name: rel-post-http
           type: http
           when: success
           http:
             method: POST
-            url: "__KTL_TEST_HOOK_SERVER__/rel-post"
+            url: "__TORQUE_TEST_HOOK_SERVER__/rel-post"
             headers:
-              X-Release: "__KTL_TEST_RELEASE_A__"
+              X-Release: "__TORQUE_TEST_RELEASE_A__"
             body: "rel post apply"
       preDelete:
         - name: rel-predelete-emit
@@ -103,11 +103,11 @@ releases:
           type: http
           when: always
           http:
-            url: "__KTL_TEST_HOOK_SERVER__/rel-post-delete"
-  - name: __KTL_TEST_RELEASE_B__
-    chart: "__KTL_TEST_CHART__"
-    namespace: __KTL_TEST_NAMESPACE__
-    needs: ["__KTL_TEST_RELEASE_A__"]
+            url: "__TORQUE_TEST_HOOK_SERVER__/rel-post-delete"
+  - name: __TORQUE_TEST_RELEASE_B__
+    chart: "__TORQUE_TEST_CHART__"
+    namespace: __TORQUE_TEST_NAMESPACE__
+    needs: ["__TORQUE_TEST_RELEASE_A__"]
     apply:
       wait: true
       timeout: 2m
@@ -120,16 +120,16 @@ releases:
             workDir: "./hooks"
             command: ["sh", "rel-pre.sh"]
             env:
-              HOOK_STATE_DIR: "__KTL_TEST_STATE_DIR__"
+              HOOK_STATE_DIR: "__TORQUE_TEST_STATE_DIR__"
       postApply:
         - name: rel-post-http
           type: http
           when: success
           http:
             method: POST
-            url: "__KTL_TEST_HOOK_SERVER__/rel-post"
+            url: "__TORQUE_TEST_HOOK_SERVER__/rel-post"
             headers:
-              X-Release: "__KTL_TEST_RELEASE_B__"
+              X-Release: "__TORQUE_TEST_RELEASE_B__"
             body: "rel post apply"
       preDelete:
         - name: rel-predelete-emit
@@ -142,4 +142,4 @@ releases:
           type: http
           when: always
           http:
-            url: "__KTL_TEST_HOOK_SERVER__/rel-post-delete"
+            url: "__TORQUE_TEST_HOOK_SERVER__/rel-post-delete"

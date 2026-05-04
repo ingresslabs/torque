@@ -12,14 +12,14 @@ import (
 	"strings"
 	"time"
 
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
-const httpAuthCookieName = "ktl_token"
+const httpAuthCookieName = "torque_token"
 
 func newHTTPGateway(token string, mirror *MirrorServer) http.Handler {
 	mux := http.NewServeMux()
@@ -580,7 +580,7 @@ func allowCORS(w http.ResponseWriter, r *http.Request) bool {
 	// Default to permissive CORS for local dev UIs; real deployments should prefer
 	// a reverse proxy that applies tighter CORS rules.
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "authorization,x-ktl-token,last-event-id,content-type")
+	w.Header().Set("Access-Control-Allow-Headers", "authorization,x-torque-token,last-event-id,content-type")
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS")
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
@@ -599,7 +599,7 @@ func requireHTTPAuth(w http.ResponseWriter, r *http.Request, expected string) bo
 	}
 	raw := strings.TrimSpace(r.Header.Get("Authorization"))
 	if raw == "" {
-		raw = strings.TrimSpace(r.Header.Get("X-KTL-Token"))
+		raw = strings.TrimSpace(r.Header.Get("X-TORQUE-Token"))
 	}
 	if raw == "" {
 		if c, err := r.Cookie(httpAuthCookieName); err == nil && c != nil {

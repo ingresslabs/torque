@@ -96,10 +96,10 @@ func DriftReport(p *Plan) ([]string, error) {
 			// Include a stable header so multiple diffs per node are easy to scan.
 			drift = append(drift, fmt.Sprintf("%s inputs changed (%s -> %s):", n.ID, want, got))
 
-			if n.EffectiveInput.KtlVersion != gotInput.KtlVersion || n.EffectiveInput.KtlGitCommit != gotInput.KtlGitCommit {
-				drift = append(drift, fmt.Sprintf("  ktl: %s (%s) -> %s (%s)",
-					n.EffectiveInput.KtlVersion, n.EffectiveInput.KtlGitCommit,
-					gotInput.KtlVersion, gotInput.KtlGitCommit,
+			if n.EffectiveInput.TorqueVersion != gotInput.TorqueVersion || n.EffectiveInput.TorqueGitCommit != gotInput.TorqueGitCommit {
+				drift = append(drift, fmt.Sprintf("  torque: %s (%s) -> %s (%s)",
+					n.EffectiveInput.TorqueVersion, n.EffectiveInput.TorqueGitCommit,
+					gotInput.TorqueVersion, gotInput.TorqueGitCommit,
 				))
 			}
 			if n.EffectiveInput.StackGitCommit != gotInput.StackGitCommit || n.EffectiveInput.StackGitDirty != gotInput.StackGitDirty {

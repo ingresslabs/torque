@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/featureflags"
+	"github.com/ingresslabs/torque/internal/featureflags"
 )
 
 func featureFlagsDoc() string {
@@ -14,7 +14,7 @@ func featureFlagsDoc() string {
 	}
 	var b strings.Builder
 	b.WriteString("Registered feature flags\n\n")
-	b.WriteString("Enable per invocation with `ktl --feature <name>` (repeatable/comma-separated), via config (`feature: [\"<name>\"]`), or env vars `KTL_FEATURE_<FLAG>`.\n\n")
+	b.WriteString("Enable per invocation with `torque --feature <name>` (repeatable/comma-separated), via config (`feature: [\"<name>\"]`), or env vars `TORQUE_FEATURE_<FLAG>`.\n\n")
 	for _, def := range defs {
 		defaultState := "off"
 		if def.Default {

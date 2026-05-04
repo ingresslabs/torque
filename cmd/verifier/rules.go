@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/appconfig"
-	"github.com/ingresslabs/ktl/internal/verify"
+	"github.com/ingresslabs/torque/internal/appconfig"
+	"github.com/ingresslabs/torque/internal/verify"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func newVerifyRulesCommand(rulesPath *string) *cobra.Command {
 		Use:   "rules",
 		Short: "Browse available verifier rules",
 		Long: strings.TrimSpace(`
-List or inspect the rule metadata shipped with ktl verifier and verify.
+List or inspect the rule metadata shipped with torque verifier and verify.
 
 This is a discovery tool: it helps you understand rule meaning and severity,
 and it gives you stable rule IDs to use in selectors.
@@ -235,7 +235,7 @@ func loadRulesForCLI(rulesDir string, rulesPath *string) (verify.Ruleset, error)
 	if rulesPath != nil {
 		paths = append(paths, splitListLocal(*rulesPath)...)
 	}
-	if env := strings.TrimSpace(os.Getenv("KTL_VERIFY_RULES_PATH")); env != "" {
+	if env := strings.TrimSpace(os.Getenv("TORQUE_VERIFY_RULES_PATH")); env != "" {
 		paths = append(paths, splitListLocal(env)...)
 	}
 	return verify.LoadRuleset(paths...)

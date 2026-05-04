@@ -11,7 +11,7 @@ import (
 
 func TestWriteReport_HTML_Golden(t *testing.T) {
 	rep := &Report{
-		Tool:        "ktl-verify",
+		Tool:        "torque-verify",
 		Engine:      EngineMeta{Name: "builtin", Ruleset: "builtin@test"},
 		Mode:        ModeWarn,
 		FailOn:      SeverityHigh,
@@ -43,12 +43,12 @@ func TestWriteReport_HTML_Golden(t *testing.T) {
 		t.Fatalf("WriteReport(html): %v", err)
 	}
 	got := out.String()
-	if !strings.Contains(got, "<title>ktl verify report</title>") {
+	if !strings.Contains(got, "<title>torque verify report</title>") {
 		t.Fatalf("expected HTML title, got:\n%s", got[:min2(400, len(got))])
 	}
 
 	goldenPath := filepath.Join("testdata", "verify", "golden", "verify_report.html")
-	if os.Getenv("KTL_UPDATE_GOLDENS") == "1" {
+	if os.Getenv("TORQUE_UPDATE_GOLDENS") == "1" {
 		if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
 			t.Fatalf("mkdir: %v", err)
 		}
@@ -58,10 +58,10 @@ func TestWriteReport_HTML_Golden(t *testing.T) {
 	}
 	want, err := os.ReadFile(goldenPath)
 	if err != nil {
-		t.Fatalf("read golden %s: %v (set KTL_UPDATE_GOLDENS=1 to generate)", goldenPath, err)
+		t.Fatalf("read golden %s: %v (set TORQUE_UPDATE_GOLDENS=1 to generate)", goldenPath, err)
 	}
 	if string(want) != got {
-		t.Fatalf("golden mismatch (%s). set KTL_UPDATE_GOLDENS=1 to update", goldenPath)
+		t.Fatalf("golden mismatch (%s). set TORQUE_UPDATE_GOLDENS=1 to update", goldenPath)
 	}
 }
 

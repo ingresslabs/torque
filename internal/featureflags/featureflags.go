@@ -57,7 +57,7 @@ func Definitions() []Definition {
 	return defs
 }
 
-// Flags captures the resolved state of all feature flags for a ktl invocation.
+// Flags captures the resolved state of all feature flags for a torque invocation.
 type Flags struct {
 	values map[Name]bool
 }
@@ -85,7 +85,7 @@ func (f Flags) EnabledNames() []Name {
 	return names
 }
 
-// EnvVar returns the environment variable that toggles the flag (e.g. KTL_FEATURE_FOO).
+// EnvVar returns the environment variable that toggles the flag (e.g. TORQUE_FEATURE_FOO).
 func (d Definition) EnvVar() string {
 	return envVarForName(d.Name)
 }
@@ -113,14 +113,14 @@ func Resolve(sources ...[]string) (Flags, error) {
 	return Flags{values: values}, nil
 }
 
-// EnabledFromEnv scans the current environment (or the provided list) for KTL_FEATURE_* values.
+// EnabledFromEnv scans the current environment (or the provided list) for TORQUE_FEATURE_* values.
 func EnabledFromEnv(environ []string) []string {
 	if environ == nil {
 		environ = os.Environ()
 	}
 	var enabled []string
 	for _, entry := range environ {
-		if !strings.HasPrefix(entry, "KTL_FEATURE_") {
+		if !strings.HasPrefix(entry, "TORQUE_FEATURE_") {
 			continue
 		}
 		parts := strings.SplitN(entry, "=", 2)
@@ -130,7 +130,7 @@ func EnabledFromEnv(environ []string) []string {
 		if !isTruthy(parts[1]) {
 			continue
 		}
-		name := strings.TrimPrefix(parts[0], "KTL_FEATURE_")
+		name := strings.TrimPrefix(parts[0], "TORQUE_FEATURE_")
 		name = strings.ReplaceAll(name, "_", "-")
 		name = strings.ToLower(name)
 		enabled = append(enabled, name)
@@ -183,7 +183,7 @@ func normalizeName(raw string) Name {
 func envVarForName(name Name) string {
 	upper := strings.ToUpper(string(name))
 	upper = strings.ReplaceAll(upper, "-", "_")
-	return "KTL_FEATURE_" + upper
+	return "TORQUE_FEATURE_" + upper
 }
 
 func isTruthy(val string) bool {

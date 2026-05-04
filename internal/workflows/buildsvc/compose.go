@@ -13,9 +13,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/dockerconfig"
-	"github.com/ingresslabs/ktl/pkg/buildkit"
-	appcompose "github.com/ingresslabs/ktl/pkg/compose"
+	"github.com/ingresslabs/torque/internal/dockerconfig"
+	"github.com/ingresslabs/torque/pkg/buildkit"
+	appcompose "github.com/ingresslabs/torque/pkg/compose"
 )
 
 func (s *service) runComposeBuild(ctx context.Context, composeFiles []string, opts Options, observers []buildkit.ProgressObserver, diagnosticObservers []buildkit.BuildDiagnosticObserver, quietProgress bool, stream *buildProgressBroadcaster, streams Streams) error {

@@ -11,18 +11,18 @@ import (
 )
 
 const (
-	sandboxActiveEnvKey        = "KTL_SANDBOX_ACTIVE"
-	legacySandboxActiveEnvKey  = "KTL_NSJAIL_ACTIVE"
-	sandboxLogPathEnvKey       = "KTL_SANDBOX_LOG_PATH"
-	legacySandboxLogPathEnv    = "KTL_NSJAIL_LOG_PATH"
-	sandboxDisableEnvKey       = "KTL_SANDBOX_DISABLE"
-	legacySandboxDisableEnv    = "KTL_NSJAIL_DISABLE"
-	sandboxContextEnvKey       = "KTL_SANDBOX_CONTEXT"
-	legacySandboxContextEnvKey = "KTL_NSJAIL_CONTEXT"
-	sandboxCacheEnvKey         = "KTL_SANDBOX_CACHE"
-	legacySandboxCacheEnvKey   = "KTL_NSJAIL_CACHE"
-	sandboxBuilderEnvKey       = "KTL_SANDBOX_BUILDER"
-	legacySandboxBuilderEnvKey = "KTL_NSJAIL_BUILDER"
+	sandboxActiveEnvKey        = "TORQUE_SANDBOX_ACTIVE"
+	legacySandboxActiveEnvKey  = "TORQUE_NSJAIL_ACTIVE"
+	sandboxLogPathEnvKey       = "TORQUE_SANDBOX_LOG_PATH"
+	legacySandboxLogPathEnv    = "TORQUE_NSJAIL_LOG_PATH"
+	sandboxDisableEnvKey       = "TORQUE_SANDBOX_DISABLE"
+	legacySandboxDisableEnv    = "TORQUE_NSJAIL_DISABLE"
+	sandboxContextEnvKey       = "TORQUE_SANDBOX_CONTEXT"
+	legacySandboxContextEnvKey = "TORQUE_NSJAIL_CONTEXT"
+	sandboxCacheEnvKey         = "TORQUE_SANDBOX_CACHE"
+	legacySandboxCacheEnvKey   = "TORQUE_NSJAIL_CACHE"
+	sandboxBuilderEnvKey       = "TORQUE_SANDBOX_BUILDER"
+	legacySandboxBuilderEnvKey = "TORQUE_NSJAIL_BUILDER"
 )
 
 type sandboxInjector func(ctx context.Context, opts *Options, streams Streams, contextAbs string) (bool, error)

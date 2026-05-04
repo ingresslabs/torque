@@ -15,7 +15,7 @@ kubectl --kubeconfig ~/.kube/archimedes.yaml apply -f testdata/verify/showcase/r
 Use the custom ruleset (includes a CRITICAL rule):
 
 ```bash
-./bin/verify verify namespace ktl-verify-showcase \
+./bin/verify verify namespace torque-verify-showcase \
   --kubeconfig ~/.kube/archimedes.yaml \
   --rules-dir testdata/verify/showcase/rules
 ```
@@ -23,5 +23,5 @@ Use the custom ruleset (includes a CRITICAL rule):
 To remove:
 
 ```bash
-kubectl --kubeconfig ~/.kube/archimedes.yaml delete ns ktl-verify-showcase
+kubectl --kubeconfig ~/.kube/archimedes.yaml delete ns torque-verify-showcase
 ```

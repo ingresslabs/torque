@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement or a new capability for ktl.
+description: Suggest an improvement or a new capability for torque.
 title: "feat: "
 labels:
   - enhancement
@@ -29,7 +29,7 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: What should ktl do? Include CLI UX (commands/flags/output) if relevant.
+      description: What should torque do? Include CLI UX (commands/flags/output) if relevant.
     validations:
       required: true
 

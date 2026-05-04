@@ -1,27 +1,27 @@
 bin/*
-ktl-report-*
-ktl-capture-*.sqlite
-ktl-capture-*.sqlite-wal
-ktl-capture-*.sqlite-shm
+torque-report-*
+torque-capture-*.sqlite
+torque-capture-*.sqlite-wal
+torque-capture-*.sqlite-shm
 testdata/build/dockerfile/dist/*
 dist/
 *.deb
 *.rpm
 .DS_Store
 
-# ktl local state
-.ktl/
+# torque local state
+.torque/
 # temp verify binaries/logs
 /tmp/verify_*.tmp
 /tmp/v.yaml
 # go build caches (local)
 *.test
 *.out
-# ktl local state
-.ktl/
+# torque local state
+.torque/
 
 .bin/
-/ktl
+/torque
 kubeconfig-lab
 
 # AI agent / local assistant workspace files

@@ -14,15 +14,15 @@ import (
 
 	"github.com/go-logr/logr"
 
-	"github.com/ingresslabs/ktl/internal/api/convert"
-	"github.com/ingresslabs/ktl/internal/kube"
-	"github.com/ingresslabs/ktl/internal/tailer"
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/torque/internal/api/convert"
+	"github.com/ingresslabs/torque/internal/kube"
+	"github.com/ingresslabs/torque/internal/tailer"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// LogServer relays ktl log streams over gRPC.
+// LogServer relays torque log streams over gRPC.
 type LogServer struct {
 	apiv1.UnimplementedLogServiceServer
 	Config Config

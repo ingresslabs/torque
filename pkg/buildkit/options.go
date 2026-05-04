@@ -146,7 +146,7 @@ func (defaultRunner) BuildDockerfile(ctx context.Context, opts DockerfileBuildOp
 
 // DefaultBuilderAddress returns the best-effort rootless BuildKit socket.
 func DefaultBuilderAddress() string {
-	if v := os.Getenv("KTL_BUILDKIT_HOST"); v != "" {
+	if v := os.Getenv("TORQUE_BUILDKIT_HOST"); v != "" {
 		return v
 	}
 	if v := os.Getenv("BUILDKIT_HOST"); v != "" {
@@ -169,16 +169,16 @@ func DefaultBuilderAddress() string {
 
 // DefaultCacheDir returns a user cache folder for BuildKit metadata.
 func DefaultCacheDir() string {
-	if v := os.Getenv("KTL_BUILDKIT_CACHE"); v != "" {
+	if v := os.Getenv("TORQUE_BUILDKIT_CACHE"); v != "" {
 		return v
 	}
 	if cacheDir, err := os.UserCacheDir(); err == nil {
-		return filepath.Join(cacheDir, "ktl", "buildkit-cache")
+		return filepath.Join(cacheDir, "torque", "buildkit-cache")
 	}
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
-		return filepath.Join(home, ".cache", "ktl", "buildkit-cache")
+		return filepath.Join(home, ".cache", "torque", "buildkit-cache")
 	}
-	return filepath.Join(os.TempDir(), "ktl-buildkit-cache")
+	return filepath.Join(os.TempDir(), "torque-buildkit-cache")
 }
 
 // DefaultOCIOutputDir returns the dist/ path for OCI exports relative to the context.
@@ -203,5 +203,5 @@ func DefaultLocalTag(contextDir string) string {
 	if sanitized == "" {
 		sanitized = "workspace"
 	}
-	return fmt.Sprintf("ktl.local/%s:dev", sanitized)
+	return fmt.Sprintf("torque.local/%s:dev", sanitized)
 }

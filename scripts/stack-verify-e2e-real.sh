@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Real-cluster e2e verification for `ktl stack` verify (Kubernetes-only health gates).
+# Real-cluster e2e verification for `torque stack` verify (Kubernetes-only health gates).
 #
 # This suite is separate from scripts/stack-e2e-real.sh because it intentionally
 # creates real workloads (Deployments/Pods), not just ConfigMaps.
 #
 # Required:
 #   KUBECONFIG_PATH=/path/to/kubeconfig
-#   KTL_STACK_VERIFY_E2E_CONFIRM=1
+#   TORQUE_STACK_VERIFY_E2E_CONFIRM=1
 #
 # Optional:
 #   KUBE_CONTEXT=...
-#   KTL_STACK_VERIFY_E2E_NAMESPACE=ktl-stack-verify-e2e
+#   TORQUE_STACK_VERIFY_E2E_NAMESPACE=torque-stack-verify-e2e
 #
 
 ROOT_BASE="${ROOT_BASE:-testdata/stack/verify-e2e-real}"
 KUBECONFIG_PATH="${KUBECONFIG_PATH:-}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-}"
-NAMESPACE="${KTL_STACK_VERIFY_E2E_NAMESPACE:-ktl-stack-verify-e2e}"
+NAMESPACE="${TORQUE_STACK_VERIFY_E2E_NAMESPACE:-torque-stack-verify-e2e}"
 
-if [[ "${KTL_STACK_VERIFY_E2E_CONFIRM:-}" != "1" ]]; then
-  echo "Refusing to run without KTL_STACK_VERIFY_E2E_CONFIRM=1" >&2
+if [[ "${TORQUE_STACK_VERIFY_E2E_CONFIRM:-}" != "1" ]]; then
+  echo "Refusing to run without TORQUE_STACK_VERIFY_E2E_CONFIRM=1" >&2
   echo "This script talks to a real cluster and will create Deployments/Pods." >&2
   exit 2
 fi
@@ -49,7 +49,7 @@ file_matches() {
   fi
 }
 
-echo "ktl stack verify real-cluster e2e"
+echo "torque stack verify real-cluster e2e"
 echo "  fixtures:    ${ROOT_BASE}"
 echo "  kubeconfig:  ${KUBECONFIG_PATH}"
 if [[ -n "${KUBE_CONTEXT}" ]]; then
@@ -61,27 +61,27 @@ echo
 make -s build
 
 kubectl_args=(--kubeconfig "${KUBECONFIG_PATH}")
-ktl_args=(--kubeconfig "${KUBECONFIG_PATH}")
+torque_args=(--kubeconfig "${KUBECONFIG_PATH}")
 if [[ -n "${KUBE_CONTEXT}" ]]; then
   kubectl_args+=(--context "${KUBE_CONTEXT}")
-  ktl_args+=(--context "${KUBE_CONTEXT}")
+  torque_args+=(--context "${KUBE_CONTEXT}")
 fi
 
 echo ">> ensure namespace ${NAMESPACE}"
 kubectl "${kubectl_args[@]}" get ns "${NAMESPACE}" >/dev/null 2>&1 || kubectl "${kubectl_args[@]}" create ns "${NAMESPACE}"
 
-tmp_root="$(mktemp -d "${TMPDIR:-/tmp}/ktl-stack-verify-e2e-real.XXXXXX")"
+tmp_root="$(mktemp -d "${TMPDIR:-/tmp}/torque-stack-verify-e2e-real.XXXXXX")"
 cleanup() { rm -rf "${tmp_root}"; }
 trap cleanup EXIT
 
 copy_fixture_tree() {
   local dst="$1"
   if command -v rsync >/dev/null 2>&1; then
-    rsync -a --delete --exclude ".ktl" "${ROOT_BASE}/" "${dst}/"
+    rsync -a --delete --exclude ".torque" "${ROOT_BASE}/" "${dst}/"
   else
     mkdir -p "${dst}"
     cp -R "${ROOT_BASE}/." "${dst}/"
-    rm -rf "${dst}/"*/.ktl || true
+    rm -rf "${dst}/"*/.torque || true
   fi
 }
 
@@ -102,7 +102,7 @@ def rewrite(path: str) -> None:
     out = []
     for line in lines:
         line = line.replace("kubeconfig: ~/.kube/archimedes.yaml", f"kubeconfig: {kubeconfig}")
-        line = line.replace("namespace: ktl-stack-verify-e2e", f"namespace: {namespace}")
+        line = line.replace("namespace: torque-stack-verify-e2e", f"namespace: {namespace}")
         out.append(line)
 
     with open(path, "w", encoding="utf-8") as f:
@@ -133,14 +133,14 @@ rewrite_fixture_yaml "${work}"
 root="${work}/01-deploy-not-ready"
 
 echo ">> plan (${root})"
-./bin/ktl "${ktl_args[@]}" stack plan --root "${root}" --output table >/dev/null
+./bin/torque "${torque_args[@]}" stack plan --root "${root}" --output table >/dev/null
 
 echo ">> apply expect verify failure (${root})"
-must_fail "verify should fail" ./bin/ktl "${ktl_args[@]}" stack apply --root "${root}" --yes --retry 1
+must_fail "verify should fail" ./bin/torque "${torque_args[@]}" stack apply --root "${root}" --yes --retry 1
 
 echo ">> status shows verify failed (${root})"
 status_raw_out="${root}/.status.raw.jsonl"
-./bin/ktl "${ktl_args[@]}" stack status --root "${root}" --format raw --tail 200 >"${status_raw_out}"
+./bin/torque "${torque_args[@]}" stack status --root "${root}" --format raw --tail 200 >"${status_raw_out}"
 file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"
 file_matches '"status"[[:space:]]*:[[:space:]]*"failed"' "${status_raw_out}"
 
@@ -155,9 +155,9 @@ data=data.replace('failOnWarnings: true','failOnWarnings: false')
 open(path,"w",encoding="utf-8").write(data)
 PY
 
-./bin/ktl "${ktl_args[@]}" stack apply --root "${root}" --yes --retry 5 >/dev/null
+./bin/torque "${torque_args[@]}" stack apply --root "${root}" --yes --retry 5 >/dev/null
 
 echo ">> delete cleanup (${root})"
-./bin/ktl "${ktl_args[@]}" stack delete --root "${root}" --yes --retry 2 >/dev/null
+./bin/torque "${torque_args[@]}" stack delete --root "${root}" --yes --retry 2 >/dev/null
 
 echo "All stack verify e2e checks passed"

@@ -13,7 +13,7 @@ func TestEvaluate(t *testing.T) {
 
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "policy.rego"), []byte(`
-package ktl.build
+package torque.build
 
 deny[msg] {
   base := input.bases[_]

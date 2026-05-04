@@ -19,7 +19,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func TestKtlStackComplexHooksE2E(t *testing.T) {
+func TestTorqueStackComplexHooksE2E(t *testing.T) {
 	requireCommand(t, "kubectl")
 	requireCommand(t, "helm")
 
@@ -40,15 +40,15 @@ func TestKtlStackComplexHooksE2E(t *testing.T) {
 		RunID:         strconv.FormatInt(time.Now().UnixNano(), 10),
 		ReleaseA:      releaseA,
 		ReleaseB:      releaseB,
-		ChartPath:     filepath.Join(repoRoot, "testdata", "charts", "ktl-stack-hooks-e2e"),
+		ChartPath:     filepath.Join(repoRoot, "testdata", "charts", "torque-stack-hooks-e2e"),
 	})
 
 	t.Cleanup(func() {
-		_, _, _ = execKtl(2*time.Minute, "stack", "--config", stackRoot, "delete", "--output", "json", "--yes")
-		_ = exec.Command("kubectl", kubectlArgs("delete", "job", "-n", namespace, "-l", "ktl.dev/e2e=true", "--ignore-not-found=true")...).Run()
+		_, _, _ = execTorque(2*time.Minute, "stack", "--config", stackRoot, "delete", "--output", "json", "--yes")
+		_ = exec.Command("kubectl", kubectlArgs("delete", "job", "-n", namespace, "-l", "torque.dev/e2e=true", "--ignore-not-found=true")...).Run()
 	})
 
-	out1 := runKtl(t, 10*time.Minute,
+	out1 := runTorque(t, 10*time.Minute,
 		"stack", "--config", stackRoot, "apply",
 		"--output", "json",
 		"--yes",
@@ -73,7 +73,7 @@ func TestKtlStackComplexHooksE2E(t *testing.T) {
 	assertApplyCacheHasHooks(t, stackRoot, namespace, releaseA)
 	assertApplyCacheHasHooks(t, stackRoot, namespace, releaseB)
 
-	out2 := runKtl(t, 10*time.Minute,
+	out2 := runTorque(t, 10*time.Minute,
 		"stack", "--config", stackRoot, "apply",
 		"--output", "json",
 		"--yes",
@@ -88,7 +88,7 @@ func TestKtlStackComplexHooksE2E(t *testing.T) {
 	waitForHookJob(t, namespace, releaseB+"-hook-pre-upgrade")
 	waitForHookJob(t, namespace, releaseB+"-hook-post-upgrade")
 
-	out3 := runKtl(t, 10*time.Minute,
+	out3 := runTorque(t, 10*time.Minute,
 		"stack", "--config", stackRoot, "delete",
 		"--output", "json",
 		"--yes",
@@ -148,13 +148,13 @@ func prepareComplexHooksStack(t *testing.T, cfg complexHooksStackConfig) string 
 	}
 
 	repls := map[string]string{
-		"__KTL_TEST_HOOK_SERVER__": cfg.HookServerURL,
-		"__KTL_TEST_STATE_DIR__":   cfg.StateDir,
-		"__KTL_TEST_NAMESPACE__":   cfg.Namespace,
-		"__KTL_TEST_RUN_ID__":      cfg.RunID,
-		"__KTL_TEST_RELEASE_A__":   cfg.ReleaseA,
-		"__KTL_TEST_RELEASE_B__":   cfg.ReleaseB,
-		"__KTL_TEST_CHART__":       cfg.ChartPath,
+		"__TORQUE_TEST_HOOK_SERVER__": cfg.HookServerURL,
+		"__TORQUE_TEST_STATE_DIR__":   cfg.StateDir,
+		"__TORQUE_TEST_NAMESPACE__":   cfg.Namespace,
+		"__TORQUE_TEST_RUN_ID__":      cfg.RunID,
+		"__TORQUE_TEST_RELEASE_A__":   cfg.ReleaseA,
+		"__TORQUE_TEST_RELEASE_B__":   cfg.ReleaseB,
+		"__TORQUE_TEST_CHART__":       cfg.ChartPath,
 	}
 	patchFile(filepath.Join(dst, "stack.yaml"), repls)
 	patchFile(filepath.Join(dst, "hooks", "ns.yaml"), repls)
@@ -331,7 +331,7 @@ func assertNoApplyCacheNoopSkip(t *testing.T, events []jsonRunEvent) {
 
 func assertApplyCacheHasHooks(t *testing.T, stackRoot, namespace, releaseName string) {
 	t.Helper()
-	dbPath := filepath.Join(stackRoot, ".ktl", "stack", "state.sqlite")
+	dbPath := filepath.Join(stackRoot, ".torque", "stack", "state.sqlite")
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("open sqlite %s: %v", dbPath, err)
@@ -339,7 +339,7 @@ func assertApplyCacheHasHooks(t *testing.T, stackRoot, namespace, releaseName st
 	defer db.Close()
 
 	var hasHooks int
-	row := db.QueryRow(`SELECT has_hooks FROM ktl_stack_apply_cache WHERE namespace = ? AND release_name = ? AND command = 'apply' LIMIT 1`, namespace, releaseName)
+	row := db.QueryRow(`SELECT has_hooks FROM torque_stack_apply_cache WHERE namespace = ? AND release_name = ? AND command = 'apply' LIMIT 1`, namespace, releaseName)
 	if err := row.Scan(&hasHooks); err != nil {
 		t.Fatalf("scan apply_cache row (ns=%s release=%s): %v", namespace, releaseName, err)
 	}

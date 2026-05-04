@@ -15,7 +15,7 @@ func PrintGraphDOT(w io.Writer, p *Plan) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(w, "digraph ktl_stack {")
+	fmt.Fprintln(w, "digraph torque_stack {")
 	fmt.Fprintln(w, "  rankdir=LR;")
 	fmt.Fprintln(w, "  node [shape=box,fontname=\"SF Pro Text\"];")
 

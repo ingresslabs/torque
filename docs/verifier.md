@@ -1,6 +1,6 @@
 # Verifier
 
-Verifier is the standalone Kubernetes policy verifier included with ktl. It checks Helm charts, rendered manifests, and live namespaces with the shared ktl verification engine.
+Verifier is the standalone Kubernetes policy verifier included with torque. It checks Helm charts, rendered manifests, and live namespaces with the shared torque verification engine.
 
 ## Quick Start
 

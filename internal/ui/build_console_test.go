@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/tailer"
+	"github.com/ingresslabs/torque/internal/tailer"
 )
 
 func TestBuildConsoleEventTailDedupAndClamp(t *testing.T) {

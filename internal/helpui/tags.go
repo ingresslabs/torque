@@ -3,8 +3,8 @@ package helpui
 import "strings"
 
 var commandTags = map[string][]string{
-	"ktl init": {"onboarding", "setup"},
-	"ktl help": {"onboarding"},
+	"torque init": {"onboarding", "setup"},
+	"torque help": {"onboarding"},
 }
 
 func tagsForCommand(path string) []string {

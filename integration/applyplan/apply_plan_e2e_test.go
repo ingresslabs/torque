@@ -21,17 +21,17 @@ import (
 )
 
 const (
-	e2eKubeconfigEnv = "KTL_APPLYPLAN_E2E_KUBECONFIG"
-	e2eConfirmEnv    = "KTL_APPLYPLAN_E2E_CONFIRM"
-	e2eChartsEnv     = "KTL_APPLYPLAN_E2E_CHARTS"
-	e2eContextsEnv   = "KTL_APPLYPLAN_E2E_CONTEXTS"
-	e2eMaxChartsEnv  = "KTL_APPLYPLAN_E2E_MAX_CHARTS"
-	e2eMaxCtxEnv     = "KTL_APPLYPLAN_E2E_MAX_CONTEXTS"
+	e2eKubeconfigEnv = "TORQUE_APPLYPLAN_E2E_KUBECONFIG"
+	e2eConfirmEnv    = "TORQUE_APPLYPLAN_E2E_CONFIRM"
+	e2eChartsEnv     = "TORQUE_APPLYPLAN_E2E_CHARTS"
+	e2eContextsEnv   = "TORQUE_APPLYPLAN_E2E_CONTEXTS"
+	e2eMaxChartsEnv  = "TORQUE_APPLYPLAN_E2E_MAX_CHARTS"
+	e2eMaxCtxEnv     = "TORQUE_APPLYPLAN_E2E_MAX_CONTEXTS"
 )
 
 var (
 	repoRoot   string
-	ktlBin     string
+	torqueBin  string
 	kubeconfig string
 	contexts   []contextSelection
 	charts     []string
@@ -69,7 +69,7 @@ func bootstrapEnvironment(rawKubeconfig string) error {
 	if err != nil {
 		return err
 	}
-	if err := buildKtlBinary(); err != nil {
+	if err := buildTorqueBinary(); err != nil {
 		return err
 	}
 	contexts, err = loadContexts(kubeconfig)
@@ -106,18 +106,18 @@ func resolveKubeconfig(raw string) (string, error) {
 	return raw, nil
 }
 
-func buildKtlBinary() error {
+func buildTorqueBinary() error {
 	binDir := filepath.Join(repoRoot, "bin")
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		return err
 	}
-	ktlBin = filepath.Join(binDir, "ktl.applyplan.test")
-	cmd := exec.Command("go", "build", "-o", ktlBin, "./cmd/ktl")
+	torqueBin = filepath.Join(binDir, "torque.applyplan.test")
+	cmd := exec.Command("go", "build", "-o", torqueBin, "./cmd/torque")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("go build ktl: %w", err)
+		return fmt.Errorf("go build torque: %w", err)
 	}
 	return nil
 }
@@ -251,7 +251,7 @@ func TestApplyPlanAllChartsAndNamespaces_BasicFormats(t *testing.T) {
 			release := e2eReleaseName(chartName, sel.name, sel.namespace)
 
 			t.Run(fmt.Sprintf("%s/%s/text", sel.name, chartName), func(t *testing.T) {
-				if err := runKtl(ctx, []string{
+				if err := runTorque(ctx, []string{
 					"apply", "plan",
 					"--chart", chartPath,
 					"--release", release,
@@ -265,7 +265,7 @@ func TestApplyPlanAllChartsAndNamespaces_BasicFormats(t *testing.T) {
 			})
 
 			t.Run(fmt.Sprintf("%s/%s/json", sel.name, chartName), func(t *testing.T) {
-				if err := runKtl(ctx, []string{
+				if err := runTorque(ctx, []string{
 					"apply", "plan",
 					"--chart", chartPath,
 					"--release", release,
@@ -285,7 +285,7 @@ func TestApplyPlanFixtureChart_OptionMatrix(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
-	chartPath := filepath.Join(repoRoot, "testdata", "charts", "ktl-applyplan-e2e")
+	chartPath := filepath.Join(repoRoot, "testdata", "charts", "torque-applyplan-e2e")
 	valuesFile := filepath.Join(chartPath, "values-e2e.yaml")
 
 	tempDir := t.TempDir()
@@ -295,11 +295,11 @@ func TestApplyPlanFixtureChart_OptionMatrix(t *testing.T) {
 	}
 
 	for _, sel := range contexts {
-		release := e2eReleaseName("ktl-applyplan-e2e", sel.name, sel.namespace)
+		release := e2eReleaseName("torque-applyplan-e2e", sel.name, sel.namespace)
 
 		run := func(name string, args []string) {
 			t.Run(fmt.Sprintf("%s/%s", sel.name, name), func(t *testing.T) {
-				if err := runKtl(ctx, args); err != nil {
+				if err := runTorque(ctx, args); err != nil {
 					t.Fatalf("%s failed: %v", name, err)
 				}
 			})
@@ -457,9 +457,9 @@ func TestApplyPlanFixtureChart_OptionMatrix(t *testing.T) {
 	}
 }
 
-func runKtl(ctx context.Context, args []string) error {
+func runTorque(ctx context.Context, args []string) error {
 	var stderr limitedBuffer
-	cmd := exec.CommandContext(ctx, ktlBin, args...)
+	cmd := exec.CommandContext(ctx, torqueBin, args...)
 	cmd.Dir = repoRoot
 	cmd.Stdout = io.Discard
 	cmd.Stderr = &stderr
@@ -503,7 +503,7 @@ func e2eReleaseName(chartName, contextName, namespace string) string {
 	if len(base) > 24 {
 		base = base[:24]
 	}
-	return fmt.Sprintf("ktl-e2e-%s-%s", strings.Trim(base, "-"), hash)
+	return fmt.Sprintf("torque-e2e-%s-%s", strings.Trim(base, "-"), hash)
 }
 
 func sanitizeFileToken(s string) string {

@@ -19,10 +19,10 @@ import (
 const defaultSandboxConfigName = "sandbox-default.cfg"
 const hermeticSandboxConfigName = "sandbox-hermetic.cfg"
 
-//go:embed sandbox/ktl-default.cfg
+//go:embed sandbox/torque-default.cfg
 var embeddedSandboxConfig []byte
 
-//go:embed sandbox/ktl-hermetic.cfg
+//go:embed sandbox/torque-hermetic.cfg
 var embeddedHermeticSandboxConfig []byte
 
 func ensureDefaultSandboxConfig() (string, error) {
@@ -38,7 +38,7 @@ func ensureEmbeddedSandboxConfig(name string, payload []byte) (string, error) {
 	if err != nil || dir == "" {
 		dir = os.TempDir()
 	}
-	dir = filepath.Join(dir, "ktl")
+	dir = filepath.Join(dir, "torque")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}

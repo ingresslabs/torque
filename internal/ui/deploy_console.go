@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/torque/internal/deploy"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

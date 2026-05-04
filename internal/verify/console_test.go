@@ -52,7 +52,7 @@ func TestConsoleSnapshotLines(t *testing.T) {
 
 	got := strings.Join(c.SnapshotLines(), "\n") + "\n"
 	got = strings.ReplaceAll(got, "\x1b", "\\x1b")
-	if !strings.Contains(got, "KTL VERIFY") {
+	if !strings.Contains(got, "TORQUE VERIFY") {
 		t.Fatalf("expected header, got:\n%s", got)
 	}
 	if !strings.Contains(got, "[PASS]") {

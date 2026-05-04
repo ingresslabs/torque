@@ -41,10 +41,10 @@ func requireAuth(ctx context.Context, expected string) error {
 		return status.Error(codes.Unauthenticated, "missing authentication token")
 	}
 
-	// Accept either `authorization: Bearer <token>` or `x-ktl-token: <token>`.
+	// Accept either `authorization: Bearer <token>` or `x-torque-token: <token>`.
 	raw := firstNonEmpty(md.Get("authorization"))
 	if raw == "" {
-		raw = firstNonEmpty(md.Get("x-ktl-token"))
+		raw = firstNonEmpty(md.Get("x-torque-token"))
 	}
 	raw = strings.TrimSpace(raw)
 	if raw == "" {

@@ -12,7 +12,7 @@ import (
 // if present.
 //
 // It annotates objects with:
-// - __ktl_source: string
+// - __torque_source: string
 func DecodeK8SYAMLWithSources(manifest string) ([]map[string]any, error) {
 	dec := yaml.NewYAMLOrJSONDecoder(strings.NewReader(manifest), 4096)
 	var out []map[string]any
@@ -28,7 +28,7 @@ func DecodeK8SYAMLWithSources(manifest string) ([]map[string]any, error) {
 			continue
 		}
 		// We cannot recover comments via YAML decoding; as a compromise, support
-		// a prior pre-pass where the manifest includes a "__ktl_source" key
+		// a prior pre-pass where the manifest includes a "__torque_source" key
 		// (set by callers that parse "# Source:" comments).
 		out = append(out, obj)
 	}
@@ -99,7 +99,7 @@ func DecodeK8SYAMLWithHelmSources(manifest string) ([]map[string]any, error) {
 		}
 		for _, obj := range objs {
 			if source != "" && obj != nil {
-				obj["__ktl_source"] = source
+				obj["__torque_source"] = source
 			}
 			out = append(out, obj)
 		}

@@ -6,7 +6,7 @@
   "descriptionText": "ClusterRoles should not grant wildcard verbs or resources (e.g. '*' in verbs/resources). Prefer least-privilege RBAC.",
   "descriptionUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-rbac-01",
+  "descriptionID": "torque-rbac-01",
   "cloudProvider": "common",
   "cwe": "284",
   "riskScore": "7.5"

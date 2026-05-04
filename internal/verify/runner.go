@@ -48,7 +48,7 @@ func (r Runner) Verify(ctx context.Context, target string, objects []map[string]
 	if opts.Mode == ModeOff {
 		summary := BuildSummary(nil, false)
 		rep := &Report{
-			Tool:        "ktl-verify",
+			Tool:        "torque-verify",
 			Engine:      EngineMeta{Name: "builtin", Ruleset: "off"},
 			Mode:        opts.Mode,
 			Passed:      true,
@@ -68,7 +68,7 @@ func (r Runner) Verify(ctx context.Context, target string, objects []map[string]
 			paths = append(paths, p)
 		}
 	}
-	if env := strings.TrimSpace(os.Getenv("KTL_VERIFY_RULES_PATH")); env != "" {
+	if env := strings.TrimSpace(os.Getenv("TORQUE_VERIFY_RULES_PATH")); env != "" {
 		for _, p := range splitList(env) {
 			if p != "" {
 				paths = append(paths, p)
@@ -106,7 +106,7 @@ func (r Runner) Verify(ctx context.Context, target string, objects []map[string]
 	}
 
 	rep := &Report{
-		Tool:        "ktl-verify",
+		Tool:        "torque-verify",
 		Engine:      EngineMeta{Name: "builtin", Ruleset: rulesetLabel},
 		Mode:        opts.Mode,
 		FailOn:      opts.FailOn,

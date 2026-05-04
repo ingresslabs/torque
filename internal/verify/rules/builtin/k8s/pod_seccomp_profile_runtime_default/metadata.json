@@ -6,7 +6,7 @@
   "descriptionText": "Pods and containers should configure seccompProfile.type (prefer RuntimeDefault) to reduce kernel attack surface.",
   "descriptionUrl": "https://kubernetes.io/docs/tutorials/security/seccomp/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-pss-03",
+  "descriptionID": "torque-pss-03",
   "cloudProvider": "common",
   "cwe": "693",
   "riskScore": "7.0"

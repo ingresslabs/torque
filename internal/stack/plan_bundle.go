@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/torque/internal/deploy"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	helmkube "helm.sh/helm/v3/pkg/kube"
@@ -45,7 +45,7 @@ func BuildStackDiffSummary(ctx context.Context, p *Plan, defaultKubeconfig strin
 		return nil, fmt.Errorf("plan is nil")
 	}
 	out := &StackDiffSummary{
-		APIVersion: "ktl.dev/stack-diff-summary/v1",
+		APIVersion: "torque.dev/stack-diff-summary/v1",
 		PlanHash:   strings.TrimSpace(planHash),
 		Nodes:      map[string]NodeDiffSummary{},
 	}
@@ -174,7 +174,7 @@ func WriteStackPlanBundle(outPath string, planJSON []byte, attestationJSON []byt
 	if outPath == "" {
 		return "", fmt.Errorf("bundle output path is required")
 	}
-	tmp, err := os.MkdirTemp("", "ktl-stack-plan-bundle-*")
+	tmp, err := os.MkdirTemp("", "torque-stack-plan-bundle-*")
 	if err != nil {
 		return "", err
 	}

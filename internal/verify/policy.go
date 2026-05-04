@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/policy"
+	"github.com/ingresslabs/torque/internal/policy"
 )
 
 type PolicyOptions struct {
@@ -38,7 +38,7 @@ func EvaluatePolicy(ctx context.Context, opts PolicyOptions, objects []map[strin
 		WhenUTC:  now(),
 		Context:  "verify",
 		External: raw,
-	}, "data.ktl.verify")
+	}, "data.torque.verify")
 	if err != nil {
 		return nil, err
 	}

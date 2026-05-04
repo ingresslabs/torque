@@ -3,7 +3,7 @@ package stack
 // RunEventType enumerates structured stack run events.
 //
 // These values are persisted in the sqlite state store and are consumed by
-// `ktl stack status --follow` and the stack run renderers.
+// `torque stack status --follow` and the stack run renderers.
 type RunEventType string
 
 const (

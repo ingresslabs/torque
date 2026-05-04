@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/grpcutil"
-	"github.com/ingresslabs/ktl/internal/workflows/buildsvc"
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/torque/internal/grpcutil"
+	"github.com/ingresslabs/torque/internal/workflows/buildsvc"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

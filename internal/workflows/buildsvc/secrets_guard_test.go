@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ingresslabs/ktl/internal/secrets"
+	"github.com/ingresslabs/torque/internal/secrets"
 )
 
 func TestSecretsGuardPreflight_DockerfileFixtures(t *testing.T) {

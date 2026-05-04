@@ -25,7 +25,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	}
 
 	if _, err := db.ExecContext(ctx, `
-CREATE TABLE IF NOT EXISTS ktl_capture_meta (
+CREATE TABLE IF NOT EXISTS torque_capture_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );`); err != nil {
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS ktl_capture_meta (
 
 func currentSchemaVersion(ctx context.Context, db *sql.DB) (int, error) {
 	var v string
-	err := db.QueryRowContext(ctx, `SELECT value FROM ktl_capture_meta WHERE key = 'schema_version'`).Scan(&v)
+	err := db.QueryRowContext(ctx, `SELECT value FROM torque_capture_meta WHERE key = 'schema_version'`).Scan(&v)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	}
@@ -65,7 +65,7 @@ func currentSchemaVersion(ctx context.Context, db *sql.DB) (int, error) {
 
 func setSchemaVersion(ctx context.Context, db *sql.DB, v int) error {
 	if _, err := db.ExecContext(ctx, `
-INSERT INTO ktl_capture_meta(key, value) VALUES('schema_version', ?)
+INSERT INTO torque_capture_meta(key, value) VALUES('schema_version', ?)
 ON CONFLICT(key) DO UPDATE SET value = excluded.value
 `, fmt.Sprintf("%d", v)); err != nil {
 		return fmt.Errorf("write schema_version: %w", err)
@@ -78,14 +78,14 @@ func applyMigration(ctx context.Context, db *sql.DB, toVersion int) error {
 	case 1:
 		// Baseline schema for initial capture.
 		stmts := []string{
-			`CREATE TABLE IF NOT EXISTS ktl_capture_sessions (
+			`CREATE TABLE IF NOT EXISTS torque_capture_sessions (
   session_id TEXT PRIMARY KEY,
   command TEXT NOT NULL,
   meta_json TEXT NOT NULL,
   started_at TEXT NOT NULL,
   ended_at TEXT
 );`,
-			`CREATE TABLE IF NOT EXISTS ktl_capture_events (
+			`CREATE TABLE IF NOT EXISTS torque_capture_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id TEXT NOT NULL,
   ts TEXT NOT NULL,
@@ -98,19 +98,19 @@ func applyMigration(ctx context.Context, db *sql.DB, toVersion int) error {
   stream TEXT,
   message TEXT,
   raw_json TEXT,
-  FOREIGN KEY(session_id) REFERENCES ktl_capture_sessions(session_id) ON DELETE CASCADE
+  FOREIGN KEY(session_id) REFERENCES torque_capture_sessions(session_id) ON DELETE CASCADE
 );`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_events_session_ts ON ktl_capture_events(session_id, ts);`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_events_kind ON ktl_capture_events(session_id, kind);`,
-			`CREATE TABLE IF NOT EXISTS ktl_capture_artifacts (
+			`CREATE INDEX IF NOT EXISTS idx_capture_events_session_ts ON torque_capture_events(session_id, ts);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_events_kind ON torque_capture_events(session_id, kind);`,
+			`CREATE TABLE IF NOT EXISTS torque_capture_artifacts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id TEXT NOT NULL,
   ts TEXT NOT NULL,
   name TEXT NOT NULL,
   text TEXT NOT NULL,
-  FOREIGN KEY(session_id) REFERENCES ktl_capture_sessions(session_id) ON DELETE CASCADE
+  FOREIGN KEY(session_id) REFERENCES torque_capture_sessions(session_id) ON DELETE CASCADE
 );`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_artifacts_session_name ON ktl_capture_artifacts(session_id, name);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_artifacts_session_name ON torque_capture_artifacts(session_id, name);`,
 		}
 		for _, stmt := range stmts {
 			if _, err := db.ExecContext(ctx, stmt); err != nil {
@@ -126,30 +126,30 @@ func applyMigration(ctx context.Context, db *sql.DB, toVersion int) error {
 		// - monotonic seq per session
 		// - payload blob (future compression) + keep payload_json for compatibility
 		stmts := []string{
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN run_id TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN parent_run_id TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN started_at_ns INTEGER;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN ended_at_ns INTEGER;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN cluster TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN kube_context TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN namespace TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN release TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN chart TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN image_ref TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN image_digest TEXT;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN build_context TEXT;`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_sessions_run_id ON ktl_capture_sessions(run_id);`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN run_id TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN parent_run_id TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN started_at_ns INTEGER;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN ended_at_ns INTEGER;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN cluster TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN kube_context TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN namespace TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN release TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN chart TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN image_ref TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN image_digest TEXT;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN build_context TEXT;`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_sessions_run_id ON torque_capture_sessions(run_id);`,
 
-			`ALTER TABLE ktl_capture_events ADD COLUMN seq INTEGER;`,
-			`ALTER TABLE ktl_capture_events ADD COLUMN ts_ns INTEGER;`,
-			`ALTER TABLE ktl_capture_events ADD COLUMN payload_type TEXT;`,
-			`ALTER TABLE ktl_capture_events ADD COLUMN payload_blob BLOB;`,
-			`ALTER TABLE ktl_capture_events ADD COLUMN payload_json TEXT;`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_events_session_seq ON ktl_capture_events(session_id, seq);`,
+			`ALTER TABLE torque_capture_events ADD COLUMN seq INTEGER;`,
+			`ALTER TABLE torque_capture_events ADD COLUMN ts_ns INTEGER;`,
+			`ALTER TABLE torque_capture_events ADD COLUMN payload_type TEXT;`,
+			`ALTER TABLE torque_capture_events ADD COLUMN payload_blob BLOB;`,
+			`ALTER TABLE torque_capture_events ADD COLUMN payload_json TEXT;`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_events_session_seq ON torque_capture_events(session_id, seq);`,
 
-			`ALTER TABLE ktl_capture_artifacts ADD COLUMN seq INTEGER;`,
-			`ALTER TABLE ktl_capture_artifacts ADD COLUMN ts_ns INTEGER;`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_artifacts_session_seq ON ktl_capture_artifacts(session_id, seq);`,
+			`ALTER TABLE torque_capture_artifacts ADD COLUMN seq INTEGER;`,
+			`ALTER TABLE torque_capture_artifacts ADD COLUMN ts_ns INTEGER;`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_artifacts_session_seq ON torque_capture_artifacts(session_id, seq);`,
 		}
 		for _, stmt := range stmts {
 			if _, err := db.ExecContext(ctx, stmt); err != nil {
@@ -165,14 +165,14 @@ func applyMigration(ctx context.Context, db *sql.DB, toVersion int) error {
 		return nil
 	case 3:
 		stmts := []string{
-			`CREATE TABLE IF NOT EXISTS ktl_capture_tags (
+			`CREATE TABLE IF NOT EXISTS torque_capture_tags (
   session_id TEXT NOT NULL,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   PRIMARY KEY(session_id, key),
-  FOREIGN KEY(session_id) REFERENCES ktl_capture_sessions(session_id) ON DELETE CASCADE
+  FOREIGN KEY(session_id) REFERENCES torque_capture_sessions(session_id) ON DELETE CASCADE
 );`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_tags_value ON ktl_capture_tags(key, value);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_tags_value ON torque_capture_tags(key, value);`,
 		}
 		for _, stmt := range stmts {
 			if _, err := db.ExecContext(ctx, stmt); err != nil {
@@ -182,10 +182,10 @@ func applyMigration(ctx context.Context, db *sql.DB, toVersion int) error {
 		return nil
 	case 4:
 		stmts := []string{
-			`CREATE INDEX IF NOT EXISTS idx_capture_events_namespace ON ktl_capture_events(session_id, namespace);`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_events_pod ON ktl_capture_events(session_id, pod);`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_events_source ON ktl_capture_events(session_id, source);`,
-			`CREATE INDEX IF NOT EXISTS idx_capture_sessions_entities ON ktl_capture_sessions(cluster, kube_context, namespace, release, chart);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_events_namespace ON torque_capture_events(session_id, namespace);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_events_pod ON torque_capture_events(session_id, pod);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_events_source ON torque_capture_events(session_id, source);`,
+			`CREATE INDEX IF NOT EXISTS idx_capture_sessions_entities ON torque_capture_sessions(cluster, kube_context, namespace, release, chart);`,
 		}
 		for _, stmt := range stmts {
 			if _, err := db.ExecContext(ctx, stmt); err != nil {
@@ -195,10 +195,10 @@ func applyMigration(ctx context.Context, db *sql.DB, toVersion int) error {
 		return nil
 	case 5:
 		stmts := []string{
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN queue_size INTEGER;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN batch_size INTEGER;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN flush_interval_ms INTEGER;`,
-			`ALTER TABLE ktl_capture_sessions ADD COLUMN dropped_events INTEGER;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN queue_size INTEGER;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN batch_size INTEGER;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN flush_interval_ms INTEGER;`,
+			`ALTER TABLE torque_capture_sessions ADD COLUMN dropped_events INTEGER;`,
 		}
 		for _, stmt := range stmts {
 			if _, err := db.ExecContext(ctx, stmt); err != nil {

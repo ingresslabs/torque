@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ktl help</title>
+    <title>torque help</title>
     <style>
       :root {
         --surface: rgba(255, 255, 255, 0.9);
@@ -427,7 +427,7 @@
               <button class="chip" data-kind="env" type="button">Env</button>
               <button class="chip" data-kind="doc" type="button">Docs</button>
             </div>
-            <div class="helpMeta">ktl docs</div>
+            <div class="helpMeta">torque docs</div>
           </div>
         </div>
 
@@ -455,14 +455,14 @@
       const elChips = Array.from(document.querySelectorAll("[data-kind]"));
 
       const curated = [
-        { id: "cmd:ktl init", title: "ktl init", sub: "Bootstrap a repo config quickly" },
-        { id: "cmd:ktl apply", title: "ktl apply", sub: "Deploy a chart to a cluster" },
-        { id: "cmd:ktl logs", title: "ktl logs", sub: "Tail pods fast with filtering" },
-        { id: "cmd:ktl build", title: "ktl build", sub: "Build images with BuildKit workflows" },
-        { id: "cmd:ktl apply plan", title: "ktl apply plan", sub: "Preview a Helm upgrade safely" },
+        { id: "cmd:torque init", title: "torque init", sub: "Bootstrap a repo config quickly" },
+        { id: "cmd:torque apply", title: "torque apply", sub: "Deploy a chart to a cluster" },
+        { id: "cmd:torque logs", title: "torque logs", sub: "Tail pods fast with filtering" },
+        { id: "cmd:torque build", title: "torque build", sub: "Build images with BuildKit workflows" },
+        { id: "cmd:torque apply plan", title: "torque apply plan", sub: "Preview a Helm upgrade safely" },
         { id: "doc:capture", title: "Capture evidence", sub: "Record deploy/build/log evidence" },
-        { id: "cmd:ktl delete", title: "ktl delete", sub: "Remove a release with a viewer" },
-        { id: "cmd:ktl env", title: "ktl env", sub: "Environment variables reference" },
+        { id: "cmd:torque delete", title: "torque delete", sub: "Remove a release with a viewer" },
+        { id: "cmd:torque env", title: "torque env", sub: "Environment variables reference" },
       ];
 
       function norm(s) { return (s || "").toLowerCase(); }
@@ -479,7 +479,7 @@
           q = q.replace(m[0], " ").trim();
         } else if (q.includes("--")) {
           kind = "flag";
-        } else if (q.toUpperCase().includes("KTL_")) {
+        } else if (q.toUpperCase().includes("TORQUE_")) {
           kind = "env";
         }
         return { q, kind };

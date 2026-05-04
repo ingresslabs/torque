@@ -133,7 +133,7 @@ type HTTPHookConfig struct {
 	Body    string            `yaml:"body,omitempty" json:"body,omitempty"`
 }
 
-// StackCLIConfig controls default CLI behavior for `ktl stack ...` subcommands.
+// StackCLIConfig controls default CLI behavior for `torque stack ...` subcommands.
 // Flags and environment variables can override these settings.
 type StackCLIConfig struct {
 	// Selector sets default release selection constraints.
@@ -337,8 +337,8 @@ type EffectiveInput struct {
 	StackGitCommit string `json:"stackGitCommit,omitempty"`
 	StackGitDirty  bool   `json:"stackGitDirty,omitempty"`
 
-	KtlVersion   string `json:"ktlVersion,omitempty"`
-	KtlGitCommit string `json:"ktlGitCommit,omitempty"`
+	TorqueVersion   string `json:"torqueVersion,omitempty"`
+	TorqueGitCommit string `json:"torqueGitCommit,omitempty"`
 
 	NodeID string `json:"nodeId"`
 

@@ -37,7 +37,7 @@ func runInteractiveDockerfile(ctx context.Context, c *bkclient.Client, solveOpt 
 		return res, nil
 	}
 
-	return c.Build(ctx, solveOpt, "ktl", buildFunc, statusCh)
+	return c.Build(ctx, solveOpt, "torque", buildFunc, statusCh)
 }
 
 type containerCreator interface {

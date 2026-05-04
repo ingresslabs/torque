@@ -11,7 +11,7 @@ import (
 func TestSummarizeDetectsFailedDeployCapture(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "apply.sqlite")
 	rec, err := Open(dbPath, SessionMeta{
-		Command:   "ktl apply",
+		Command:   "torque apply",
 		Args:      []string{"apply", "--chart", "./chart", "--release", "api", "-n", "prod"},
 		StartedAt: time.Now().UTC(),
 		Entities: Entities{
@@ -62,10 +62,10 @@ func TestSummarizeDetectsFailedDeployCapture(t *testing.T) {
 	if sess.PrimaryCause == nil || sess.PrimaryCause.Category != "rollout_timeout" {
 		t.Fatalf("expected rollout timeout primary cause, got %#v", sess.PrimaryCause)
 	}
-	if !containsString(sess.Suggestions, "ktl revert --release api -n prod") {
+	if !containsString(sess.Suggestions, "torque revert --release api -n prod") {
 		t.Fatalf("expected revert suggestion, got %#v", sess.Suggestions)
 	}
-	if sess.RollbackCommand != "ktl revert --release api -n prod" {
+	if sess.RollbackCommand != "torque revert --release api -n prod" {
 		t.Fatalf("RollbackCommand=%q", sess.RollbackCommand)
 	}
 	if sess.ApplyStatus != "failed" {
@@ -76,7 +76,7 @@ func TestSummarizeDetectsFailedDeployCapture(t *testing.T) {
 func TestSummarizeReadsBuildEvidence(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "build.sqlite")
 	rec, err := Open(dbPath, SessionMeta{
-		Command:   "ktl build",
+		Command:   "torque build",
 		Args:      []string{"build", "--context", ".", "--tag", "ghcr.io/acme/api:dev"},
 		StartedAt: time.Now().UTC(),
 		Entities:  Entities{BuildContext: "."},
@@ -122,7 +122,7 @@ func TestSummarizeReadsBuildEvidence(t *testing.T) {
 func TestSummarizeClassifiesResourceStatus(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "apply.sqlite")
 	rec, err := Open(dbPath, SessionMeta{
-		Command:   "ktl apply",
+		Command:   "torque apply",
 		Args:      []string{"apply", "--chart", "./chart", "--release", "api", "-n", "prod"},
 		StartedAt: time.Now().UTC(),
 		Entities:  Entities{Namespace: "prod", Release: "api", Chart: "./chart"},
@@ -163,7 +163,7 @@ func TestSummarizeClassifiesResourceStatus(t *testing.T) {
 	if len(sess.ResourceHints) == 0 || sess.ResourceHints[0].Resource != "Pod/prod/api-123" {
 		t.Fatalf("ResourceHints=%#v", sess.ResourceHints)
 	}
-	if sess.LogsCommand != "ktl logs deploy/api -n prod --events" {
+	if sess.LogsCommand != "torque logs deploy/api -n prod --events" {
 		t.Fatalf("LogsCommand=%q", sess.LogsCommand)
 	}
 }

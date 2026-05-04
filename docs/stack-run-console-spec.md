@@ -1,6 +1,6 @@
 # Stack Run Console Spec (TTY)
 
-Applies to `ktl stack apply` and `ktl stack delete` when stderr is a TTY. This is a single-screen, in-place updating console: a stable header, an optional sticky failure rail, and a main table with one line per node.
+Applies to `torque stack apply` and `torque stack delete` when stderr is a TTY. This is a single-screen, in-place updating console: a stable header, an optional sticky failure rail, and a main table with one line per node.
 
 ## Layout
 

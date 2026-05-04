@@ -55,8 +55,8 @@ func UnpackArchive(ctx context.Context, archivePath string, opts UnpackOptions) 
 	if err != nil {
 		return nil, err
 	}
-	if meta["ktl_archive_type"] != archiveType {
-		return nil, fmt.Errorf("unexpected archive type %q (want %q)", meta["ktl_archive_type"], archiveType)
+	if meta["torque_archive_type"] != archiveType {
+		return nil, fmt.Errorf("unexpected archive type %q (want %q)", meta["torque_archive_type"], archiveType)
 	}
 
 	destPath, err := resolveDestPath(opts.DestinationPath, archivePath, meta)
@@ -83,7 +83,7 @@ func UnpackArchive(ctx context.Context, archivePath string, opts UnpackOptions) 
 		return nil, fmt.Errorf("stat destination: %w", err)
 	}
 
-	rows, err := db.QueryContext(ctx, `SELECT path, mode, size, sha256, data FROM ktl_chart_files ORDER BY path ASC`)
+	rows, err := db.QueryContext(ctx, `SELECT path, mode, size, sha256, data FROM torque_chart_files ORDER BY path ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("read chart files: %w", err)
 	}

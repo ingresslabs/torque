@@ -6,7 +6,7 @@
   "descriptionText": "RoleBinding/ClusterRoleBinding subjects should not include the system:masters group.",
   "descriptionUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-rbac-02",
+  "descriptionID": "torque-rbac-02",
   "cloudProvider": "common",
   "cwe": "284",
   "riskScore": "9.0"

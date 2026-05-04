@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"

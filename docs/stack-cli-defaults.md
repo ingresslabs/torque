@@ -1,13 +1,13 @@
-# `ktl stack` minimal-flags workflow
+# `torque stack` minimal-flags workflow
 
-Goal: run `ktl stack ...` with as few flags as possible by moving defaults into `stack.yaml` and environment variables.
+Goal: run `torque stack ...` with as few flags as possible by moving defaults into `stack.yaml` and environment variables.
 
 ## Precedence
 
-For `ktl stack` configuration, precedence is:
+For `torque stack` configuration, precedence is:
 
 1. CLI flags (explicit invocation)
-2. `KTL_STACK_*` environment variables
+2. `TORQUE_STACK_*` environment variables
 3. `stack.yaml` `cli:` block (with optional `profiles.<name>.cli:` overrides)
 4. Built-in defaults (kept for backward compatibility)
 
@@ -50,18 +50,18 @@ Notes:
 Typical “no flags”:
 
 ```bash
-export KTL_STACK_ROOT=/path/to/stack
-ktl stack plan
-ktl stack apply --yes
+export TORQUE_STACK_ROOT=/path/to/stack
+torque stack plan
+torque stack apply --yes
 ```
 
 Override selection without flags:
 
 ```bash
-export KTL_STACK_TAG=team-b
-ktl stack plan
+export TORQUE_STACK_TAG=team-b
+torque stack plan
 ```
 
 ## Environment variables
 
-Run `ktl env --match stack` to list the `KTL_STACK_*` variables and their descriptions.
+Run `torque env --match stack` to list the `TORQUE_STACK_*` variables and their descriptions.

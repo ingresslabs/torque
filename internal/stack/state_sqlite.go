@@ -13,10 +13,10 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/ingresslabs/ktl/internal/version"
+	"github.com/ingresslabs/torque/internal/version"
 )
 
-const stackStateSQLiteRelPath = ".ktl/stack/state.sqlite"
+const stackStateSQLiteRelPath = ".torque/stack/state.sqlite"
 
 type stackStateStore struct {
 	db       *sql.DB
@@ -36,7 +36,7 @@ func (s *stackStateStore) GetNodeSteps(ctx context.Context, runID string) (map[s
 SELECT node_id, attempt, step,
   started_at_ns, completed_at_ns, status, message,
   error_class, error_message, error_digest, cursor_json
-FROM ktl_stack_node_steps
+FROM torque_stack_node_steps
 WHERE run_id = ?
 ORDER BY node_id ASC, attempt ASC, step ASC
 `, runID)
@@ -160,7 +160,7 @@ func (s *stackStateStore) initSchema(ctx context.Context) error {
 		`PRAGMA foreign_keys=ON;`,
 		`PRAGMA busy_timeout=5000;`,
 		`
-CREATE TABLE IF NOT EXISTS ktl_stack_runs (
+CREATE TABLE IF NOT EXISTS torque_stack_runs (
   run_id TEXT PRIMARY KEY,
   stack_root TEXT NOT NULL,
   stack_name TEXT NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS ktl_stack_runs (
   run_digest TEXT NOT NULL DEFAULT ''
 );`,
 		`
-	CREATE TABLE IF NOT EXISTS ktl_stack_nodes (
+	CREATE TABLE IF NOT EXISTS torque_stack_nodes (
   run_id TEXT NOT NULL,
   node_id TEXT NOT NULL,
   status TEXT NOT NULL,
@@ -196,10 +196,10 @@ CREATE TABLE IF NOT EXISTS ktl_stack_runs (
   last_error_digest TEXT NOT NULL DEFAULT '',
   updated_at_ns INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (run_id, node_id),
-  FOREIGN KEY (run_id) REFERENCES ktl_stack_runs(run_id) ON DELETE CASCADE
+  FOREIGN KEY (run_id) REFERENCES torque_stack_runs(run_id) ON DELETE CASCADE
 	);`,
 		`
-	CREATE TABLE IF NOT EXISTS ktl_stack_node_steps (
+	CREATE TABLE IF NOT EXISTS torque_stack_node_steps (
 	  run_id TEXT NOT NULL,
 	  node_id TEXT NOT NULL,
 	  attempt INTEGER NOT NULL,
@@ -213,10 +213,10 @@ CREATE TABLE IF NOT EXISTS ktl_stack_runs (
 	  error_digest TEXT NOT NULL DEFAULT '',
 	  cursor_json TEXT NOT NULL DEFAULT '',
 	  PRIMARY KEY (run_id, node_id, attempt, step),
-	  FOREIGN KEY (run_id) REFERENCES ktl_stack_runs(run_id) ON DELETE CASCADE
+	  FOREIGN KEY (run_id) REFERENCES torque_stack_runs(run_id) ON DELETE CASCADE
 	);`,
 		`
-	CREATE TABLE IF NOT EXISTS ktl_stack_events (
+	CREATE TABLE IF NOT EXISTS torque_stack_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   run_id TEXT NOT NULL,
   ts_ns INTEGER NOT NULL,
@@ -232,14 +232,14 @@ CREATE TABLE IF NOT EXISTS ktl_stack_runs (
   prev_digest TEXT NOT NULL DEFAULT '',
   digest TEXT NOT NULL DEFAULT '',
   crc32 TEXT NOT NULL DEFAULT '',
-  FOREIGN KEY (run_id) REFERENCES ktl_stack_runs(run_id) ON DELETE CASCADE
+  FOREIGN KEY (run_id) REFERENCES torque_stack_runs(run_id) ON DELETE CASCADE
 	);`,
-		`CREATE INDEX IF NOT EXISTS idx_ktl_stack_events_run_id_id ON ktl_stack_events(run_id, id);`,
-		`CREATE INDEX IF NOT EXISTS idx_ktl_stack_events_run_id_error_digest ON ktl_stack_events(run_id, error_digest);`,
-		`CREATE INDEX IF NOT EXISTS idx_ktl_stack_nodes_run_id_status ON ktl_stack_nodes(run_id, status);`,
-		`CREATE INDEX IF NOT EXISTS idx_ktl_stack_node_steps_by_run_node ON ktl_stack_node_steps(run_id, node_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_torque_stack_events_run_id_id ON torque_stack_events(run_id, id);`,
+		`CREATE INDEX IF NOT EXISTS idx_torque_stack_events_run_id_error_digest ON torque_stack_events(run_id, error_digest);`,
+		`CREATE INDEX IF NOT EXISTS idx_torque_stack_nodes_run_id_status ON torque_stack_nodes(run_id, status);`,
+		`CREATE INDEX IF NOT EXISTS idx_torque_stack_node_steps_by_run_node ON torque_stack_node_steps(run_id, node_id);`,
 		`
-	CREATE TABLE IF NOT EXISTS ktl_stack_lock (
+	CREATE TABLE IF NOT EXISTS torque_stack_lock (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   owner TEXT NOT NULL,
   run_id TEXT NOT NULL,
@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS ktl_stack_runs (
   ttl_ns INTEGER NOT NULL
 );`,
 		`
-CREATE TABLE IF NOT EXISTS ktl_stack_apply_cache (
+CREATE TABLE IF NOT EXISTS torque_stack_apply_cache (
   cluster_key TEXT NOT NULL,
   namespace TEXT NOT NULL,
   release_name TEXT NOT NULL,
@@ -259,9 +259,9 @@ CREATE TABLE IF NOT EXISTS ktl_stack_apply_cache (
   updated_at_ns INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (cluster_key, namespace, release_name, command, effective_input_hash)
 );`,
-		`CREATE INDEX IF NOT EXISTS idx_ktl_stack_apply_cache_lookup ON ktl_stack_apply_cache(cluster_key, namespace, release_name, command, effective_input_hash);`,
+		`CREATE INDEX IF NOT EXISTS idx_torque_stack_apply_cache_lookup ON torque_stack_apply_cache(cluster_key, namespace, release_name, command, effective_input_hash);`,
 		`
-CREATE TABLE IF NOT EXISTS ktl_stack_verify_cache (
+CREATE TABLE IF NOT EXISTS torque_stack_verify_cache (
   cluster_key TEXT NOT NULL,
   namespace TEXT NOT NULL,
   release_name TEXT NOT NULL,
@@ -274,7 +274,7 @@ CREATE TABLE IF NOT EXISTS ktl_stack_verify_cache (
   updated_at_ns INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (cluster_key, namespace, release_name)
 );`,
-		`CREATE INDEX IF NOT EXISTS idx_ktl_stack_verify_cache_lookup ON ktl_stack_verify_cache(cluster_key, namespace, release_name);`,
+		`CREATE INDEX IF NOT EXISTS idx_torque_stack_verify_cache_lookup ON torque_stack_verify_cache(cluster_key, namespace, release_name);`,
 	}
 	for _, stmt := range stmts {
 		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
@@ -297,7 +297,7 @@ CREATE TABLE IF NOT EXISTS ktl_stack_verify_cache (
 }
 
 func (s *stackStateStore) ensureVerifyCacheColumns(ctx context.Context) error {
-	cols, err := s.tableColumns(ctx, "ktl_stack_verify_cache")
+	cols, err := s.tableColumns(ctx, "torque_stack_verify_cache")
 	if err != nil {
 		return err
 	}
@@ -309,8 +309,8 @@ func (s *stackStateStore) ensureVerifyCacheColumns(ctx context.Context) error {
 		if _, ok := cols[name]; ok {
 			continue
 		}
-		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE ktl_stack_verify_cache ADD COLUMN %s %s;", name, ddl)); err != nil {
-			return fmt.Errorf("add column ktl_stack_verify_cache.%s: %w", name, err)
+		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE torque_stack_verify_cache ADD COLUMN %s %s;", name, ddl)); err != nil {
+			return fmt.Errorf("add column torque_stack_verify_cache.%s: %w", name, err)
 		}
 	}
 	return nil
@@ -352,7 +352,7 @@ func (s *stackStateStore) GetApplyCache(ctx context.Context, key ApplyCacheKey) 
 	var updatedAtNS int64
 	err := s.db.QueryRowContext(ctx, `
 SELECT desired_digest, has_hooks, last_run_id, updated_at_ns
-FROM ktl_stack_apply_cache
+FROM torque_stack_apply_cache
 WHERE cluster_key = ? AND namespace = ? AND release_name = ? AND command = ? AND effective_input_hash = ?
 LIMIT 1
 `, clusterKey, ns, releaseName, command, effective).Scan(&desiredDigest, &hasHooksInt, &lastRunID, &updatedAtNS)
@@ -396,7 +396,7 @@ func (s *stackStateStore) UpsertApplyCache(ctx context.Context, key ApplyCacheKe
 		hasHooksInt = 1
 	}
 	_, err := s.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_apply_cache (
+INSERT INTO torque_stack_apply_cache (
   cluster_key, namespace, release_name, command, effective_input_hash,
   desired_digest, has_hooks, last_run_id, updated_at_ns
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -404,7 +404,7 @@ ON CONFLICT(cluster_key, namespace, release_name, command, effective_input_hash)
   desired_digest = excluded.desired_digest,
   has_hooks = excluded.has_hooks,
   last_run_id = excluded.last_run_id,
-  updated_at_ns = CASE WHEN excluded.updated_at_ns > ktl_stack_apply_cache.updated_at_ns THEN excluded.updated_at_ns ELSE ktl_stack_apply_cache.updated_at_ns END
+  updated_at_ns = CASE WHEN excluded.updated_at_ns > torque_stack_apply_cache.updated_at_ns THEN excluded.updated_at_ns ELSE torque_stack_apply_cache.updated_at_ns END
 `, clusterKey, ns, releaseName, command, effective,
 		desiredDigest, hasHooksInt, runID, updatedAtNS)
 	return err
@@ -443,7 +443,7 @@ func (s *stackStateStore) GetVerifyCache(ctx context.Context, key VerifyCacheKey
 	var lastResult, lastMessage, lastEventRVJSON, lastEvidenceJSON string
 	err := s.db.QueryRowContext(ctx, `
 SELECT last_ok_at_ns, last_checked_at_ns, last_result, last_message, last_event_rv_json, last_evidence_json, updated_at_ns
-FROM ktl_stack_verify_cache
+FROM torque_stack_verify_cache
 WHERE cluster_key = ? AND namespace = ? AND release_name = ?
 LIMIT 1
 `, clusterKey, ns, releaseName).Scan(&lastOK, &lastChecked, &lastResult, &lastMessage, &lastEventRVJSON, &lastEvidenceJSON, &updatedAt)
@@ -485,19 +485,19 @@ func (s *stackStateStore) UpsertVerifyCache(ctx context.Context, key VerifyCache
 	}
 	now := time.Now().UTC().UnixNano()
 	_, err := s.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_verify_cache (
+INSERT INTO torque_stack_verify_cache (
   cluster_key, namespace, release_name,
   last_ok_at_ns, last_checked_at_ns, last_result, last_message, last_event_rv_json, last_evidence_json,
   updated_at_ns
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(cluster_key, namespace, release_name) DO UPDATE SET
-  last_ok_at_ns = CASE WHEN excluded.last_ok_at_ns > 0 THEN excluded.last_ok_at_ns ELSE ktl_stack_verify_cache.last_ok_at_ns END,
-  last_checked_at_ns = CASE WHEN excluded.last_checked_at_ns > 0 THEN excluded.last_checked_at_ns ELSE ktl_stack_verify_cache.last_checked_at_ns END,
-  last_result = CASE WHEN excluded.last_result != '' THEN excluded.last_result ELSE ktl_stack_verify_cache.last_result END,
-  last_message = CASE WHEN excluded.last_message != '' THEN excluded.last_message ELSE ktl_stack_verify_cache.last_message END,
-  last_event_rv_json = CASE WHEN excluded.last_event_rv_json != '' THEN excluded.last_event_rv_json ELSE ktl_stack_verify_cache.last_event_rv_json END,
-  last_evidence_json = CASE WHEN excluded.last_evidence_json != '' THEN excluded.last_evidence_json ELSE ktl_stack_verify_cache.last_evidence_json END,
-  updated_at_ns = CASE WHEN excluded.updated_at_ns > ktl_stack_verify_cache.updated_at_ns THEN excluded.updated_at_ns ELSE ktl_stack_verify_cache.updated_at_ns END
+  last_ok_at_ns = CASE WHEN excluded.last_ok_at_ns > 0 THEN excluded.last_ok_at_ns ELSE torque_stack_verify_cache.last_ok_at_ns END,
+  last_checked_at_ns = CASE WHEN excluded.last_checked_at_ns > 0 THEN excluded.last_checked_at_ns ELSE torque_stack_verify_cache.last_checked_at_ns END,
+  last_result = CASE WHEN excluded.last_result != '' THEN excluded.last_result ELSE torque_stack_verify_cache.last_result END,
+  last_message = CASE WHEN excluded.last_message != '' THEN excluded.last_message ELSE torque_stack_verify_cache.last_message END,
+  last_event_rv_json = CASE WHEN excluded.last_event_rv_json != '' THEN excluded.last_event_rv_json ELSE torque_stack_verify_cache.last_event_rv_json END,
+  last_evidence_json = CASE WHEN excluded.last_evidence_json != '' THEN excluded.last_evidence_json ELSE torque_stack_verify_cache.last_evidence_json END,
+  updated_at_ns = CASE WHEN excluded.updated_at_ns > torque_stack_verify_cache.updated_at_ns THEN excluded.updated_at_ns ELSE torque_stack_verify_cache.updated_at_ns END
 `, clusterKey, ns, releaseName,
 		okAtNS, checkedAtNS, strings.TrimSpace(result), strings.TrimSpace(message), strings.TrimSpace(lastEventRVJSON), strings.TrimSpace(evidenceJSON),
 		now)
@@ -505,7 +505,7 @@ ON CONFLICT(cluster_key, namespace, release_name) DO UPDATE SET
 }
 
 func (s *stackStateStore) ensureEventsIntegrityColumns(ctx context.Context) error {
-	cols, err := s.tableColumns(ctx, "ktl_stack_events")
+	cols, err := s.tableColumns(ctx, "torque_stack_events")
 	if err != nil {
 		return err
 	}
@@ -520,15 +520,15 @@ func (s *stackStateStore) ensureEventsIntegrityColumns(ctx context.Context) erro
 		if _, ok := cols[name]; ok {
 			continue
 		}
-		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE ktl_stack_events ADD COLUMN %s %s;", name, ddl)); err != nil {
-			return fmt.Errorf("add column ktl_stack_events.%s: %w", name, err)
+		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE torque_stack_events ADD COLUMN %s %s;", name, ddl)); err != nil {
+			return fmt.Errorf("add column torque_stack_events.%s: %w", name, err)
 		}
 	}
 	return nil
 }
 
 func (s *stackStateStore) ensureRunColumns(ctx context.Context) error {
-	cols, err := s.tableColumns(ctx, "ktl_stack_runs")
+	cols, err := s.tableColumns(ctx, "torque_stack_runs")
 	if err != nil {
 		return err
 	}
@@ -548,15 +548,15 @@ func (s *stackStateStore) ensureRunColumns(ctx context.Context) error {
 		if _, ok := cols[name]; ok {
 			continue
 		}
-		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE ktl_stack_runs ADD COLUMN %s %s;", name, ddl)); err != nil {
-			return fmt.Errorf("add column ktl_stack_runs.%s: %w", name, err)
+		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE torque_stack_runs ADD COLUMN %s %s;", name, ddl)); err != nil {
+			return fmt.Errorf("add column torque_stack_runs.%s: %w", name, err)
 		}
 	}
 	return nil
 }
 
 func (s *stackStateStore) ensureNodeColumns(ctx context.Context) error {
-	cols, err := s.tableColumns(ctx, "ktl_stack_nodes")
+	cols, err := s.tableColumns(ctx, "torque_stack_nodes")
 	if err != nil {
 		return err
 	}
@@ -569,8 +569,8 @@ func (s *stackStateStore) ensureNodeColumns(ctx context.Context) error {
 		if _, ok := cols[name]; ok {
 			continue
 		}
-		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE ktl_stack_nodes ADD COLUMN %s %s;", name, ddl)); err != nil {
-			return fmt.Errorf("add column ktl_stack_nodes.%s: %w", name, err)
+		if _, err := s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE torque_stack_nodes ADD COLUMN %s %s;", name, ddl)); err != nil {
+			return fmt.Errorf("add column torque_stack_nodes.%s: %w", name, err)
 		}
 	}
 	return nil
@@ -607,8 +607,8 @@ func (s *stackStateStore) CreateRun(ctx context.Context, run *runState, p *Plan)
 	}
 	payload.StackGitCommit = gid.Commit
 	payload.StackGitDirty = gid.Dirty
-	payload.KtlVersion = version.Version
-	payload.KtlGitCommit = version.GitCommit
+	payload.TorqueVersion = version.Version
+	payload.TorqueGitCommit = version.GitCommit
 	planHash, err := ComputeRunPlanHash(payload)
 	if err != nil {
 		return err
@@ -625,7 +625,7 @@ func (s *stackStateStore) CreateRun(ctx context.Context, run *runState, p *Plan)
 	}
 
 	emptySummary := RunSummary{
-		APIVersion: "ktl.dev/stack-run/v1",
+		APIVersion: "torque.dev/stack-run/v1",
 		RunID:      run.RunID,
 		Status:     "created",
 		StartedAt:  now.Format(time.RFC3339Nano),
@@ -664,7 +664,7 @@ func (s *stackStateStore) CreateRun(ctx context.Context, run *runState, p *Plan)
 	defer func() { _ = tx.Rollback() }()
 
 	_, err = tx.ExecContext(ctx, `
-INSERT INTO ktl_stack_runs (
+INSERT INTO torque_stack_runs (
   run_id, stack_root, stack_name, profile, command, concurrency, fail_mode, status,
   created_at_ns, updated_at_ns, completed_at_ns, created_by, host, pid,
   ci_run_url, git_author, kubeconfig, kube_context,
@@ -680,7 +680,7 @@ INSERT INTO ktl_stack_runs (
 
 	for _, n := range run.Nodes {
 		_, err := tx.ExecContext(ctx, `
-INSERT INTO ktl_stack_nodes (run_id, node_id, status, attempt, error)
+INSERT INTO torque_stack_nodes (run_id, node_id, status, attempt, error)
 VALUES (?, ?, ?, ?, ?)
 `, run.RunID, n.ID, "planned", 0, "")
 		if err != nil {
@@ -725,7 +725,7 @@ func (s *stackStateStore) AppendEvent(ctx context.Context, runID string, ev RunE
 		fieldsJSON = string(raw)
 	}
 	_, err = s.db.ExecContext(ctx, `
-	INSERT INTO ktl_stack_events (run_id, ts_ns, node_id, type, attempt, message, fields_json, error_class, error_message, error_digest, seq, prev_digest, digest, crc32)
+	INSERT INTO torque_stack_events (run_id, ts_ns, node_id, type, attempt, message, fields_json, error_class, error_message, error_digest, seq, prev_digest, digest, crc32)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, runID, ts.UnixNano(), nodeID, ev.Type, ev.Attempt, msg, fieldsJSON, errClass, errMsg, errDigest, ev.Seq, ev.PrevDigest, ev.Digest, ev.CRC32)
 	if err != nil {
@@ -734,7 +734,7 @@ func (s *stackStateStore) AppendEvent(ctx context.Context, runID string, ev RunE
 	_ = s.upsertNodeStepFromEvent(ctx, runID, ts.UnixNano(), nodeID, ev, errClass, errMsg, errDigest)
 
 	updatedAt := time.Now().UTC().UnixNano()
-	_, _ = s.db.ExecContext(ctx, `UPDATE ktl_stack_runs SET updated_at_ns = ? WHERE run_id = ?`, updatedAt, runID)
+	_, _ = s.db.ExecContext(ctx, `UPDATE torque_stack_runs SET updated_at_ns = ? WHERE run_id = ?`, updatedAt, runID)
 
 	switch ev.Type {
 	case "NODE_RUNNING", "NODE_SUCCEEDED", "NODE_FAILED", "NODE_BLOCKED":
@@ -760,7 +760,7 @@ func (s *stackStateStore) AppendEvent(ctx context.Context, runID string, ev RunE
 			}
 			updatedNodeAt := time.Now().UTC().UnixNano()
 			_, _ = s.db.ExecContext(ctx, `
-UPDATE ktl_stack_nodes
+UPDATE torque_stack_nodes
 SET status = ?, attempt = CASE WHEN ? > attempt THEN ? ELSE attempt END, error = ?, last_error_class = ?, last_error_digest = ?, updated_at_ns = ?
 WHERE run_id = ? AND node_id = ?
 `, status, ev.Attempt, ev.Attempt, nodeErr, lastErrClass, lastErrDigest, updatedNodeAt, runID, nodeID)
@@ -772,7 +772,7 @@ WHERE run_id = ? AND node_id = ?
 		if status == "" {
 			status = "completed"
 		}
-		_, _ = s.db.ExecContext(ctx, `UPDATE ktl_stack_runs SET status = ?, updated_at_ns = ? WHERE run_id = ?`, status, updatedAt, runID)
+		_, _ = s.db.ExecContext(ctx, `UPDATE torque_stack_runs SET status = ?, updated_at_ns = ? WHERE run_id = ?`, status, updatedAt, runID)
 	}
 	return nil
 }
@@ -790,7 +790,7 @@ func (s *stackStateStore) WriteSummary(ctx context.Context, runID string, summar
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	_, err = tx.ExecContext(ctx, `UPDATE ktl_stack_runs SET summary_json = ?, status = ?, updated_at_ns = ? WHERE run_id = ?`, string(raw), summary.Status, updatedAt, runID)
+	_, err = tx.ExecContext(ctx, `UPDATE torque_stack_runs SET summary_json = ?, status = ?, updated_at_ns = ? WHERE run_id = ?`, string(raw), summary.Status, updatedAt, runID)
 	if err != nil {
 		return err
 	}
@@ -798,7 +798,7 @@ func (s *stackStateStore) WriteSummary(ctx context.Context, runID string, summar
 		nodeErr := strings.TrimSpace(ns.Error)
 		updatedNodeAt := updatedAt
 		_, err := tx.ExecContext(ctx, `
-UPDATE ktl_stack_nodes
+UPDATE torque_stack_nodes
 SET status = ?, attempt = ?, error = ?, updated_at_ns = ?
 WHERE run_id = ? AND node_id = ?
 `, ns.Status, ns.Attempt, nodeErr, updatedNodeAt, runID, nodeID)
@@ -824,12 +824,12 @@ func (s *stackStateStore) FinalizeRun(ctx context.Context, runID string, complet
 
 	var planJSON string
 	var summaryJSON string
-	if err := s.db.QueryRowContext(ctx, `SELECT plan_json, summary_json FROM ktl_stack_runs WHERE run_id = ?`, runID).Scan(&planJSON, &summaryJSON); err != nil {
+	if err := s.db.QueryRowContext(ctx, `SELECT plan_json, summary_json FROM torque_stack_runs WHERE run_id = ?`, runID).Scan(&planJSON, &summaryJSON); err != nil {
 		return "", err
 	}
 	digest := computeRunDigest(planJSON, summaryJSON, lastEventDigest)
 	_, err := s.db.ExecContext(ctx, `
-UPDATE ktl_stack_runs
+UPDATE torque_stack_runs
 SET completed_at_ns = ?, last_event_digest = ?, run_digest = ?, updated_at_ns = CASE WHEN updated_at_ns < ? THEN ? ELSE updated_at_ns END
 WHERE run_id = ?
 `, completedAtNS, lastEventDigest, digest, completedAtNS, completedAtNS, runID)
@@ -841,7 +841,7 @@ WHERE run_id = ?
 
 func (s *stackStateStore) GetRunSummary(ctx context.Context, runID string) (*RunSummary, error) {
 	var raw string
-	err := s.db.QueryRowContext(ctx, `SELECT summary_json FROM ktl_stack_runs WHERE run_id = ?`, runID).Scan(&raw)
+	err := s.db.QueryRowContext(ctx, `SELECT summary_json FROM torque_stack_runs WHERE run_id = ?`, runID).Scan(&raw)
 	if err != nil {
 		return nil, err
 	}
@@ -854,7 +854,7 @@ func (s *stackStateStore) GetRunSummary(ctx context.Context, runID string) (*Run
 
 func (s *stackStateStore) GetRunPlan(ctx context.Context, runID string) (*Plan, error) {
 	var raw string
-	err := s.db.QueryRowContext(ctx, `SELECT plan_json FROM ktl_stack_runs WHERE run_id = ?`, runID).Scan(&raw)
+	err := s.db.QueryRowContext(ctx, `SELECT plan_json FROM torque_stack_runs WHERE run_id = ?`, runID).Scan(&raw)
 	if err != nil {
 		return nil, err
 	}
@@ -868,7 +868,7 @@ func (s *stackStateStore) GetRunPlan(ctx context.Context, runID string) (*Plan, 
 func (s *stackStateStore) VerifyEventsIntegrity(ctx context.Context, runID string) error {
 	rows, err := s.db.QueryContext(ctx, `
 SELECT id, ts_ns, node_id, type, attempt, message, fields_json, error_class, error_message, error_digest, seq, prev_digest, digest, crc32
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ?
 ORDER BY id ASC
 `, runID)
@@ -910,7 +910,7 @@ ORDER BY id ASC
 }
 
 func (s *stackStateStore) GetNodeStatus(ctx context.Context, runID string) (map[string]string, map[string]int, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT node_id, status, attempt FROM ktl_stack_nodes WHERE run_id = ?`, runID)
+	rows, err := s.db.QueryContext(ctx, `SELECT node_id, status, attempt FROM torque_stack_nodes WHERE run_id = ?`, runID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -952,7 +952,7 @@ func (s *stackStateStore) TailEvents(ctx context.Context, runID string, limit in
 	}
 	rows, err := s.db.QueryContext(ctx, `
 SELECT id, ts_ns, node_id, type, attempt, message, fields_json, error_class, error_message, error_digest, seq, prev_digest, digest, crc32
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ?
 ORDER BY id DESC
 LIMIT ?
@@ -996,7 +996,7 @@ func (s *stackStateStore) EventsAfter(ctx context.Context, runID string, afterID
 	}
 	rows, err := s.db.QueryContext(ctx, `
 SELECT id, ts_ns, node_id, type, attempt, message, fields_json, error_class, error_message, error_digest, seq, prev_digest, digest, crc32
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ? AND id > ?
 ORDER BY id ASC
 LIMIT ?
@@ -1030,7 +1030,7 @@ func (s *stackStateStore) ListEvents(ctx context.Context, runID string, limit in
 	}
 	query := `
 SELECT id, ts_ns, node_id, type, attempt, message, fields_json, error_class, error_message, error_digest, seq, prev_digest, digest, crc32
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ?
 ORDER BY id ASC
 `
@@ -1149,20 +1149,20 @@ func (s *stackStateStore) upsertNodeStepFromEvent(ctx context.Context, runID str
 	}
 
 	_, err := s.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_node_steps (
+INSERT INTO torque_stack_node_steps (
   run_id, node_id, attempt, step,
   started_at_ns, completed_at_ns, status, message,
   error_class, error_message, error_digest, cursor_json
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(run_id, node_id, attempt, step) DO UPDATE SET
-  started_at_ns = CASE WHEN excluded.started_at_ns > 0 THEN excluded.started_at_ns ELSE ktl_stack_node_steps.started_at_ns END,
-  completed_at_ns = CASE WHEN excluded.completed_at_ns > 0 THEN excluded.completed_at_ns ELSE ktl_stack_node_steps.completed_at_ns END,
-  status = CASE WHEN excluded.status != '' THEN excluded.status ELSE ktl_stack_node_steps.status END,
-  message = CASE WHEN excluded.message != '' THEN excluded.message ELSE ktl_stack_node_steps.message END,
-  error_class = CASE WHEN excluded.error_class != '' THEN excluded.error_class ELSE ktl_stack_node_steps.error_class END,
-  error_message = CASE WHEN excluded.error_message != '' THEN excluded.error_message ELSE ktl_stack_node_steps.error_message END,
-  error_digest = CASE WHEN excluded.error_digest != '' THEN excluded.error_digest ELSE ktl_stack_node_steps.error_digest END,
-  cursor_json = CASE WHEN excluded.cursor_json != '' THEN excluded.cursor_json ELSE ktl_stack_node_steps.cursor_json END
+  started_at_ns = CASE WHEN excluded.started_at_ns > 0 THEN excluded.started_at_ns ELSE torque_stack_node_steps.started_at_ns END,
+  completed_at_ns = CASE WHEN excluded.completed_at_ns > 0 THEN excluded.completed_at_ns ELSE torque_stack_node_steps.completed_at_ns END,
+  status = CASE WHEN excluded.status != '' THEN excluded.status ELSE torque_stack_node_steps.status END,
+  message = CASE WHEN excluded.message != '' THEN excluded.message ELSE torque_stack_node_steps.message END,
+  error_class = CASE WHEN excluded.error_class != '' THEN excluded.error_class ELSE torque_stack_node_steps.error_class END,
+  error_message = CASE WHEN excluded.error_message != '' THEN excluded.error_message ELSE torque_stack_node_steps.error_message END,
+  error_digest = CASE WHEN excluded.error_digest != '' THEN excluded.error_digest ELSE torque_stack_node_steps.error_digest END,
+  cursor_json = CASE WHEN excluded.cursor_json != '' THEN excluded.cursor_json ELSE torque_stack_node_steps.cursor_json END
 `, runID, nodeID, ev.Attempt, step,
 		startedAt, completedAt, status, message,
 		strings.TrimSpace(errClass), strings.TrimSpace(errMsg), strings.TrimSpace(errDigest), cursorJSON)
@@ -1171,7 +1171,7 @@ ON CONFLICT(run_id, node_id, attempt, step) DO UPDATE SET
 
 func (s *stackStateStore) MostRecentRunID(ctx context.Context) (string, error) {
 	var runID string
-	err := s.db.QueryRowContext(ctx, `SELECT run_id FROM ktl_stack_runs ORDER BY created_at_ns DESC LIMIT 1`).Scan(&runID)
+	err := s.db.QueryRowContext(ctx, `SELECT run_id FROM torque_stack_runs ORDER BY created_at_ns DESC LIMIT 1`).Scan(&runID)
 	return runID, err
 }
 
@@ -1181,7 +1181,7 @@ func (s *stackStateStore) ListRuns(ctx context.Context, limit int) ([]RunIndexEn
 	}
 	rows, err := s.db.QueryContext(ctx, `
 SELECT run_id, summary_json
-FROM ktl_stack_runs
+FROM torque_stack_runs
 ORDER BY created_at_ns DESC
 LIMIT ?
 `, limit)
@@ -1227,7 +1227,7 @@ func (s *stackStateStore) GetLock(ctx context.Context) (*StackLock, error) {
 	}
 	var owner, runID string
 	var createdAtNS, ttlNS int64
-	err := s.db.QueryRowContext(ctx, `SELECT owner, run_id, created_at_ns, ttl_ns FROM ktl_stack_lock WHERE id = 1`).Scan(&owner, &runID, &createdAtNS, &ttlNS)
+	err := s.db.QueryRowContext(ctx, `SELECT owner, run_id, created_at_ns, ttl_ns FROM torque_stack_lock WHERE id = 1`).Scan(&owner, &runID, &createdAtNS, &ttlNS)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -1266,7 +1266,7 @@ func (s *stackStateStore) AcquireLock(ctx context.Context, owner string, ttl tim
 
 	var curOwner, curRunID string
 	var createdAtNS, ttlNS int64
-	err = tx.QueryRowContext(ctx, `SELECT owner, run_id, created_at_ns, ttl_ns FROM ktl_stack_lock WHERE id = 1`).Scan(&curOwner, &curRunID, &createdAtNS, &ttlNS)
+	err = tx.QueryRowContext(ctx, `SELECT owner, run_id, created_at_ns, ttl_ns FROM torque_stack_lock WHERE id = 1`).Scan(&curOwner, &curRunID, &createdAtNS, &ttlNS)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
@@ -1285,13 +1285,13 @@ func (s *stackStateStore) AcquireLock(ctx context.Context, owner string, ttl tim
 			return nil, fmt.Errorf("stack state is locked by %q (runId=%s, createdAt=%s, ttl=%s); rerun with --takeover to steal the lock",
 				curOwner, curRunID, created.Format(time.RFC3339), curTTL.String())
 		}
-		_, err := tx.ExecContext(ctx, `UPDATE ktl_stack_lock SET owner = ?, run_id = ?, created_at_ns = ?, ttl_ns = ? WHERE id = 1`,
+		_, err := tx.ExecContext(ctx, `UPDATE torque_stack_lock SET owner = ?, run_id = ?, created_at_ns = ?, ttl_ns = ? WHERE id = 1`,
 			owner, strings.TrimSpace(runID), now.UnixNano(), ttl.Nanoseconds())
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		_, err := tx.ExecContext(ctx, `INSERT INTO ktl_stack_lock (id, owner, run_id, created_at_ns, ttl_ns) VALUES (1, ?, ?, ?, ?)`,
+		_, err := tx.ExecContext(ctx, `INSERT INTO torque_stack_lock (id, owner, run_id, created_at_ns, ttl_ns) VALUES (1, ?, ?, ?, ?)`,
 			owner, strings.TrimSpace(runID), now.UnixNano(), ttl.Nanoseconds())
 		if err != nil {
 			return nil, err
@@ -1318,6 +1318,6 @@ func (s *stackStateStore) ReleaseLock(ctx context.Context, owner string, runID s
 	if owner == "" {
 		return nil
 	}
-	_, _ = s.db.ExecContext(ctx, `DELETE FROM ktl_stack_lock WHERE id = 1 AND owner = ? AND run_id = ?`, owner, runID)
+	_, _ = s.db.ExecContext(ctx, `DELETE FROM torque_stack_lock WHERE id = 1 AND owner = ? AND run_id = ?`, owner, runID)
 	return nil
 }

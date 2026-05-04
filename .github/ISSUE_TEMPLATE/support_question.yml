@@ -1,5 +1,5 @@
 name: Support question
-description: Ask for help using ktl (usage, configuration, unexpected output).
+description: Ask for help using torque (usage, configuration, unexpected output).
 title: "question: "
 labels:
   - question
@@ -39,7 +39,7 @@ body:
     id: version
     attributes:
       label: Version and environment
-      description: Paste `ktl --version` (or `./bin/ktl --version`) and OS/arch.
+      description: Paste `torque --version` (or `./bin/torque --version`) and OS/arch.
       render: text
     validations:
       required: true

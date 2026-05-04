@@ -8,8 +8,8 @@ import (
 func TestDefaultLocalTagUsesDirectoryName(t *testing.T) {
 	contextDir := filepath.Join("..", "..", "testdata", "build", "dockerfile")
 	tag := DefaultLocalTag(contextDir)
-	if tag != "ktl.local/dockerfile:dev" {
-		t.Fatalf("expected tag ktl.local/dockerfile:dev, got %s", tag)
+	if tag != "torque.local/dockerfile:dev" {
+		t.Fatalf("expected tag torque.local/dockerfile:dev, got %s", tag)
 	}
 }
 

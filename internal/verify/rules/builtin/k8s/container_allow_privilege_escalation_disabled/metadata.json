@@ -6,7 +6,7 @@
   "descriptionText": "Containers should set securityContext.allowPrivilegeEscalation=false to reduce the risk of privilege escalation.",
   "descriptionUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-pss-01",
+  "descriptionID": "torque-pss-01",
   "cloudProvider": "common",
   "cwe": "269",
   "riskScore": "7.0"

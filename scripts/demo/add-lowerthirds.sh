@@ -3,12 +3,12 @@ set -euo pipefail
 
 in="${1:-}"
 if [[ -z "$in" ]]; then
-  echo "usage: $0 /path/to/ktl-demo.mov [output.mp4]" >&2
+  echo "usage: $0 /path/to/torque-demo.mov [output.mp4]" >&2
   exit 2
 fi
 
-out="${2:-ktl-demo-lowerthirds.mp4}"
-timeline="${KTL_LOWERTHIRDS_FILE:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lowerthirds.txt}"
+out="${2:-torque-demo-lowerthirds.mp4}"
+timeline="${TORQUE_LOWERTHIRDS_FILE:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lowerthirds.txt}"
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   echo "ffmpeg not found (install via Homebrew: brew install ffmpeg)" >&2
@@ -20,13 +20,13 @@ if [[ ! -f "$timeline" ]]; then
   exit 2
 fi
 
-font="${KTL_LOWERTHIRDS_FONT:-/System/Library/Fonts/Supplemental/Arial.ttf}"
+font="${TORQUE_LOWERTHIRDS_FONT:-/System/Library/Fonts/Supplemental/Arial.ttf}"
 if [[ ! -f "$font" ]]; then
   # Fallback to any existing system font.
   font="$(ls -1 /System/Library/Fonts/Supplemental/*.ttf 2>/dev/null | head -n 1 || true)"
 fi
 if [[ -z "$font" || ! -f "$font" ]]; then
-  echo "no usable .ttf font found; set KTL_LOWERTHIRDS_FONT to a .ttf path" >&2
+  echo "no usable .ttf font found; set TORQUE_LOWERTHIRDS_FONT to a .ttf path" >&2
   exit 2
 fi
 

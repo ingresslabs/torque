@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/ingresslabs/ktl/internal/tailer"
+	"github.com/ingresslabs/torque/internal/tailer"
 )
 
 func TestConsoleObserver_LogLevelFiltersGraph(t *testing.T) {

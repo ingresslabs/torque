@@ -1,9 +1,9 @@
 // File: internal/caststream/server.go
 // Brief: Internal caststream package implementation for 'server'.
 
-// Package caststream hosts lightweight remote streaming servers used by ktl.
-// It can expose log streams over WebSocket (e.g. `ktl logs --ws-listen`) and
-// render the deploy viewer HTML shell used by `ktl apply --ui` / `ktl delete --ui`.
+// Package caststream hosts lightweight remote streaming servers used by torque.
+// It can expose log streams over WebSocket (e.g. `torque logs --ws-listen`) and
+// render the deploy viewer HTML shell used by `torque apply --ui` / `torque delete --ui`.
 package caststream
 
 import (
@@ -22,8 +22,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/gorilla/websocket"
 
-	"github.com/ingresslabs/ktl/internal/deploy"
-	"github.com/ingresslabs/ktl/internal/tailer"
+	"github.com/ingresslabs/torque/internal/deploy"
+	"github.com/ingresslabs/torque/internal/tailer"
 )
 
 type Mode int
@@ -50,7 +50,7 @@ func WithDeployUI() Option {
 	}
 }
 
-// Server exposes a lightweight HTML + WebSocket view of ktl streams.
+// Server exposes a lightweight HTML + WebSocket view of torque streams.
 type Server struct {
 	addr           string
 	mode           Mode

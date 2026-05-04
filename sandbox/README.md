@@ -1,6 +1,6 @@
 # Sandbox Profiles
 
-This directory contains versioned nsjail policy files for `ktl build`.
+This directory contains versioned nsjail policy files for `torque build`.
 
 ## Strict profile
 
@@ -16,13 +16,13 @@ the embedded default. It aims to:
 On a Linux host with `nsjail` installed:
 
 ```bash
-export KTL_SANDBOX_CONFIG="$(pwd)/sandbox/linux-strict.cfg"
-ktl build ./testdata/build/dockerfiles/sandbox-strict --no-cache --tag ktl.local/sandbox-strict:dev
+export TORQUE_SANDBOX_CONFIG="$(pwd)/sandbox/linux-strict.cfg"
+torque build ./testdata/build/dockerfiles/sandbox-strict --no-cache --tag torque.local/sandbox-strict:dev
 ```
 
 To sanity-check path isolation (without involving BuildKit), run the existing
 integration test:
 
 ```bash
-go test -tags=integration ./cmd/ktl -run TestSandboxBlocksUnboundHostPaths
+go test -tags=integration ./cmd/torque -run TestSandboxBlocksUnboundHostPaths
 ```

@@ -1,4 +1,4 @@
-module github.com/ingresslabs/ktl
+module github.com/ingresslabs/torque
 
 go 1.25.9
 

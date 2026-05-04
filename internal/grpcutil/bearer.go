@@ -20,7 +20,7 @@ func (b bearerTokenCreds) GetRequestMetadata(_ context.Context, _ ...string) (ma
 }
 
 func (b bearerTokenCreds) RequireTransportSecurity() bool {
-	// ktl-agent runs insecure gRPC by default today; keep token auth usable in
+	// torque-agent runs insecure gRPC by default today; keep token auth usable in
 	// local/dev clusters without forcing TLS.
 	return false
 }

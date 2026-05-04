@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// ResolveSandboxConfigPath returns the nsjail config path that ktl build would use.
+// ResolveSandboxConfigPath returns the nsjail config path that torque build would use.
 func ResolveSandboxConfigPath(explicit string, hermetic bool, allowNetwork bool) (string, error) {
 	explicit = strings.TrimSpace(explicit)
 	if explicit != "" {

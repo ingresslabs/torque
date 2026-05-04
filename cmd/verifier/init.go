@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	cfgpkg "github.com/ingresslabs/ktl/internal/verify/config"
+	cfgpkg "github.com/ingresslabs/torque/internal/verify/config"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )

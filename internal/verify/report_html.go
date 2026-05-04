@@ -103,7 +103,7 @@ func writeHTML(w io.Writer, rep *Report) error {
 	var b strings.Builder
 	b.WriteString("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\" />\n")
 	b.WriteString("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n")
-	b.WriteString("<title>ktl verify report</title>\n")
+	b.WriteString("<title>torque verify report</title>\n")
 	b.WriteString("<style>\n")
 	// Lux minimalist: ivory surfaces, deep ink text, brass accents.
 	b.WriteString(":root{color-scheme:light;--ink:#0b1f2a;--muted:rgba(11,31,42,0.62);--navy:#0b3a53;--brass:#b08d57;--surface:rgba(255,255,255,0.92);--surface-soft:rgba(255,255,255,0.84);--border:rgba(11,31,42,0.12);--shadow:0 26px 60px rgba(11,31,42,0.12);--shadow-soft:0 16px 34px rgba(11,31,42,0.10);--ease:cubic-bezier(.16,1,.3,1);} \n")
@@ -169,7 +169,7 @@ func writeHTML(w io.Writer, rep *Report) error {
 	b.WriteString("<div class=\"drawer\" id=\"drawer\"></div>\n")
 	b.WriteString("<div class=\"toast\" id=\"toast\">Copied</div>\n")
 
-	b.WriteString("<script type=\"application/json\" id=\"ktlVerifyData\">")
+	b.WriteString("<script type=\"application/json\" id=\"torqueVerifyData\">")
 	b.WriteString(jsonText)
 	b.WriteString("</script>\n")
 
@@ -184,7 +184,7 @@ func writeHTML(w io.Writer, rep *Report) error {
 
 const verifyHTMLJS = `
 (function(){
-  var raw = document.getElementById('ktlVerifyData');
+  var raw = document.getElementById('torqueVerifyData');
   if(!raw){ return; }
   var data = {};
   try { data = JSON.parse(raw.textContent || '{}'); } catch(e) { data = {}; }
@@ -358,7 +358,7 @@ const verifyHTMLJS = `
     hero.innerHTML = '';
     var wrap = ce('div','hero');
     var left = ce('div');
-    left.appendChild(text(ce('h1'), 'ktl verify report'));
+    left.appendChild(text(ce('h1'), 'torque verify report'));
     left.appendChild(text(ce('div','subtitle'), 'Evaluated: ' + fmtRFC3339(rep.evaluatedAt)));
     wrap.appendChild(left);
     var right = ce('div','subtitle hero-right');
@@ -447,7 +447,7 @@ const verifyHTMLJS = `
       var btn = ce('button','btn'); btn.type='button'; btn.textContent='Copy PR Summary';
       btn.onclick = function(){
         var lines = [];
-        lines.push('### ktl verify');
+        lines.push('### torque verify');
         lines.push('');
         lines.push('- New/Changed: ' + newCount);
         lines.push('- Fixed: ' + fixedCount);

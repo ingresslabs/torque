@@ -13,7 +13,7 @@ func writeMarkdown(w io.Writer, rep *Report) error {
 		return nil
 	}
 	var b strings.Builder
-	b.WriteString("# ktl verify report\n\n")
+	b.WriteString("# torque verify report\n\n")
 	b.WriteString(fmt.Sprintf("- Evaluated: %s\n", rep.EvaluatedAt.Format(time.RFC3339)))
 	b.WriteString(fmt.Sprintf("- Mode: %s\n", rep.Mode))
 	b.WriteString(fmt.Sprintf("- Passed: %t\n", rep.Passed))

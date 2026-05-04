@@ -4,14 +4,14 @@ set -euo pipefail
 ITERATIONS="${ITERATIONS:-10}"
 ROOT="${1:-testdata/stack/smoke/basic}"
 KUBECONFIG_PATH="${KUBECONFIG_PATH:-$HOME/.kube/archimedes.yaml}"
-NAMESPACE="${KTL_STACK_SMOKE_NAMESPACE:-ktl-stack-smoke}"
+NAMESPACE="${TORQUE_STACK_SMOKE_NAMESPACE:-torque-stack-smoke}"
 
 if [[ ! -f "${KUBECONFIG_PATH}" ]]; then
   echo "missing kubeconfig: ${KUBECONFIG_PATH}" >&2
   exit 2
 fi
 
-echo "ktl stack e2e loop"
+echo "torque stack e2e loop"
 echo "  iterations: ${ITERATIONS}"
 echo "  root:       ${ROOT}"
 echo "  kubeconfig:  ${KUBECONFIG_PATH}"
@@ -21,13 +21,13 @@ echo
 failures=0
 for ((i=1; i<=ITERATIONS; i++)); do
   echo "===== iteration ${i}/${ITERATIONS} ====="
-  if KUBECONFIG_PATH="${KUBECONFIG_PATH}" KTL_STACK_SMOKE_NAMESPACE="${NAMESPACE}" ./scripts/stack-smoke.sh "${ROOT}"; then
+  if KUBECONFIG_PATH="${KUBECONFIG_PATH}" TORQUE_STACK_SMOKE_NAMESPACE="${NAMESPACE}" ./scripts/stack-smoke.sh "${ROOT}"; then
     echo "OK iteration ${i}"
   else
     echo "FAIL iteration ${i}" >&2
     failures=$((failures+1))
     echo "Stack state (if any):" >&2
-    ls -la "${ROOT}/.ktl/stack/" 2>/dev/null >&2 || true
+    ls -la "${ROOT}/.torque/stack/" 2>/dev/null >&2 || true
     echo >&2
   fi
 done

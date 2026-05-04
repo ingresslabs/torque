@@ -80,7 +80,7 @@ func loadBundleFromURL(ctx context.Context, url string) (*Bundle, error) {
 	if len(body) > maxPolicyBytes {
 		return nil, fmt.Errorf("policy bundle too large (>%d bytes)", maxPolicyBytes)
 	}
-	tmp, err := os.MkdirTemp("", "ktl-policy-*")
+	tmp, err := os.MkdirTemp("", "torque-policy-*")
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func unpackTarball(path string) (*Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	tmp, err := os.MkdirTemp("", "ktl-policy-*")
+	tmp, err := os.MkdirTemp("", "torque-policy-*")
 	if err != nil {
 		return nil, err
 	}

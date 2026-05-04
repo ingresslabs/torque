@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/kube"
+	"github.com/ingresslabs/torque/internal/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -50,7 +50,7 @@ metadata:
 	}
 
 	// Event is present => fail.
-	addEvent("KtlVerifyDemo", now.Add(-30*time.Second))
+	addEvent("TorqueVerifyDemo", now.Add(-30*time.Second))
 	_, err = verifyKubeRelease(context.Background(), client, ns, release, manifest, VerifyOptions{
 		Enabled:        boolPtr(true),
 		FailOnWarnings: boolPtr(true),

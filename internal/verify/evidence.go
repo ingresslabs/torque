@@ -25,7 +25,7 @@ func buildEvidence(obj map[string]any, fieldPath string) map[string]any {
 	if strings.TrimSpace(fieldPath) != "" {
 		out["fieldPath"] = strings.TrimSpace(fieldPath)
 	}
-	if src := strings.TrimSpace(toString(obj["__ktl_source"])); src != "" {
+	if src := strings.TrimSpace(toString(obj["__torque_source"])); src != "" {
 		out["templateSource"] = src
 	}
 

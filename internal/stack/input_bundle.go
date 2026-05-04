@@ -78,7 +78,7 @@ func WriteInputBundle(ctx context.Context, outPath string, planHash string, node
 
 	now := time.Now().UTC()
 	manifest := &InputBundleManifest{
-		APIVersion: "ktl.dev/stack-input-bundle/v1",
+		APIVersion: "torque.dev/stack-input-bundle/v1",
 		CreatedAt:  now.Format(time.RFC3339Nano),
 		PlanHash:   strings.TrimSpace(planHash),
 	}

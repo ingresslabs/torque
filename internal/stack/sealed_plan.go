@@ -58,7 +58,7 @@ type LoadSealedPlanOptions struct {
 }
 
 // LoadSealedPlan loads a run plan (plan.json + inputs.tar.gz) either from a directory produced by
-// `ktl stack seal` or from a portable .tgz bundle.
+// `torque stack seal` or from a portable .tgz bundle.
 //
 // The returned cleanup must be called to remove any temporary extraction directories.
 func LoadSealedPlan(ctx context.Context, opts LoadSealedPlanOptions) (*Plan, func(), error) {
@@ -142,7 +142,7 @@ func LoadSealedPlan(ctx context.Context, opts LoadSealedPlanOptions) (*Plan, fun
 		return nil, nil, err
 	}
 
-	tmpDir, err := os.MkdirTemp("", "ktl-stack-inputs-*")
+	tmpDir, err := os.MkdirTemp("", "torque-stack-inputs-*")
 	if err != nil {
 		return nil, nil, err
 	}

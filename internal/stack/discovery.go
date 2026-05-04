@@ -120,8 +120,8 @@ func readStackFile(path string) (*StackFile, error) {
 	if sf.Kind != "" && sf.Kind != "Stack" {
 		return nil, fmt.Errorf("%s: kind must be Stack (got %q)", path, sf.Kind)
 	}
-	if sf.APIVersion != "" && sf.APIVersion != "ktl.dev/v1" {
-		return nil, fmt.Errorf("%s: apiVersion must be ktl.dev/v1 (got %q)", path, sf.APIVersion)
+	if sf.APIVersion != "" && sf.APIVersion != "torque.dev/v1" {
+		return nil, fmt.Errorf("%s: apiVersion must be torque.dev/v1 (got %q)", path, sf.APIVersion)
 	}
 	for i := range sf.Releases {
 		if strings.TrimSpace(sf.Releases[i].Name) == "" {
@@ -146,8 +146,8 @@ func readReleaseFile(path string) (*ReleaseFile, error) {
 	if rf.Kind != "" && rf.Kind != "Release" {
 		return nil, fmt.Errorf("%s: kind must be Release (got %q)", path, rf.Kind)
 	}
-	if rf.APIVersion != "" && rf.APIVersion != "ktl.dev/v1" {
-		return nil, fmt.Errorf("%s: apiVersion must be ktl.dev/v1 (got %q)", path, rf.APIVersion)
+	if rf.APIVersion != "" && rf.APIVersion != "torque.dev/v1" {
+		return nil, fmt.Errorf("%s: apiVersion must be torque.dev/v1 (got %q)", path, rf.APIVersion)
 	}
 	if strings.TrimSpace(rf.Name) == "" {
 		return nil, errors.New(path + ": name is required")

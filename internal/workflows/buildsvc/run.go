@@ -17,17 +17,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/capture"
-	"github.com/ingresslabs/ktl/internal/caststream"
-	"github.com/ingresslabs/ktl/internal/castutil"
-	"github.com/ingresslabs/ktl/internal/dockerconfig"
-	"github.com/ingresslabs/ktl/internal/logging"
-	"github.com/ingresslabs/ktl/internal/tailer"
-	"github.com/ingresslabs/ktl/internal/telemetry"
-	"github.com/ingresslabs/ktl/internal/ui"
-	"github.com/ingresslabs/ktl/pkg/buildkit"
-	appcompose "github.com/ingresslabs/ktl/pkg/compose"
-	"github.com/ingresslabs/ktl/pkg/registry"
+	"github.com/ingresslabs/torque/internal/capture"
+	"github.com/ingresslabs/torque/internal/caststream"
+	"github.com/ingresslabs/torque/internal/castutil"
+	"github.com/ingresslabs/torque/internal/dockerconfig"
+	"github.com/ingresslabs/torque/internal/logging"
+	"github.com/ingresslabs/torque/internal/tailer"
+	"github.com/ingresslabs/torque/internal/telemetry"
+	"github.com/ingresslabs/torque/internal/ui"
+	"github.com/ingresslabs/torque/pkg/buildkit"
+	appcompose "github.com/ingresslabs/torque/pkg/compose"
+	"github.com/ingresslabs/torque/pkg/registry"
 )
 
 // Dependencies configures a build Service.
@@ -129,7 +129,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 			opts.RequireSandbox = true
 		}
 		if strings.TrimSpace(opts.AttestationDir) == "" {
-			return nil, errors.New("--hermetic requires --attest-dir so ktl can persist provenance (including external fetches)")
+			return nil, errors.New("--hermetic requires --attest-dir so torque can persist provenance (including external fetches)")
 		}
 		opts.AttestProvenance = true
 		opts.AttestSBOM = true
@@ -165,7 +165,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 		if runtime == "" {
 			runtime = "system default"
 		}
-		fmt.Fprintf(errOut, "Running ktl build inside the sandbox (policy: %s, binary: %s). Set KTL_SANDBOX_DISABLE=1 to opt out.\n", policy, runtime)
+		fmt.Fprintf(errOut, "Running torque build inside the sandbox (policy: %s, binary: %s). Set TORQUE_SANDBOX_DISABLE=1 to opt out.\n", policy, runtime)
 	}
 
 	contextDir := opts.ContextDir
@@ -220,7 +220,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 			return &Result{}, nil
 		}
 	} else if opts.RequireSandbox && !sandboxActive() {
-		return nil, fmt.Errorf("sandbox is required but unavailable on this host (set KTL_SANDBOX_DISABLE=1 to opt out, or omit --hermetic/--sandbox)")
+		return nil, fmt.Errorf("sandbox is required but unavailable on this host (set TORQUE_SANDBOX_DISABLE=1 to opt out, or omit --hermetic/--sandbox)")
 	} else if opts.SandboxLogs {
 		return nil, fmt.Errorf("--sandbox-logs is only supported on Linux hosts with a sandbox runtime installed")
 	}
@@ -248,7 +248,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 
 	var captureRecorder *capture.Recorder
 	if path := strings.TrimSpace(opts.CapturePath); path != "" {
-		resolved, err := capture.ResolvePath("ktl build", path, time.Now())
+		resolved, err := capture.ResolvePath("torque build", path, time.Now())
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +258,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 			return nil, err
 		}
 		rec, err := capture.Open(resolved, capture.SessionMeta{
-			Command:   "ktl build",
+			Command:   "torque build",
 			Args:      append([]string(nil), os.Args[1:]...),
 			StartedAt: time.Now().UTC(),
 			Host:      host,
@@ -348,12 +348,12 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 		}
 		wsServer := caststream.New(addr, caststream.ModeWS, mirrorLabel, logger.WithName("build-ws"))
 		stream.addObserver(wsServer)
-		if err := castutil.StartCastServer(ctx, wsServer, "ktl build websocket stream", logger.WithName("build-ws"), errOut); err != nil {
+		if err := castutil.StartCastServer(ctx, wsServer, "torque build websocket stream", logger.WithName("build-ws"), errOut); err != nil {
 			return nil, err
 		}
-		fmt.Fprintf(errOut, "Serving ktl websocket build stream on %s\n", addr)
+		fmt.Fprintf(errOut, "Serving torque websocket build stream on %s\n", addr)
 	}
-	stream.emitInfo(fmt.Sprintf("Streaming ktl build from %s", contextDir))
+	stream.emitInfo(fmt.Sprintf("Streaming torque build from %s", contextDir))
 	var deferredCacheIntel func()
 	defer func() {
 		if buildConsole != nil {
@@ -442,7 +442,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 		if fetches != nil {
 			if dir := strings.TrimSpace(opts.AttestationDir); dir != "" {
 				if err := os.MkdirAll(dir, 0o755); err == nil {
-					_ = os.WriteFile(filepath.Join(dir, "ktl-external-fetches.json"), []byte(fetches.snapshotJSON()), 0o644)
+					_ = os.WriteFile(filepath.Join(dir, "torque-external-fetches.json"), []byte(fetches.snapshotJSON()), 0o644)
 				}
 			}
 		}
@@ -680,7 +680,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 	if opts.Interactive {
 		tty := detectTTY(streams)
 		if tty == nil {
-			return nil, errors.New("--interactive requires a TTY. Run ktl build from an interactive terminal or omit --interactive")
+			return nil, errors.New("--interactive requires a TTY. Run torque build from an interactive terminal or omit --interactive")
 		}
 		shellArgs, err := parseInteractiveShell(opts.InteractiveShell)
 		if err != nil {
@@ -762,7 +762,7 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 		}
 		if fetches != nil {
 			if err := os.MkdirAll(opts.AttestationDir, 0o755); err == nil {
-				_ = os.WriteFile(filepath.Join(opts.AttestationDir, "ktl-external-fetches.json"), []byte(fetches.snapshotJSON()), 0o644)
+				_ = os.WriteFile(filepath.Join(opts.AttestationDir, "torque-external-fetches.json"), []byte(fetches.snapshotJSON()), 0o644)
 			}
 		}
 		if stream != nil {

@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/grpcutil"
-	"github.com/ingresslabs/ktl/internal/workflows/buildsvc"
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/torque/internal/grpcutil"
+	"github.com/ingresslabs/torque/internal/workflows/buildsvc"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -103,7 +103,7 @@ func TestMirrorFlightRecorder_PersistReplayListExport(t *testing.T) {
 		_, err := client.SetSessionMeta(metaCtx, &apiv1.MirrorSetSessionMetaRequest{
 			SessionId: "sess1",
 			Meta: &apiv1.MirrorSessionMeta{
-				Command:   "ktl logs",
+				Command:   "torque logs",
 				Args:      []string{"checkout-.*", "--namespace", "ns"},
 				Requester: "tester",
 				Namespace: "ns",
@@ -179,8 +179,8 @@ func TestMirrorFlightRecorder_PersistReplayListExport(t *testing.T) {
 				if s.GetLastSequence() < 3 {
 					t.Fatalf("sess1 last_sequence: got %d want >=3", s.GetLastSequence())
 				}
-				if s.GetMeta().GetCommand() != "ktl logs" {
-					t.Fatalf("sess1 meta.command: got %q want %q", s.GetMeta().GetCommand(), "ktl logs")
+				if s.GetMeta().GetCommand() != "torque logs" {
+					t.Fatalf("sess1 meta.command: got %q want %q", s.GetMeta().GetCommand(), "torque logs")
 				}
 				if s.GetTags()["team"] != "infra" {
 					t.Fatalf("sess1 tag team: got %q want %q", s.GetTags()["team"], "infra")
@@ -200,8 +200,8 @@ func TestMirrorFlightRecorder_PersistReplayListExport(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetSession: %v", err)
 		}
-		if sess.GetMeta().GetCommand() != "ktl logs" {
-			t.Fatalf("GetSession meta.command: got %q want %q", sess.GetMeta().GetCommand(), "ktl logs")
+		if sess.GetMeta().GetCommand() != "torque logs" {
+			t.Fatalf("GetSession meta.command: got %q want %q", sess.GetMeta().GetCommand(), "torque logs")
 		}
 		if sess.GetTags()["team"] != "infra" {
 			t.Fatalf("GetSession tag team: got %q want %q", sess.GetTags()["team"], "infra")

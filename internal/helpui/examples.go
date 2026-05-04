@@ -3,132 +3,132 @@ package helpui
 // curatedExamples supplements Cobra's .Example fields with task-based golden paths.
 // Keys are Cobra command paths (CommandPath()).
 var curatedExamples = map[string][]string{
-	"ktl logs": {
-		"# Tail pods matching a regex in a namespace\nktl logs 'checkout-.*' -n prod-payments",
-		"# Highlight errors\nktl logs 'checkout-.*' -n prod-payments --highlight ERROR",
+	"torque logs": {
+		"# Tail pods matching a regex in a namespace\ntorque logs 'checkout-.*' -n prod-payments",
+		"# Highlight errors\ntorque logs 'checkout-.*' -n prod-payments --highlight ERROR",
 	},
-	"ktl init": {
-		"# Create a repo-local .ktl.yaml\nktl init",
-		"# Preview the config without writing\nktl init --dry-run",
-		"# Run the interactive wizard\nktl init --interactive",
-		"# Use an opinionated preset\nktl init --preset prod",
-		"# Apply a built-in template\nktl init --template platform",
-		"# Apply a template from a URL\nktl init --template https://example.com/ktl-init.yaml",
-		"# Merge defaults into an existing config\nktl init --merge",
-		"# Scaffold chart/ and values/ plus gitignore\nktl init --layout --gitignore",
-		"# Scaffold Vault-backed secrets\nktl init --secrets-provider vault",
-		"# Emit JSON for automation\nktl init --output json --dry-run",
-		"# Write a replayable init plan\nktl init --plan --plan-output .ktl/init-plan.json",
-		"# Apply a saved init plan\nktl init --apply-plan .ktl/init-plan.json",
-		"# Initialize another path\nktl init ./services/api",
-		"# Overwrite existing config\nktl init --force",
+	"torque init": {
+		"# Create a repo-local .torque.yaml\ntorque init",
+		"# Preview the config without writing\ntorque init --dry-run",
+		"# Run the interactive wizard\ntorque init --interactive",
+		"# Use an opinionated preset\ntorque init --preset prod",
+		"# Apply a built-in template\ntorque init --template platform",
+		"# Apply a template from a URL\ntorque init --template https://example.com/torque-init.yaml",
+		"# Merge defaults into an existing config\ntorque init --merge",
+		"# Scaffold chart/ and values/ plus gitignore\ntorque init --layout --gitignore",
+		"# Scaffold Vault-backed secrets\ntorque init --secrets-provider vault",
+		"# Emit JSON for automation\ntorque init --output json --dry-run",
+		"# Write a replayable init plan\ntorque init --plan --plan-output .torque/init-plan.json",
+		"# Apply a saved init plan\ntorque init --apply-plan .torque/init-plan.json",
+		"# Initialize another path\ntorque init ./services/api",
+		"# Overwrite existing config\ntorque init --force",
 	},
-	"ktl init from-cluster": {
-		"# Generate stack.yaml from the active namespace\nktl init from-cluster",
-		"# Preview adoption across all non-system namespaces\nktl init from-cluster --all-namespaces --dry-run",
-		"# Export installed charts and current Helm values\nktl init from-cluster --all-namespaces --write-values",
-		"# Adopt a specific namespace into another file\nktl init from-cluster -n prod --output stacks/prod.yaml",
+	"torque init from-cluster": {
+		"# Generate stack.yaml from the active namespace\ntorque init from-cluster",
+		"# Preview adoption across all non-system namespaces\ntorque init from-cluster --all-namespaces --dry-run",
+		"# Export installed charts and current Helm values\ntorque init from-cluster --all-namespaces --write-values",
+		"# Adopt a specific namespace into another file\ntorque init from-cluster -n prod --output stacks/prod.yaml",
 	},
-	"ktl build": {
-		"# Build an image from a directory\nktl build . --tag ghcr.io/acme/app:dev",
-		"# Capture build provenance for apply plan\nktl build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite",
-		"# Share the build stream over WebSocket\nktl build . --ws-listen :9085",
+	"torque build": {
+		"# Build an image from a directory\ntorque build . --tag ghcr.io/acme/app:dev",
+		"# Capture build provenance for apply plan\ntorque build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite",
+		"# Share the build stream over WebSocket\ntorque build . --ws-listen :9085",
 	},
-	"ktl explain": {
-		"# Explain a deploy capture\nktl explain ./apply.sqlite",
-		"# Explain a stack capture as JSON\nktl explain ./stack.sqlite --format json",
-		"# Write a Markdown explanation for CI logs or PR comments\nktl explain ./apply.sqlite --format markdown",
-		"# Explain a specific captured session\nktl explain ./apply.sqlite --session <session-id>",
+	"torque explain": {
+		"# Explain a deploy capture\ntorque explain ./apply.sqlite",
+		"# Explain a stack capture as JSON\ntorque explain ./stack.sqlite --format json",
+		"# Write a Markdown explanation for CI logs or PR comments\ntorque explain ./apply.sqlite --format markdown",
+		"# Explain a specific captured session\ntorque explain ./apply.sqlite --session <session-id>",
 	},
-	"ktl help": {
-		"# Launch the interactive help UI\nktl help --ui",
-		"# Show help for a specific command\nktl help apply",
+	"torque help": {
+		"# Launch the interactive help UI\ntorque help --ui",
+		"# Show help for a specific command\ntorque help apply",
 	},
-	"ktl apply plan": {
-		"# Preview a Helm upgrade\nktl apply plan --chart ./chart --release foo -n default",
-		"# Write a GitHub PR comment summary\nktl apply plan --chart ./chart --release foo -n default --github-comment --output plan.md",
-		"# Attach verifier and build evidence\nktl apply plan --chart ./chart --release foo -n default --verify-report verify.json --build-capture ./build.sqlite --github-comment",
-		"# Render a shareable HTML visualization\nktl apply plan --visualize --chart ./chart --release foo -n default",
-		"# Preview with secret references\nktl apply plan --chart ./chart --release foo -n default --secret-provider local",
-		"# Preview with Vault-backed secrets\nktl apply plan --chart ./chart --release foo -n default --secret-provider vault",
-		"# Compare against a saved baseline\nktl apply plan --chart ./chart --release foo -n default --compare-to ./plan.json",
-		"# Write a baseline snapshot\nktl apply plan --chart ./chart --release foo -n default --baseline ./plan.json",
+	"torque apply plan": {
+		"# Preview a Helm upgrade\ntorque apply plan --chart ./chart --release foo -n default",
+		"# Write a GitHub PR comment summary\ntorque apply plan --chart ./chart --release foo -n default --github-comment --output plan.md",
+		"# Attach verifier and build evidence\ntorque apply plan --chart ./chart --release foo -n default --verify-report verify.json --build-capture ./build.sqlite --github-comment",
+		"# Render a shareable HTML visualization\ntorque apply plan --visualize --chart ./chart --release foo -n default",
+		"# Preview with secret references\ntorque apply plan --chart ./chart --release foo -n default --secret-provider local",
+		"# Preview with Vault-backed secrets\ntorque apply plan --chart ./chart --release foo -n default --secret-provider vault",
+		"# Compare against a saved baseline\ntorque apply plan --chart ./chart --release foo -n default --compare-to ./plan.json",
+		"# Write a baseline snapshot\ntorque apply plan --chart ./chart --release foo -n default --baseline ./plan.json",
 	},
-	"ktl apply": {
-		"# Deploy a chart\nktl apply --chart ./chart --release foo -n default",
-		"# Run the deploy viewer\nktl apply --chart ./chart --release foo -n default --ui",
-		"# Deploy with secret references\nktl apply --chart ./chart --release foo -n default --secret-provider local",
-		"# Deploy with Vault-backed secrets\nktl apply --chart ./chart --release foo -n default --secret-provider vault",
+	"torque apply": {
+		"# Deploy a chart\ntorque apply --chart ./chart --release foo -n default",
+		"# Run the deploy viewer\ntorque apply --chart ./chart --release foo -n default --ui",
+		"# Deploy with secret references\ntorque apply --chart ./chart --release foo -n default --secret-provider local",
+		"# Deploy with Vault-backed secrets\ntorque apply --chart ./chart --release foo -n default --secret-provider vault",
 	},
-	"ktl delete": {
-		"# Delete a release\nktl delete --release foo -n default",
-		"# Run the destroy viewer\nktl delete --release foo -n default --ui",
+	"torque delete": {
+		"# Delete a release\ntorque delete --release foo -n default",
+		"# Run the destroy viewer\ntorque delete --release foo -n default --ui",
 	},
-	"ktl revert": {
-		"# Revert a release to the last known-good revision\nktl revert --release foo -n default",
+	"torque revert": {
+		"# Revert a release to the last known-good revision\ntorque revert --release foo -n default",
 	},
-	"ktl env": {
-		"# Show env var reference (machine-readable)\nktl env --format json",
+	"torque env": {
+		"# Show env var reference (machine-readable)\ntorque env --format json",
 	},
-	"ktl secrets": {
-		"# Validate a secret reference\nktl secrets test --secret-provider vault --ref secret://vault/app/db#password",
-		"# List secrets under a provider prefix\nktl secrets list --secret-provider local --path app --format json",
-		"# Discover secret refs across the repo\nktl secrets discover --scope repo",
-		"# Discover secret refs for a chart\nktl secrets discover --scope chart --chart ./chart --values values/dev.yaml",
-		"# Discover secret refs for a stack\nktl secrets discover --scope stack --config ./stacks/prod",
+	"torque secrets": {
+		"# Validate a secret reference\ntorque secrets test --secret-provider vault --ref secret://vault/app/db#password",
+		"# List secrets under a provider prefix\ntorque secrets list --secret-provider local --path app --format json",
+		"# Discover secret refs across the repo\ntorque secrets discover --scope repo",
+		"# Discover secret refs for a chart\ntorque secrets discover --scope chart --chart ./chart --values values/dev.yaml",
+		"# Discover secret refs for a stack\ntorque secrets discover --scope stack --config ./stacks/prod",
 	},
-	"ktl version": {
-		"# Print version information\nktl version",
+	"torque version": {
+		"# Print version information\ntorque version",
 	},
-	"ktl stack": {
-		"# Plan the stack (default: read-only, like `ktl stack plan`)\nktl stack --config ./stacks/prod",
-		"# Restrict selection via environment defaults\nKTL_STACK_TAG=critical KTL_STACK_CLUSTER=prod-us ktl stack --config ./stacks/prod",
-		"# Emit a machine-readable plan for tooling\nktl stack --config ./stacks/prod --output json",
+	"torque stack": {
+		"# Plan the stack (default: read-only, like `torque stack plan`)\ntorque stack --config ./stacks/prod",
+		"# Restrict selection via environment defaults\nTORQUE_STACK_TAG=critical TORQUE_STACK_CLUSTER=prod-us torque stack --config ./stacks/prod",
+		"# Emit a machine-readable plan for tooling\ntorque stack --config ./stacks/prod --output json",
 	},
-	"ktl stack plan": {
-		"# Write a reproducible plan bundle for review/CI\nktl stack plan --config ./stacks/prod --bundle ./stack-plan.tgz",
-		"# Embed a live diff summary in the bundle (requires cluster access)\nktl stack plan --config ./stacks/prod --bundle ./stack-plan.tgz --bundle-diff-summary",
+	"torque stack plan": {
+		"# Write a reproducible plan bundle for review/CI\ntorque stack plan --config ./stacks/prod --bundle ./stack-plan.tgz",
+		"# Embed a live diff summary in the bundle (requires cluster access)\ntorque stack plan --config ./stacks/prod --bundle ./stack-plan.tgz --bundle-diff-summary",
 	},
-	"ktl stack graph": {
-		"# Render a Graphviz DOT graph\nktl stack graph --config ./stacks/prod > stack.dot",
-		"# Render a Mermaid graph\nktl stack graph --config ./stacks/prod --format mermaid > stack.mmd",
+	"torque stack graph": {
+		"# Render a Graphviz DOT graph\ntorque stack graph --config ./stacks/prod > stack.dot",
+		"# Render a Mermaid graph\ntorque stack graph --config ./stacks/prod --format mermaid > stack.mmd",
 	},
-	"ktl stack explain": {
-		"# Explain why a release is selected (by name)\nktl stack explain --config ./stacks/prod api",
-		"# Print only selection reasons\nktl stack explain --config ./stacks/prod api --why",
+	"torque stack explain": {
+		"# Explain why a release is selected (by name)\ntorque stack explain --config ./stacks/prod api",
+		"# Print only selection reasons\ntorque stack explain --config ./stacks/prod api --why",
 	},
-	"ktl stack apply": {
-		"# Apply the selected releases (DAG order)\nktl stack apply --config ./stacks/prod --yes",
-		"# Capture a stack run evidence bundle\nktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite",
-		"# Resume the most recent run (uses stored frozen plan unless --replan is set)\nktl stack apply --config ./stacks/prod --resume --yes",
-		"# Enable manifest diffs (defaulted via env)\nKTL_STACK_APPLY_DIFF=1 ktl stack apply --config ./stacks/prod --yes",
-		"# Apply with secret references\nktl stack apply --config ./stacks/prod --secret-provider vault --yes",
+	"torque stack apply": {
+		"# Apply the selected releases (DAG order)\ntorque stack apply --config ./stacks/prod --yes",
+		"# Capture a stack run evidence bundle\ntorque stack apply --config ./stacks/prod --yes --capture ./stack.sqlite",
+		"# Resume the most recent run (uses stored frozen plan unless --replan is set)\ntorque stack apply --config ./stacks/prod --resume --yes",
+		"# Enable manifest diffs (defaulted via env)\nTORQUE_STACK_APPLY_DIFF=1 torque stack apply --config ./stacks/prod --yes",
+		"# Apply with secret references\ntorque stack apply --config ./stacks/prod --secret-provider vault --yes",
 	},
-	"ktl stack delete": {
-		"# Delete the selected releases (reverse DAG order)\nktl stack delete --config ./stacks/prod --yes",
-		"# Prompt only when deleting 50+ releases\nktl stack delete --config ./stacks/prod --delete-confirm-threshold 50",
+	"torque stack delete": {
+		"# Delete the selected releases (reverse DAG order)\ntorque stack delete --config ./stacks/prod --yes",
+		"# Prompt only when deleting 50+ releases\ntorque stack delete --config ./stacks/prod --delete-confirm-threshold 50",
 	},
-	"ktl stack status": {
-		"# Tail the most recent run\nktl stack status --config ./stacks/prod --follow",
-		"# Show a specific run ID (see `ktl stack runs`)\nktl stack status --config ./stacks/prod --run-id 2025-12-30T12-34-56.000000000Z --follow",
+	"torque stack status": {
+		"# Tail the most recent run\ntorque stack status --config ./stacks/prod --follow",
+		"# Show a specific run ID (see `torque stack runs`)\ntorque stack status --config ./stacks/prod --run-id 2025-12-30T12-34-56.000000000Z --follow",
 	},
-	"ktl stack runs": {
-		"# List recent runs\nktl stack runs --config ./stacks/prod --limit 50",
+	"torque stack runs": {
+		"# List recent runs\ntorque stack runs --config ./stacks/prod --limit 50",
 	},
-	"ktl stack audit": {
-		"# Show audit table for the most recent run\nktl stack audit --config ./stacks/prod",
-		"# Export a shareable HTML report\nktl stack audit --config ./stacks/prod --output html > stack-audit.html",
+	"torque stack audit": {
+		"# Show audit table for the most recent run\ntorque stack audit --config ./stacks/prod",
+		"# Export a shareable HTML report\ntorque stack audit --config ./stacks/prod --output html > stack-audit.html",
 	},
-	"ktl stack export": {
-		"# Export the most recent run as a portable bundle\nktl stack export --config ./stacks/prod",
-		"# Export a specific run ID\nktl stack export --config ./stacks/prod --run-id 2025-12-30T12-34-56.000000000Z --out ./exports/run.tgz",
+	"torque stack export": {
+		"# Export the most recent run as a portable bundle\ntorque stack export --config ./stacks/prod",
+		"# Export a specific run ID\ntorque stack export --config ./stacks/prod --run-id 2025-12-30T12-34-56.000000000Z --out ./exports/run.tgz",
 	},
-	"ktl stack seal": {
-		"# Seal a plan directory for CI (includes inputs bundle by default)\nktl stack seal --config ./stacks/prod --out ./.ktl/stack/sealed --command apply",
-		"# Seal without bundling inputs\nktl stack seal --config ./stacks/prod --out ./.ktl/stack/sealed --bundle=false --command apply",
+	"torque stack seal": {
+		"# Seal a plan directory for CI (includes inputs bundle by default)\ntorque stack seal --config ./stacks/prod --out ./.torque/stack/sealed --command apply",
+		"# Seal without bundling inputs\ntorque stack seal --config ./stacks/prod --out ./.torque/stack/sealed --bundle=false --command apply",
 	},
-	"ktl stack rerun-failed": {
-		"# Resume the most recent run and schedule only failed nodes\nktl stack rerun-failed --config ./stacks/prod --yes",
+	"torque stack rerun-failed": {
+		"# Resume the most recent run and schedule only failed nodes\ntorque stack rerun-failed --config ./stacks/prod --yes",
 	},
 	"verifier": {
 		"# Verify a chart render (inline)\nverifier --chart ./chart --release foo -n default",
@@ -142,11 +142,11 @@ var curatedExamples = map[string][]string{
 		"# HTML report\nverifier --manifest ./rendered.yaml --format html --report ./verify-report.html --open",
 		"# Print a suggested fix plan (table output only)\nverifier verify.yaml --fix",
 	},
-	"ktl-package": {
-		"# Package a chart directory\nktl-package ./chart --output dist/chart.sqlite",
-		"# Verify an existing archive\nktl-package --verify dist/chart.sqlite",
-		"# Package then verify (quiet with SHA)\nktl-package ./chart --output dist/chart.sqlite --print-sha --quiet && ktl-package --verify dist/chart.sqlite",
-		"# Stream an archive over ssh\nktl-package ./chart --output - | ssh host \"cat > chart.sqlite\"",
-		"# Unpack an archive into a directory\nktl-package --unpack dist/chart.sqlite --destination ./chart-unpacked",
+	"torque-package": {
+		"# Package a chart directory\ntorque-package ./chart --output dist/chart.sqlite",
+		"# Verify an existing archive\ntorque-package --verify dist/chart.sqlite",
+		"# Package then verify (quiet with SHA)\ntorque-package ./chart --output dist/chart.sqlite --print-sha --quiet && torque-package --verify dist/chart.sqlite",
+		"# Stream an archive over ssh\ntorque-package ./chart --output - | ssh host \"cat > chart.sqlite\"",
+		"# Unpack an archive into a directory\ntorque-package --unpack dist/chart.sqlite --destination ./chart-unpacked",
 	},
 }

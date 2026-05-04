@@ -55,7 +55,7 @@ func DefaultReportPath(attestDir string) string {
 	if attestDir == "" {
 		return ""
 	}
-	return filepath.Join(attestDir, "ktl-secrets-report.json")
+	return filepath.Join(attestDir, "torque-secrets-report.json")
 }
 
 func WriteReport(path string, report *Report) error {

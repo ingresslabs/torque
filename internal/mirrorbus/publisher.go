@@ -11,15 +11,15 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/ingresslabs/ktl/internal/grpcutil"
+	"github.com/ingresslabs/torque/internal/grpcutil"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	"github.com/ingresslabs/ktl/internal/api/convert"
-	"github.com/ingresslabs/ktl/internal/tailer"
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/torque/internal/api/convert"
+	"github.com/ingresslabs/torque/internal/tailer"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 )
 
 // Publisher streams log records to the central mirror bus.

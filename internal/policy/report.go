@@ -13,7 +13,7 @@ func DefaultReportPath(attestDir string) string {
 	if attestDir == "" {
 		return ""
 	}
-	return filepath.Join(attestDir, "ktl-policy-report.json")
+	return filepath.Join(attestDir, "torque-policy-report.json")
 }
 
 func WriteReport(path string, report *Report) error {

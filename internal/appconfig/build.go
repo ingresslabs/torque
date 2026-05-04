@@ -36,7 +36,7 @@ func DefaultGlobalPath() string {
 	if strings.TrimSpace(home) == "" {
 		return ""
 	}
-	return filepath.Join(home, ".ktl", "config.yaml")
+	return filepath.Join(home, ".torque", "config.yaml")
 }
 
 func DefaultRepoPath(repoRoot string) string {
@@ -44,7 +44,7 @@ func DefaultRepoPath(repoRoot string) string {
 	if repoRoot == "" {
 		return ""
 	}
-	return filepath.Join(repoRoot, ".ktl.yaml")
+	return filepath.Join(repoRoot, ".torque.yaml")
 }
 
 func Load(ctx context.Context, globalPath, repoPath string) (Config, error) {

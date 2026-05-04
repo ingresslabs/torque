@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/ui"
+	"github.com/ingresslabs/torque/internal/ui"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -332,7 +332,7 @@ func (c *Console) renderHeaderLocked(width int) string {
 	default:
 		tag = ansiDim(c.opts.Color, tag)
 	}
-	left := ansiBold(c.opts.Color, "KTL VERIFY") + " " + tag + " " + target
+	left := ansiBold(c.opts.Color, "TORQUE VERIFY") + " " + tag + " " + target
 	right := elapsed.String()
 	return trimToWidthANSI(joinLeftRightANSI(left, right, width), width)
 }

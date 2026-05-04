@@ -19,7 +19,7 @@ func writeFile(t *testing.T, path string, contents string) {
 func TestCompile_MergesDefaultsAndProfiles(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "stack.yaml"), `
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: demo
 defaultProfile: dev
@@ -38,7 +38,7 @@ defaults:
   tags: [svc]
 `)
 	writeFile(t, filepath.Join(root, "services", "redis", "release.yaml"), `
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Release
 name: redis
 chart: ./chart
@@ -80,7 +80,7 @@ tags: [cache]
 func TestCompile_AllowsSameReleaseNameAcrossNamespaces(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "stack.yaml"), `
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: adopted
 defaults:
@@ -115,7 +115,7 @@ releases:
 func TestSelect_ByTagAndIncludeDeps(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "stack.yaml"), `
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: demo
 defaults:
@@ -154,7 +154,7 @@ releases:
 func TestSelect_AllowMissingDeps_PrunesNeeds(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "stack.yaml"), `
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: demo
 defaults:

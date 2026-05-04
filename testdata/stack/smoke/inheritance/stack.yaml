@@ -1,4 +1,4 @@
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: smoke-inheritance
 
@@ -13,7 +13,7 @@ defaults:
   cluster:
     name: archimedes
     kubeconfig: ~/.kube/archimedes.yaml
-  namespace: ktl-stack-smoke
+  namespace: torque-stack-smoke
   values: [values-common.yaml]
   set:
     global.cluster: archimedes

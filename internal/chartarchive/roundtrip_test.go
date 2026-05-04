@@ -102,7 +102,7 @@ func TestUnpackArchiveDetectsTamper(t *testing.T) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 	defer db.Close()
-	if _, err := db.Exec(`UPDATE ktl_chart_files SET data = x'00' || data WHERE path = 'Chart.yaml'`); err != nil {
+	if _, err := db.Exec(`UPDATE torque_chart_files SET data = x'00' || data WHERE path = 'Chart.yaml'`); err != nil {
 		t.Fatalf("tamper: %v", err)
 	}
 

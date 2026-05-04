@@ -130,7 +130,7 @@ func providerHints(defaultProvider string, providers []string) []string {
 		hints = append(hints, fmt.Sprintf("configured providers: %s", strings.Join(providers, ", ")))
 	}
 	if strings.TrimSpace(defaultProvider) == "" {
-		hints = append(hints, "set secrets.defaultProvider in .ktl.yaml or pass --secret-provider")
+		hints = append(hints, "set secrets.defaultProvider in .torque.yaml or pass --secret-provider")
 	}
 	return hints
 }
@@ -309,9 +309,9 @@ func validateVaultRef(ctx context.Context, p *vaultProvider, ref Ref, opts Valid
 	if err != nil {
 		hints := []string{}
 		if parent, _ := parentPath(path); parent != "" {
-			hints = append(hints, fmt.Sprintf("list vault path: ktl secrets list --secret-provider %s --path %s", ref.Provider, parent))
+			hints = append(hints, fmt.Sprintf("list vault path: torque secrets list --secret-provider %s --path %s", ref.Provider, parent))
 		} else {
-			hints = append(hints, fmt.Sprintf("list vault path: ktl secrets list --secret-provider %s --path /", ref.Provider))
+			hints = append(hints, fmt.Sprintf("list vault path: torque secrets list --secret-provider %s --path /", ref.Provider))
 		}
 		return &ValidationIssue{
 			Reference:   ref.Reference(),

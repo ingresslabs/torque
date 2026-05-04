@@ -29,8 +29,8 @@ type RunPlan struct {
 	StackGitCommit string `json:"stackGitCommit,omitempty"`
 	StackGitDirty  bool   `json:"stackGitDirty,omitempty"`
 
-	KtlVersion   string `json:"ktlVersion,omitempty"`
-	KtlGitCommit string `json:"ktlGitCommit,omitempty"`
+	TorqueVersion   string `json:"torqueVersion,omitempty"`
+	TorqueGitCommit string `json:"torqueGitCommit,omitempty"`
 }
 
 type RunSelector struct {
@@ -96,7 +96,7 @@ type RunSummary struct {
 func buildRunPlanPayload(run *runState, p *Plan) *RunPlan {
 	nodes := append([]*ResolvedRelease(nil), p.Nodes...)
 	return &RunPlan{
-		APIVersion:  "ktl.dev/stack-run/v1",
+		APIVersion:  "torque.dev/stack-run/v1",
 		RunID:       run.RunID,
 		StackRoot:   p.StackRoot,
 		StackName:   p.StackName,
@@ -135,7 +135,7 @@ func computeRunEventIntegrity(ev RunEvent) (digest string, crc string) {
 		_, _ = h.Write([]byte{0})
 		_, _ = c.Write([]byte{0})
 	}
-	write("ktl.stack-event.v1")
+	write("torque.stack-event.v1")
 	write(fmt.Sprintf("seq=%d", ev.Seq))
 	write(ev.TS)
 	write(ev.RunID)
@@ -192,7 +192,7 @@ func computeRunDigest(planJSON string, summaryJSON string, lastEventDigest strin
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-run.v1")
+	write("torque.stack-run.v1")
 	write(planJSON)
 	write(summaryJSON)
 	write(strings.TrimSpace(lastEventDigest))
@@ -205,7 +205,7 @@ func computeRunErrorDigest(class string, message string) string {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-error.v1")
+	write("torque.stack-error.v1")
 	write(strings.TrimSpace(class))
 	write(strings.TrimSpace(message))
 	return "sha256:" + hex.EncodeToString(h.Sum(nil))

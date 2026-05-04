@@ -1,8 +1,8 @@
 // File: internal/tailer/node_logs.go
 // Brief: Internal tailer package implementation for 'node logs'.
 
-// node_logs.go extends the tailer with kubelet-proxy log streaming so ktl can
-// enrich 'ktl logs' sessions with node/system files alongside pod output.
+// node_logs.go extends the tailer with kubelet-proxy log streaming so torque can
+// enrich 'torque logs' sessions with node/system files alongside pod output.
 package tailer
 
 import (

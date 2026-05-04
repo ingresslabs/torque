@@ -40,7 +40,7 @@ func TestListRuns_NewestFirst(t *testing.T) {
 		t.Fatalf("CreateRun: %v", err)
 	}
 	sum1 := &RunSummary{
-		APIVersion: "ktl.dev/stack-run/v1",
+		APIVersion: "torque.dev/stack-run/v1",
 		RunID:      run1ID,
 		Status:     "succeeded",
 		StartedAt:  "2025-01-01T00:00:00Z",
@@ -54,7 +54,7 @@ func TestListRuns_NewestFirst(t *testing.T) {
 	if err := s.WriteSummary(ctx, run1ID, sum1); err != nil {
 		t.Fatalf("WriteSummary: %v", err)
 	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE ktl_stack_runs SET created_at_ns = ?, updated_at_ns = ?, summary_json = ? WHERE run_id = ?`,
+	if _, err := s.db.ExecContext(ctx, `UPDATE torque_stack_runs SET created_at_ns = ?, updated_at_ns = ?, summary_json = ? WHERE run_id = ?`,
 		int64(1000), int64(1001), marshalJSON(t, sum1), run1ID); err != nil {
 		t.Fatalf("update run1 timestamps: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestListRuns_NewestFirst(t *testing.T) {
 		t.Fatalf("CreateRun: %v", err)
 	}
 	sum2 := &RunSummary{
-		APIVersion: "ktl.dev/stack-run/v1",
+		APIVersion: "torque.dev/stack-run/v1",
 		RunID:      run2ID,
 		Status:     "failed",
 		StartedAt:  "2025-01-02T00:00:00Z",
@@ -89,7 +89,7 @@ func TestListRuns_NewestFirst(t *testing.T) {
 	if err := s.WriteSummary(ctx, run2ID, sum2); err != nil {
 		t.Fatalf("WriteSummary: %v", err)
 	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE ktl_stack_runs SET created_at_ns = ?, updated_at_ns = ?, summary_json = ? WHERE run_id = ?`,
+	if _, err := s.db.ExecContext(ctx, `UPDATE torque_stack_runs SET created_at_ns = ?, updated_at_ns = ?, summary_json = ? WHERE run_id = ?`,
 		int64(2000), int64(2001), marshalJSON(t, sum2), run2ID); err != nil {
 		t.Fatalf("update run2 timestamps: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestRunStatus_FormatTable(t *testing.T) {
 		t.Fatalf("CreateRun: %v", err)
 	}
 	sum := &RunSummary{
-		APIVersion: "ktl.dev/stack-run/v1",
+		APIVersion: "torque.dev/stack-run/v1",
 		RunID:      runID,
 		Status:     "failed",
 		StartedAt:  "2025-01-02T00:00:00Z",
@@ -146,7 +146,7 @@ func TestRunStatus_FormatTable(t *testing.T) {
 	if err := s.WriteSummary(ctx, runID, sum); err != nil {
 		t.Fatalf("WriteSummary: %v", err)
 	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE ktl_stack_runs SET summary_json = ? WHERE run_id = ?`, marshalJSON(t, sum), runID); err != nil {
+	if _, err := s.db.ExecContext(ctx, `UPDATE torque_stack_runs SET summary_json = ? WHERE run_id = ?`, marshalJSON(t, sum), runID); err != nil {
 		t.Fatalf("update summary_json: %v", err)
 	}
 

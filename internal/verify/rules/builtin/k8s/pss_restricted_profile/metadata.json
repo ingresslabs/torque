@@ -6,7 +6,7 @@
   "descriptionText": "CI gate: require a Kubernetes Pod Security Standards \"restricted\" posture across workloads (no privilege escalation, drop ALL capabilities, no added capabilities, non-root, seccomp RuntimeDefault/Localhost, not Unconfined, not privileged, no host namespaces).",
   "descriptionUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-pss-bundle-01",
+  "descriptionID": "torque-pss-bundle-01",
   "cloudProvider": "common",
   "cwe": "693",
   "riskScore": "9.0"

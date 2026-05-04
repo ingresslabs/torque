@@ -40,7 +40,7 @@ func TestVerifyShortcut_Chart_ClientOnly(t *testing.T) {
 		t.Fatalf("write kubeconfig: %v", err)
 	}
 
-	kubeContext := "ktl"
+	kubeContext := "torque"
 	cmd := newRootCommand()
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -71,17 +71,17 @@ func minimalKubeconfigYAML() string {
 apiVersion: v1
 kind: Config
 clusters:
-  - name: ktl
+  - name: torque
     cluster:
       server: https://127.0.0.1:1
 contexts:
-  - name: ktl
+  - name: torque
     context:
-      cluster: ktl
-      user: ktl
-current-context: ktl
+      cluster: torque
+      user: torque
+current-context: torque
 users:
-  - name: ktl
+  - name: torque
     user:
       token: dummy
 `) + "\n"
@@ -110,7 +110,7 @@ func TestMinimalKubeconfigYAML_IsDeterministic(t *testing.T) {
 		t.Fatalf("failed to resolve caller")
 	}
 	_ = file
-	if !strings.Contains(minimalKubeconfigYAML(), "current-context: ktl") {
+	if !strings.Contains(minimalKubeconfigYAML(), "current-context: torque") {
 		t.Fatalf("unexpected kubeconfig template")
 	}
 }

@@ -105,7 +105,7 @@ func GetRunAudit(ctx context.Context, opts RunAuditOptions) (*RunAudit, error) {
 	)
 	err = s.db.QueryRowContext(ctx, `
 SELECT status, created_at_ns, updated_at_ns, completed_at_ns, created_by, host, pid, ci_run_url, git_author, kubeconfig, kube_context, plan_json, summary_json, last_event_digest, run_digest
-FROM ktl_stack_runs
+FROM torque_stack_runs
 WHERE run_id = ?
 `, runID).Scan(&status, &createdAtNS, &updatedAtNS, &completedAtNS, &createdBy, &host, &pid, &ciRunURL, &gitAuthor, &kubeconfig, &kubeContext, &planJSON, &summaryJSON, &storedLastHash, &storedRunHash)
 	if err != nil {
@@ -118,7 +118,7 @@ WHERE run_id = ?
 	}
 
 	a := &RunAudit{
-		APIVersion:    "ktl.dev/stack-audit/v1",
+		APIVersion:    "torque.dev/stack-audit/v1",
 		RunID:         runID,
 		Status:        strings.TrimSpace(status),
 		CreatedAt:     time.Unix(0, createdAtNS).UTC().Format(time.RFC3339Nano),
@@ -172,7 +172,7 @@ WHERE run_id = ?
 	}
 
 	var lastDigest string
-	row := s.db.QueryRowContext(ctx, `SELECT digest FROM ktl_stack_events WHERE run_id = ? ORDER BY id DESC LIMIT 1`, runID)
+	row := s.db.QueryRowContext(ctx, `SELECT digest FROM torque_stack_events WHERE run_id = ? ORDER BY id DESC LIMIT 1`, runID)
 	switch err := row.Scan(&lastDigest); err {
 	case nil:
 		lastDigest = strings.TrimSpace(lastDigest)
@@ -220,9 +220,9 @@ func buildStackStatusFollowCommand(root string, runID string) string {
 		return ""
 	}
 	if root == "." {
-		return "ktl stack status --run-id " + runID + " --follow"
+		return "torque stack status --run-id " + runID + " --follow"
 	}
-	return "ktl stack --root " + root + " status --run-id " + runID + " --follow"
+	return "torque stack --root " + root + " status --run-id " + runID + " --follow"
 }
 
 func loadFailureClusters(ctx context.Context, s *stackStateStore, runID string, limit int) ([]FailureCluster, error) {
@@ -234,7 +234,7 @@ func loadFailureClusters(ctx context.Context, s *stackStateStore, runID string, 
 	}
 	rows, err := s.db.QueryContext(ctx, `
 SELECT error_class, error_digest, COUNT(*) AS failed_events, COUNT(DISTINCT node_id) AS affected_nodes
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ? AND type = 'NODE_FAILED' AND node_id != '' AND error_digest != ''
 GROUP BY error_class, error_digest
 ORDER BY affected_nodes DESC, failed_events DESC
@@ -259,7 +259,7 @@ LIMIT ?
 	for i := range out {
 		rows2, err := s.db.QueryContext(ctx, `
 SELECT DISTINCT node_id
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ? AND type = 'NODE_FAILED' AND error_digest = ?
 ORDER BY node_id ASC
 LIMIT 5

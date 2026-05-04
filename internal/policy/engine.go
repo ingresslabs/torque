@@ -53,7 +53,7 @@ type Report struct {
 }
 
 func Evaluate(ctx context.Context, bundle *Bundle, input BuildInput) (*Report, error) {
-	return EvaluateWithQuery(ctx, bundle, input, "data.ktl.build")
+	return EvaluateWithQuery(ctx, bundle, input, "data.torque.build")
 }
 
 func EvaluateWithQuery(ctx context.Context, bundle *Bundle, input BuildInput, query string) (*Report, error) {
@@ -67,7 +67,7 @@ func EvaluateWithQuery(ctx context.Context, bundle *Bundle, input BuildInput, qu
 	}
 	query = strings.TrimSpace(query)
 	if query == "" {
-		query = "data.ktl.build"
+		query = "data.torque.build"
 	}
 	opts := []func(*rego.Rego){
 		rego.SetRegoVersion(ast.RegoV0),

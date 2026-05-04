@@ -19,7 +19,7 @@ func TestWrapUpgradeOnlyNoDeployedReleaseErrAddsGuidance(t *testing.T) {
 	if !strings.Contains(msg, "omit --upgrade") {
 		t.Fatalf("expected --upgrade hint, got: %s", msg)
 	}
-	if !strings.Contains(msg, "ktl list --namespace roedk") {
+	if !strings.Contains(msg, "torque list --namespace roedk") {
 		t.Fatalf("expected list hint, got: %s", msg)
 	}
 }

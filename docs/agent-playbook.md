@@ -17,7 +17,7 @@ If you changed user-facing behavior (flags/output/config parsing), also do a loc
 
 ```bash
 make build
-./bin/ktl --help
+./bin/torque --help
 ```
 
 ## Repo Map
@@ -33,23 +33,23 @@ make build
 
 ### Add a CLI flag
 
-1. Add Cobra flag wiring under `cmd/ktl/*`.
+1. Add Cobra flag wiring under `cmd/torque/*`.
 2. Thread into an options struct under `internal/*`.
 3. Add/extend a unit test near the behavior.
 4. If user-facing: update help-ui search/examples under `internal/helpui/`.
 
 ### Add a subcommand
 
-1. Cobra wiring: `cmd/ktl/*` only.
+1. Cobra wiring: `cmd/torque/*` only.
 2. Logic: implement in `internal/*`.
-3. Tests: start with `go test ./cmd/ktl/...`, then run `make test` before review.
+3. Tests: start with `go test ./cmd/torque/...`, then run `make test` before review.
 
 ### Touch HTML/CSS/UI
 
 Source of truth: `DESIGN.md`.
 
 - Prefer extending tokens and existing components over one-off styles.
-- Verify the relevant surface manually (`ktl help --ui`, `ktl apply --ui`, `ktl delete --ui`).
+- Verify the relevant surface manually (`torque help --ui`, `torque apply --ui`, `torque delete --ui`).
 
 ### Update protobuf / API stubs
 
@@ -63,7 +63,7 @@ git diff --exit-code
 
 - Unit tests: `make test` (or `go test ./...`).
 - CI parity: `make test-ci` (fmt + lint + tests + package/verify smoke).
-- Live-cluster integration suite (requires `kubectl` + kubeconfig): `KTL_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...` (example kubeconfig: `$HOME/.kube/archimedes.yaml`).
+- Live-cluster integration suite (requires `kubectl` + kubeconfig): `TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...` (example kubeconfig: `$HOME/.kube/archimedes.yaml`).
 
 ## Guardrails
 
@@ -73,7 +73,7 @@ git diff --exit-code
 
 ## References
 
-- gRPC agent API (ktl-agent): `docs/grpc-agent.md`
+- gRPC agent API (torque-agent): `docs/grpc-agent.md`
 - Dependency map (generated): `docs/deps.md` (refresh via `make deps`)
 - Troubleshooting: `docs/troubleshooting.md`
 - Sandbox policy: `sandbox/*.cfg`

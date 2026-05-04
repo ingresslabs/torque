@@ -1,15 +1,15 @@
 # Configuration atlas
 
-Practical, copy/paste-friendly examples for the configs that power `ktl`.
+Practical, copy/paste-friendly examples for the configs that power `torque`.
 
 This is intentionally biased toward “what do I put in the file?” rather than exhaustive schema docs.
 
-## ktl config (`.ktl.yaml` / `~/.ktl/config.yaml`)
+## torque config (`.torque.yaml` / `~/.torque/config.yaml`)
 
 Use the repo or global config file to set deploy-time secret providers or build defaults.
 
 ```yaml
-# .ktl.yaml
+# .torque.yaml
 build:
   profile: ci
 
@@ -28,9 +28,9 @@ secrets:
   #   authMount: approle
   #   roleId: 00000000-0000-0000-0000-000000000000
   #   secretId: s.0000000000000000000000
-  #   # kubernetesRole: ktl
+  #   # kubernetesRole: torque
   #   # kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token
-  #   # awsRole: ktl
+  #   # awsRole: torque
   #   # awsRegion: us-east-1
   #   # awsHeaderValue: vault.example.com
   #   mount: secret
@@ -66,7 +66,7 @@ secrets:
       address: https://vault.example.com
       authMethod: kubernetes
       authMount: kubernetes
-      kubernetesRole: ktl
+      kubernetesRole: torque
       kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token
       mount: secret
       kvVersion: 2
@@ -82,7 +82,7 @@ secrets:
       address: https://vault.example.com
       authMethod: aws
       authMount: aws
-      awsRole: ktl
+      awsRole: torque
       awsRegion: us-east-1
       awsHeaderValue: vault.example.com
       mount: secret
@@ -91,7 +91,7 @@ secrets:
 
 ## `stack.yaml` (minimal, with CLI defaults)
 
-This is the “minimal-flags” stack workflow: keep defaults in `stack.yaml` under `cli:` and override with `KTL_STACK_*` only when needed.
+This is the “minimal-flags” stack workflow: keep defaults in `stack.yaml` under `cli:` and override with `TORQUE_STACK_*` only when needed.
 
 ```yaml
 # stack.yaml
@@ -115,8 +115,8 @@ defaults:
     concurrency: 6
     progressiveConcurrency: true
 
-# CLI defaults for `ktl stack ...` so you can run with fewer flags.
-# Precedence: flags > KTL_STACK_* env > stack.yaml cli > built-in defaults.
+# CLI defaults for `torque stack ...` so you can run with fewer flags.
+# Precedence: flags > TORQUE_STACK_* env > stack.yaml cli > built-in defaults.
 cli:
   output: table
   inferDeps: true
@@ -152,7 +152,7 @@ releases:
 ```
 
 Notes:
-- `ktl stack` is read-only by default (prints a plan); use `ktl stack apply` / `ktl stack delete` to execute.
+- `torque stack` is read-only by default (prints a plan); use `torque stack apply` / `torque stack delete` to execute.
 - Profile overlays: use `profiles.<name>.cli` and `profiles.<name>.defaults` to override per environment (dev/stage/prod).
 - For CLI schema details, see `docs/stack-cli-defaults.md`.
 
@@ -229,13 +229,13 @@ output:
 
 ## Sandbox profiles (`sandbox/*.cfg`)
 
-Sandbox policies live under `sandbox/` and are selected via `KTL_SANDBOX_CONFIG` (or `--sandbox-config`).
+Sandbox policies live under `sandbox/` and are selected via `TORQUE_SANDBOX_CONFIG` (or `--sandbox-config`).
 
 Example (CI-like policy):
 
 ```bash
-export KTL_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
-ktl build . --tag ghcr.io/acme/app:dev
+export TORQUE_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
+torque build . --tag ghcr.io/acme/app:dev
 ```
 
 What matters most in a policy:

@@ -48,7 +48,7 @@ func ReadArtifacts(ctx context.Context, path string, names ...string) ([]Artifac
 	if len(cleanNames) == 0 {
 		rows, err = db.QueryContext(ctx, `
 SELECT seq, ts, name, text
-FROM ktl_capture_artifacts
+FROM torque_capture_artifacts
 ORDER BY seq ASC
 `)
 	} else {
@@ -59,7 +59,7 @@ ORDER BY seq ASC
 		}
 		query := `
 SELECT seq, ts, name, text
-FROM ktl_capture_artifacts
+FROM torque_capture_artifacts
 WHERE name IN (` + strings.Join(placeholders, ",") + `)
 ORDER BY seq ASC
 `

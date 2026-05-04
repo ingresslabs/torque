@@ -9,7 +9,7 @@ import (
 
 func TestWriteReport_Table_IncludesMessage(t *testing.T) {
 	rep := &Report{
-		Tool:        "ktl-verify",
+		Tool:        "torque-verify",
 		Engine:      EngineMeta{Name: "builtin", Ruleset: "builtin@test"},
 		Mode:        ModeBlock,
 		Passed:      false,

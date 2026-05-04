@@ -27,11 +27,11 @@ func TestStackStateSQLite_CheckpointPortable_SingleFileCopyOpens(t *testing.T) {
 	runID := "run-1"
 	now := time.Now().UTC().UnixNano()
 	selectorJSON := `{"release":["foo"]}`
-	planJSON := `{"apiVersion":"ktl.dev/stack-plan/v1"}`
-	summaryJSON := `{"apiVersion":"ktl.dev/stack-run/v1"}`
+	planJSON := `{"apiVersion":"torque.dev/stack-plan/v1"}`
+	summaryJSON := `{"apiVersion":"torque.dev/stack-run/v1"}`
 
 	_, err = s.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_runs (
+INSERT INTO torque_stack_runs (
   run_id, stack_root, stack_name, profile, command, concurrency, fail_mode, status,
   created_at_ns, updated_at_ns, selector_json, plan_json, summary_json
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -42,7 +42,7 @@ INSERT INTO ktl_stack_runs (
 		t.Fatalf("insert run: %v", err)
 	}
 	_, err = s.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_nodes (run_id, node_id, status, attempt, error)
+INSERT INTO torque_stack_nodes (run_id, node_id, status, attempt, error)
 VALUES (?, ?, ?, ?, ?)
 `, runID, "node-1", "planned", 0, "")
 	if err != nil {
@@ -50,7 +50,7 @@ VALUES (?, ?, ?, ?, ?)
 		t.Fatalf("insert node: %v", err)
 	}
 	_, err = s.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_events (run_id, ts_ns, node_id, type, attempt, message, error_class, error_message, error_digest)
+INSERT INTO torque_stack_events (run_id, ts_ns, node_id, type, attempt, message, error_class, error_message, error_digest)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `, runID, now, "node-1", "NODE_RUNNING", 1, "", "", "", "")
 	if err != nil {
@@ -96,7 +96,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	db.SetMaxIdleConns(1)
 
 	var runs int
-	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM ktl_stack_runs;`).Scan(&runs); err != nil {
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM torque_stack_runs;`).Scan(&runs); err != nil {
 		t.Fatalf("query copied runs: %v", err)
 	}
 	if runs != 1 {
@@ -104,7 +104,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	}
 
 	var events int
-	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM ktl_stack_events;`).Scan(&events); err != nil {
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM torque_stack_events;`).Scan(&events); err != nil {
 		t.Fatalf("query copied events: %v", err)
 	}
 	if events != 1 {

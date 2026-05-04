@@ -20,7 +20,7 @@ func DigestNormalizedManifest(manifest string) (digest string, hasHooks bool, er
 		return "", false, err
 	}
 	if len(objects) == 0 {
-		sum := sha256.Sum256([]byte("ktl.manifest-digest.v1\x00empty\x00"))
+		sum := sha256.Sum256([]byte("torque.manifest-digest.v1\x00empty\x00"))
 		return "sha256:" + hex.EncodeToString(sum[:]), false, nil
 	}
 
@@ -33,7 +33,7 @@ func DigestNormalizedManifest(manifest string) (digest string, hasHooks bool, er
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.manifest-digest.v1")
+	write("torque.manifest-digest.v1")
 	for _, obj := range objects {
 		if obj.IsHook {
 			hasHooks = true

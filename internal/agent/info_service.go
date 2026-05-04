@@ -3,8 +3,8 @@ package agent
 import (
 	"context"
 
-	"github.com/ingresslabs/ktl/internal/version"
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/torque/internal/version"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 )
 
 type infoService struct {

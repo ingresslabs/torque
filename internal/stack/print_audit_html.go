@@ -37,7 +37,7 @@ func PrintRunAuditHTML(w io.Writer, a *RunAudit) error {
 		PlanJSON   string
 		EventsJSON string
 	}{
-		Title:      fmt.Sprintf("ktl stack audit %s", a.RunID),
+		Title:      fmt.Sprintf("torque stack audit %s", a.RunID),
 		AuditJSON:  string(raw),
 		PlanJSON:   prettyPlan,
 		EventsJSON: eventsText,

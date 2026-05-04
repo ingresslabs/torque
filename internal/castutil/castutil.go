@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/ingresslabs/ktl/internal/caststream"
+	"github.com/ingresslabs/torque/internal/caststream"
 )
 
 // StartCastServer boots a caststream server and surfaces early failures to the caller.

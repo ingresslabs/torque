@@ -1,5 +1,5 @@
 name: Bug report
-description: Report something that is broken or unexpected in ktl.
+description: Report something that is broken or unexpected in torque.
 title: "bug: "
 labels:
   - bug
@@ -28,7 +28,7 @@ body:
     attributes:
       label: What happened?
       description: What did you see? Include error messages.
-      placeholder: "ktl apply ... fails with ..."
+      placeholder: "torque apply ... fails with ..."
     validations:
       required: true
 
@@ -55,7 +55,7 @@ body:
     id: logs
     attributes:
       label: Logs / output
-      description: Paste relevant `ktl` output (redact secrets). Prefer text over screenshots.
+      description: Paste relevant `torque` output (redact secrets). Prefer text over screenshots.
       render: shell
     validations:
       required: false
@@ -64,9 +64,9 @@ body:
     id: version
     attributes:
       label: Version and environment
-      description: Paste `ktl --version` (or `./bin/ktl --version`), OS, and any relevant tool versions (kubectl/helm/docker).
+      description: Paste `torque --version` (or `./bin/torque --version`), OS, and any relevant tool versions (kubectl/helm/docker).
       placeholder: |
-        ktl:
+        torque:
         go:
         os/arch:
         kubectl:

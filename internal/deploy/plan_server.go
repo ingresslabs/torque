@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/kube"
+	"github.com/ingresslabs/torque/internal/kube"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,7 +32,7 @@ func DetectServerSideReplaceKeys(ctx context.Context, client *kube.Client, propo
 		return map[string]bool{}, nil
 	}
 	if strings.TrimSpace(opts.FieldManager) == "" {
-		opts.FieldManager = "ktl-plan"
+		opts.FieldManager = "torque-plan"
 	}
 
 	objs, err := parseManifestObjects(proposedManifest)

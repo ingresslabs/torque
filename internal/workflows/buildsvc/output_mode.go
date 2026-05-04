@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// OutputMode controls how ktl build renders progress locally.
+// OutputMode controls how torque build renders progress locally.
 type OutputMode string
 
 const (

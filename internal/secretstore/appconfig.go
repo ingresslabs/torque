@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/appconfig"
+	"github.com/ingresslabs/torque/internal/appconfig"
 )
 
 // ConfigFromApp maps appconfig secrets to secretstore config.

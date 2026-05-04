@@ -66,7 +66,7 @@ func ResolveLayout(reference string) (ImageRecord, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return ImageRecord{}, fmt.Errorf("no cached build for %s; run ktl build first", reference)
+			return ImageRecord{}, fmt.Errorf("no cached build for %s; run torque build first", reference)
 		}
 		return ImageRecord{}, err
 	}
@@ -128,7 +128,7 @@ func recordsDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cacheDir, "ktl", "images"), nil
+	return filepath.Join(cacheDir, "torque", "images"), nil
 }
 
 func encodeReference(ref string) string {

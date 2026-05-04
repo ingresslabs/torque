@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/torque/internal/deploy"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -142,7 +142,7 @@ func inferClusterDependencies(ctx context.Context, clusterName string, nodes []*
 			objNS := effectiveObjectNamespace(obj, n.Namespace)
 			ann := obj.GetAnnotations()
 			if ann != nil {
-				if raw := strings.TrimSpace(ann["ktl.io/depends-on"]); raw != "" {
+				if raw := strings.TrimSpace(ann["torque.io/depends-on"]); raw != "" {
 					for _, dep := range splitCSVList(raw) {
 						add(dep, InferredReason{
 							Type:     "annotation:depends-on",
@@ -392,19 +392,19 @@ func renderAndExtractFacts(ctx context.Context, node *ResolvedRelease, defaultKu
 			// Release-level overrides via any rendered object annotation.
 			// Config file values still win because they are already applied to the node before inference.
 			if node.Wave == 0 {
-				if raw := strings.TrimSpace(ann["ktl.io/wave"]); raw != "" {
+				if raw := strings.TrimSpace(ann["torque.io/wave"]); raw != "" {
 					if v, err := parseInt(raw); err == nil {
 						node.Wave = v
 					}
 				}
 			}
 			if !node.Critical {
-				if raw := strings.TrimSpace(ann["ktl.io/critical"]); raw == "1" || strings.EqualFold(raw, "true") {
+				if raw := strings.TrimSpace(ann["torque.io/critical"]); raw == "1" || strings.EqualFold(raw, "true") {
 					node.Critical = true
 				}
 			}
 			if strings.TrimSpace(node.Parallelism) == "" {
-				if raw := strings.TrimSpace(ann["ktl.io/parallelismGroup"]); raw != "" {
+				if raw := strings.TrimSpace(ann["torque.io/parallelismGroup"]); raw != "" {
 					node.Parallelism = raw
 				}
 			}

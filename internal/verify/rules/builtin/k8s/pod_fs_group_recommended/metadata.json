@@ -6,7 +6,7 @@
   "descriptionText": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
   "descriptionUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-pss-05",
+  "descriptionID": "torque-pss-05",
   "cloudProvider": "common",
   "cwe": "250",
   "riskScore": "2.0"

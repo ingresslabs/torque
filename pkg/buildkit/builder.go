@@ -647,7 +647,7 @@ func sanitizePathName(path string) string {
 	base = strings.ReplaceAll(base, "_", "-")
 	base = strings.Trim(base, "-.")
 	if base == "" {
-		base = "ktl-build"
+		base = "torque-build"
 	}
 	return base
 }

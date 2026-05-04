@@ -7,41 +7,41 @@ Command-level `--capture` flags record deploy, destroy, build, log, and stack se
 Record a deploy:
 
 ```bash
-ktl apply --chart ./chart --release foo -n default --capture ./apply.sqlite
+torque apply --chart ./chart --release foo -n default --capture ./apply.sqlite
 ```
 
 Record a build:
 
 ```bash
-ktl build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite
+torque build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite
 ```
 
 Attach build evidence to a deploy plan, apply the release, and capture follow-up logs:
 
 ```bash
-ktl build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite
-ktl apply plan --chart ./chart --release foo -n default \
+torque build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite
+torque apply plan --chart ./chart --release foo -n default \
   --build-capture ./build.sqlite --github-comment --output plan.md
-ktl apply --chart ./chart --release foo -n default --capture ./apply.sqlite --yes
-ktl logs 'foo-.*' -n default --capture ./logs.sqlite --tail 100
+torque apply --chart ./chart --release foo -n default --capture ./apply.sqlite --yes
+torque logs 'foo-.*' -n default --capture ./logs.sqlite --tail 100
 ```
 
 Record logs:
 
 ```bash
-ktl logs deploy/foo -n default --capture ./logs.sqlite
+torque logs deploy/foo -n default --capture ./logs.sqlite
 ```
 
 Record a stack run:
 
 ```bash
-ktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
+torque stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
 ```
 
 Store the evidence file as a CI artifact:
 
 ```bash
-tar -czf ktl-evidence.tgz ./apply.sqlite
+tar -czf torque-evidence.tgz ./apply.sqlite
 ```
 
 ## What Gets Captured

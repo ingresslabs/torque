@@ -39,7 +39,7 @@ func GenerateEd25519Key() (*BundleKey, error) {
 		return nil, err
 	}
 	return &BundleKey{
-		APIVersion: "ktl.dev/bundle-key/v1",
+		APIVersion: "torque.dev/bundle-key/v1",
 		Type:       "ed25519",
 		PublicKey:  base64.StdEncoding.EncodeToString(pub),
 		PrivateKey: base64.StdEncoding.EncodeToString(priv),
@@ -69,11 +69,11 @@ func LoadBundleKey(path string) (*BundleKey, ed25519.PublicKey, ed25519.PrivateK
 	case ed25519.PrivateKeySize:
 		priv := ed25519.PrivateKey(b)
 		pub := priv.Public().(ed25519.PublicKey)
-		return &BundleKey{APIVersion: "ktl.dev/bundle-key/v1", Type: "ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), PrivateKey: s}, pub, priv, nil
+		return &BundleKey{APIVersion: "torque.dev/bundle-key/v1", Type: "ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), PrivateKey: s}, pub, priv, nil
 	case ed25519.SeedSize:
 		priv := ed25519.NewKeyFromSeed(b)
 		pub := priv.Public().(ed25519.PublicKey)
-		return &BundleKey{APIVersion: "ktl.dev/bundle-key/v1", Type: "ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Seed: s}, pub, priv, nil
+		return &BundleKey{APIVersion: "torque.dev/bundle-key/v1", Type: "ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Seed: s}, pub, priv, nil
 	default:
 		return nil, nil, nil, fmt.Errorf("unexpected key material length %d (want 32 seed or 64 private key)", len(b))
 	}
@@ -152,7 +152,7 @@ func signManifest(priv ed25519.PrivateKey, manifestJSON []byte) (*BundleSignatur
 	sig := ed25519.Sign(priv, sum[:])
 	pub := priv.Public().(ed25519.PublicKey)
 	return &BundleSignature{
-		APIVersion:     "ktl.dev/bundle-signature/v1",
+		APIVersion:     "torque.dev/bundle-signature/v1",
 		CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
 		Algorithm:      "ed25519",
 		PublicKey:      base64.StdEncoding.EncodeToString(pub),

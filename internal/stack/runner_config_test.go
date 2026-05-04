@@ -8,7 +8,7 @@ func pf32(v float32) *float32 { return &v }
 func pf64(v float64) *float64 { return &v }
 
 func TestResolveRunnerConfig_ProfileOverridesBase(t *testing.T) {
-	root := "/tmp/ktl-root"
+	root := "/tmp/torque-root"
 	u := &Universe{
 		RootDir: root,
 		Stacks: map[string]StackFile{
@@ -73,9 +73,9 @@ func TestResolveRunnerConfig_ProfileOverridesBase(t *testing.T) {
 
 func TestValidateRunnerResolved_CatchesBadValues(t *testing.T) {
 	_, err := ResolveRunnerConfig(&Universe{
-		RootDir: "/tmp/ktl-root2",
+		RootDir: "/tmp/torque-root2",
 		Stacks: map[string]StackFile{
-			"/tmp/ktl-root2": {
+			"/tmp/torque-root2": {
 				Runner: RunnerConfig{
 					Concurrency: pint(2),
 					Adaptive: RunnerAdaptive{

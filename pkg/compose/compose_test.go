@@ -88,7 +88,7 @@ func TestServiceTags(t *testing.T) {
 		t.Fatalf("CollectBuildableServices: %v", err)
 	}
 	tags := ServiceTags(project, "api", services["api"])
-	expected := []string{"ktl-test/api:dev"}
+	expected := []string{"torque-test/api:dev"}
 	if !reflect.DeepEqual(tags, expected) {
 		t.Fatalf("expected %v, got %v", expected, tags)
 	}

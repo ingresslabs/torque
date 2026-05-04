@@ -8,7 +8,7 @@ import (
 func TestRecordAndResolveLayoutFromTestdata(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	layoutPath := filepath.Join("..", "..", "testdata", "build", "dockerfile", "dist", "oci", "dockerfile")
-	ref := "ktl.local/test:dev"
+	ref := "torque.local/test:dev"
 	if err := RecordLayout(ref, layoutPath); err != nil {
 		t.Fatalf("RecordLayout error: %v", err)
 	}

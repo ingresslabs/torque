@@ -1,9 +1,9 @@
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: e2e-11-verify-enabled
 defaults:
   cluster: { name: archimedes, kubeconfig: ~/.kube/archimedes.yaml }
-  namespace: ktl-stack-e2e
+  namespace: torque-stack-e2e
   verify:
     enabled: true
     failOnWarnings: true

@@ -47,12 +47,12 @@ jobs:
           build_date="$(date -u -d "@${source_date_epoch}" '+%Y-%m-%dT%H:%M:%SZ')"
           export SOURCE_DATE_EPOCH="${source_date_epoch}"
           ldflags="-s -w \
-            -X github.com/ingresslabs/ktl/internal/version.Version=${{ github.ref_name }} \
-            -X github.com/ingresslabs/ktl/internal/version.GitCommit=${commit} \
-            -X github.com/ingresslabs/ktl/internal/version.GitTreeState=clean \
-            -X github.com/ingresslabs/ktl/internal/version.BuildDate=${build_date}"
+            -X github.com/ingresslabs/torque/internal/version.Version=${{ github.ref_name }} \
+            -X github.com/ingresslabs/torque/internal/version.GitCommit=${commit} \
+            -X github.com/ingresslabs/torque/internal/version.GitTreeState=clean \
+            -X github.com/ingresslabs/torque/internal/version.BuildDate=${build_date}"
           mkdir -p dist
-          for spec in ktl:ktl verifier:verifier verify:verify package:ktl-package; do
+          for spec in torque:torque verifier:verifier verify:verify package:torque-package; do
             cmd="${spec%%:*}"
             tool="${spec##*:}"
             outdir="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}"
@@ -87,7 +87,7 @@ jobs:
           set -euo pipefail
           syft="${{ steps.syft.outputs.cmd }}"
           tag="${{ github.ref_name }}"
-          for tool in ktl verifier verify ktl-package; do
+          for tool in torque verifier verify torque-package; do
             bin="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}/${tool}"
             spdx="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}.sbom.spdx.json"
             cdx="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}.sbom.cdx.json"
@@ -143,12 +143,12 @@ jobs:
             dist/*.sha256
             dist/checksums-*.txt
 
-      - name: Attest SBOM (ktl)
+      - name: Attest SBOM (torque)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
         continue-on-error: true
         with:
-          subject-path: dist/ktl-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
-          sbom-path: dist/ktl-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
+          subject-path: dist/torque-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
+          sbom-path: dist/torque-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
       - name: Attest SBOM (verify)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
@@ -164,12 +164,12 @@ jobs:
           subject-path: dist/verifier-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
           sbom-path: dist/verifier-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
-      - name: Attest SBOM (ktl-package)
+      - name: Attest SBOM (torque-package)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
         continue-on-error: true
         with:
-          subject-path: dist/ktl-package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
-          sbom-path: dist/ktl-package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
+          subject-path: dist/torque-package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
+          sbom-path: dist/torque-package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
       - name: Upload release assets
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
@@ -276,15 +276,15 @@ jobs:
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
         continue-on-error: true
         with:
-          subject-path: dist/ktl_${{ github.ref_name }}_amd64.deb
-          sbom-path: dist/ktl_${{ github.ref_name }}_amd64.deb.sbom.spdx.json
+          subject-path: dist/torque_${{ github.ref_name }}_amd64.deb
+          sbom-path: dist/torque_${{ github.ref_name }}_amd64.deb.sbom.spdx.json
 
       - name: Attest SBOM (rpm)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
         continue-on-error: true
         with:
-          subject-path: dist/ktl-${{ github.ref_name }}-1.x86_64.rpm
-          sbom-path: dist/ktl-${{ github.ref_name }}-1.x86_64.rpm.sbom.spdx.json
+          subject-path: dist/torque-${{ github.ref_name }}-1.x86_64.rpm
+          sbom-path: dist/torque-${{ github.ref_name }}-1.x86_64.rpm.sbom.spdx.json
 
       - name: Upload package assets
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2

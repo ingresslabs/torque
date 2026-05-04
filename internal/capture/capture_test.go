@@ -10,14 +10,14 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/ingresslabs/ktl/internal/deploy"
-	"github.com/ingresslabs/ktl/internal/tailer"
+	"github.com/ingresslabs/torque/internal/deploy"
+	"github.com/ingresslabs/torque/internal/tailer"
 )
 
 func TestRecorderWritesSessionAndEvents(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "cap.sqlite")
 	rec, err := Open(dbPath, SessionMeta{
-		Command:   "ktl logs",
+		Command:   "torque logs",
 		Args:      []string{"foo"},
 		StartedAt: time.Now().UTC(),
 		Extra:     map[string]string{"x": "y"},
@@ -69,14 +69,14 @@ func TestRecorderWritesSessionAndEvents(t *testing.T) {
 	defer db.Close()
 
 	var sessionCount int
-	if err := db.QueryRow(`SELECT COUNT(*) FROM ktl_capture_sessions`).Scan(&sessionCount); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(*) FROM torque_capture_sessions`).Scan(&sessionCount); err != nil {
 		t.Fatalf("count sessions: %v", err)
 	}
 	if sessionCount != 1 {
 		t.Fatalf("expected 1 session, got %d", sessionCount)
 	}
 	var eventCount int
-	if err := db.QueryRow(`SELECT COUNT(*) FROM ktl_capture_events`).Scan(&eventCount); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(*) FROM torque_capture_events`).Scan(&eventCount); err != nil {
 		t.Fatalf("count events: %v", err)
 	}
 	if eventCount != 3 {
@@ -84,14 +84,14 @@ func TestRecorderWritesSessionAndEvents(t *testing.T) {
 	}
 	var minSeq sql.NullInt64
 	var maxSeq sql.NullInt64
-	if err := db.QueryRow(`SELECT MIN(seq), MAX(seq) FROM ktl_capture_events`).Scan(&minSeq, &maxSeq); err != nil {
+	if err := db.QueryRow(`SELECT MIN(seq), MAX(seq) FROM torque_capture_events`).Scan(&minSeq, &maxSeq); err != nil {
 		t.Fatalf("seq range: %v", err)
 	}
 	if !minSeq.Valid || !maxSeq.Valid || minSeq.Int64 <= 0 || maxSeq.Int64 < minSeq.Int64 {
 		t.Fatalf("unexpected seq range: min=%v max=%v", minSeq, maxSeq)
 	}
 	var artifactCount int
-	if err := db.QueryRow(`SELECT COUNT(*) FROM ktl_capture_artifacts`).Scan(&artifactCount); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(*) FROM torque_capture_artifacts`).Scan(&artifactCount); err != nil {
 		t.Fatalf("count artifacts: %v", err)
 	}
 	if artifactCount != 1 {

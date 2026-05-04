@@ -183,18 +183,18 @@ func Summarize(ctx context.Context, path string, opts SummaryOptions) (*CaptureS
 }
 
 func readSummarySessions(ctx context.Context, db *sql.DB, filter string) ([]summarySessionRow, error) {
-	cols, err := sqliteTableColumns(ctx, db, "ktl_capture_sessions")
+	cols, err := sqliteTableColumns(ctx, db, "torque_capture_sessions")
 	if err != nil {
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, fmt.Errorf("capture is missing ktl_capture_sessions")
+		return nil, fmt.Errorf("capture is missing torque_capture_sessions")
 	}
 	query := fmt.Sprintf(`
 SELECT
   %s, %s, %s, %s, %s, %s, %s,
   %s, %s, %s, %s, %s, %s, %s, %s
-FROM ktl_capture_sessions
+FROM torque_capture_sessions
 ORDER BY %s ASC, session_id ASC
 `,
 		sqliteColumnExpr(cols, "session_id", "''"),
@@ -261,7 +261,7 @@ ORDER BY %s ASC, session_id ASC
 	if hasSQLiteColumn(cols, "dropped_events") {
 		for i := range out {
 			var dropped sql.NullInt64
-			if err := db.QueryRowContext(ctx, `SELECT dropped_events FROM ktl_capture_sessions WHERE session_id = ?`, out[i].SessionID).Scan(&dropped); err != nil && err != sql.ErrNoRows {
+			if err := db.QueryRowContext(ctx, `SELECT dropped_events FROM torque_capture_sessions WHERE session_id = ?`, out[i].SessionID).Scan(&dropped); err != nil && err != sql.ErrNoRows {
 				return nil, fmt.Errorf("read dropped event count: %w", err)
 			}
 			if dropped.Valid {
@@ -458,7 +458,7 @@ func summarizeEvents(ctx context.Context, db *sql.DB, sess *SessionSummary, opts
 }
 
 func readSummaryEvents(ctx context.Context, db *sql.DB, sessionID string) ([]summaryEventRow, error) {
-	cols, err := sqliteTableColumns(ctx, db, "ktl_capture_events")
+	cols, err := sqliteTableColumns(ctx, db, "torque_capture_events")
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +472,7 @@ func readSummaryEvents(ctx context.Context, db *sql.DB, sessionID string) ([]sum
 	query := fmt.Sprintf(`
 SELECT
   %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-FROM ktl_capture_events
+FROM torque_capture_events
 WHERE session_id = ?
 ORDER BY %s ASC, id ASC
 `,
@@ -570,7 +570,7 @@ func summarizeArtifacts(ctx context.Context, db *sql.DB, sess *SessionSummary) e
 }
 
 func readSessionArtifacts(ctx context.Context, db *sql.DB, sessionID string) ([]Artifact, error) {
-	cols, err := sqliteTableColumns(ctx, db, "ktl_capture_artifacts")
+	cols, err := sqliteTableColumns(ctx, db, "torque_capture_artifacts")
 	if err != nil {
 		return nil, err
 	}
@@ -583,7 +583,7 @@ func readSessionArtifacts(ctx context.Context, db *sql.DB, sessionID string) ([]
 	}
 	query := fmt.Sprintf(`
 SELECT %s, %s, %s, %s
-FROM ktl_capture_artifacts
+FROM torque_capture_artifacts
 WHERE session_id = ?
 ORDER BY %s ASC, id ASC
 `,
@@ -626,11 +626,11 @@ ORDER BY %s ASC, id ASC
 }
 
 func readSessionTags(ctx context.Context, db *sql.DB, sessionID string) (map[string]string, error) {
-	cols, err := sqliteTableColumns(ctx, db, "ktl_capture_tags")
+	cols, err := sqliteTableColumns(ctx, db, "torque_capture_tags")
 	if err != nil || len(cols) == 0 {
 		return nil, err
 	}
-	rows, err := db.QueryContext(ctx, `SELECT key, value FROM ktl_capture_tags WHERE session_id = ? ORDER BY key`, sessionID)
+	rows, err := db.QueryContext(ctx, `SELECT key, value FROM torque_capture_tags WHERE session_id = ? ORDER BY key`, sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -1079,7 +1079,7 @@ func classifyCause(message, resource, evidence string) Cause {
 		strings.Contains(needle, "yaml parse") || strings.Contains(needle, "helm"):
 		c.Category = "helm_render_or_upgrade"
 		c.Fixes = []string{
-			"Run ktl apply plan locally and fix the Helm template, values, or immutable field issue.",
+			"Run torque apply plan locally and fix the Helm template, values, or immutable field issue.",
 		}
 	}
 	return c
@@ -1145,31 +1145,31 @@ func buildCommandSuggestions(sess SessionSummary, path string) []CommandSuggesti
 	if sess.Entities.Chart != "" && sess.Entities.Release != "" {
 		out = append(out, CommandSuggestion{
 			Purpose: "review",
-			Command: fmt.Sprintf("ktl apply plan --chart %s --release %s%s", shellQuoteIfNeeded(sess.Entities.Chart), shellQuoteIfNeeded(sess.Entities.Release), nsFlag),
+			Command: fmt.Sprintf("torque apply plan --chart %s --release %s%s", shellQuoteIfNeeded(sess.Entities.Chart), shellQuoteIfNeeded(sess.Entities.Release), nsFlag),
 		})
 	}
 	if sess.Entities.Release != "" && strings.Contains(strings.ToLower(sess.Command), "apply") {
 		out = append(out, CommandSuggestion{
 			Purpose: "rollback",
-			Command: fmt.Sprintf("ktl revert --release %s%s", shellQuoteIfNeeded(sess.Entities.Release), nsFlag),
+			Command: fmt.Sprintf("torque revert --release %s%s", shellQuoteIfNeeded(sess.Entities.Release), nsFlag),
 		})
 	}
 	if sess.Entities.Release != "" && sess.Entities.Namespace != "" {
 		out = append(out, CommandSuggestion{
 			Purpose: "logs",
-			Command: fmt.Sprintf("ktl logs deploy/%s%s --events", shellQuoteIfNeeded(sess.Entities.Release), nsFlag),
+			Command: fmt.Sprintf("torque logs deploy/%s%s --events", shellQuoteIfNeeded(sess.Entities.Release), nsFlag),
 		})
 	}
 	if strings.Contains(strings.ToLower(sess.Command), "build") && sess.BuildDigest != "" {
 		out = append(out, CommandSuggestion{
 			Purpose: "attach-build-evidence",
-			Command: fmt.Sprintf("ktl apply plan ... --build-capture %s", shellQuoteIfNeeded(path)),
+			Command: fmt.Sprintf("torque apply plan ... --build-capture %s", shellQuoteIfNeeded(path)),
 		})
 	}
 	if strings.TrimSpace(path) != "" {
 		out = append(out, CommandSuggestion{
 			Purpose: "share-explanation",
-			Command: fmt.Sprintf("ktl explain %s --format markdown", shellQuoteIfNeeded(path)),
+			Command: fmt.Sprintf("torque explain %s --format markdown", shellQuoteIfNeeded(path)),
 		})
 	}
 	return dedupeCommandSuggestions(out)

@@ -6,7 +6,7 @@
   "descriptionText": "Containers should define a readinessProbe to help Kubernetes route traffic only to ready workloads.",
   "descriptionUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-rel-02",
+  "descriptionID": "torque-rel-02",
   "cloudProvider": "common",
   "cwe": "710",
   "riskScore": "3.2"

@@ -1,6 +1,6 @@
 # Packaging (deb/rpm)
 
-This directory contains a Docker-based packaging workflow that builds Linux `deb` and `rpm` packages for the ktl toolkit without requiring Ruby/FPM tooling on the host.
+This directory contains a Docker-based packaging workflow that builds Linux `deb` and `rpm` packages for the torque toolkit without requiring Ruby/FPM tooling on the host.
 
 ## Usage
 
@@ -12,10 +12,10 @@ Artifacts are written into `./dist/` and should not be committed.
 
 The packages install:
 
-- `ktl`
+- `torque`
 - `verifier`
 - `verify` (deprecated compatibility binary; prefer `verifier`)
-- `ktl-package`
+- `torque-package`
 
 ## Customization
 

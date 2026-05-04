@@ -6,7 +6,7 @@
   "descriptionText": "Ingress resources should configure TLS (spec.tls) to avoid serving traffic over plain HTTP.",
   "descriptionUrl": "https://kubernetes.io/docs/concepts/services-networking/ingress/#tls",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-net-01",
+  "descriptionID": "torque-net-01",
   "cloudProvider": "common",
   "cwe": "319",
   "riskScore": "5.8"

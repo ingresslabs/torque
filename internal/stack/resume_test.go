@@ -10,7 +10,7 @@ func TestDriftReport_Explainable(t *testing.T) {
 	root := t.TempDir()
 
 	writeFile(t, filepath.Join(root, "stack.yaml"), `
-apiVersion: ktl.dev/v1
+apiVersion: torque.dev/v1
 kind: Stack
 name: demo
 defaults:

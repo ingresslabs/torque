@@ -38,7 +38,7 @@ func isRepoRoot(dir string) bool {
 	if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
 		return true
 	}
-	if fi, err := os.Stat(filepath.Join(dir, ".ktl.yaml")); err == nil && !fi.IsDir() {
+	if fi, err := os.Stat(filepath.Join(dir, ".torque.yaml")); err == nil && !fi.IsDir() {
 		return true
 	}
 	return false

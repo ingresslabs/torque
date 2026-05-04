@@ -1,7 +1,7 @@
 // File: internal/ui/spinner.go
 // Brief: Internal ui package implementation for 'spinner'.
 
-// spinner.go implements the CLI spinner displayed while ktl performs background work (captures, remotes, etc.).
+// spinner.go implements the CLI spinner displayed while torque performs background work (captures, remotes, etc.).
 package ui
 
 import (

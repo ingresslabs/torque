@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
-	"github.com/ingresslabs/ktl/internal/config"
+	"github.com/ingresslabs/torque/internal/config"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 

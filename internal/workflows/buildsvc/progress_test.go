@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/tailer"
-	"github.com/ingresslabs/ktl/pkg/buildkit"
+	"github.com/ingresslabs/torque/internal/tailer"
+	"github.com/ingresslabs/torque/pkg/buildkit"
 	"github.com/moby/buildkit/client"
 	digest "github.com/opencontainers/go-digest"
 )

@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/tailer"
-	"github.com/ingresslabs/ktl/pkg/buildkit"
-	appcompose "github.com/ingresslabs/ktl/pkg/compose"
+	"github.com/ingresslabs/torque/internal/tailer"
+	"github.com/ingresslabs/torque/pkg/buildkit"
+	appcompose "github.com/ingresslabs/torque/pkg/compose"
 	"github.com/moby/buildkit/client"
 	digest "github.com/opencontainers/go-digest"
 )
@@ -35,7 +35,7 @@ type buildProgressBroadcaster struct {
 func newBuildProgressBroadcaster(label string) *buildProgressBroadcaster {
 	label = strings.TrimSpace(label)
 	if label == "" {
-		label = "ktl-build"
+		label = "torque-build"
 	}
 	return &buildProgressBroadcaster{
 		label:    label,

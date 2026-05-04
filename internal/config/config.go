@@ -1,7 +1,7 @@
 // File: internal/config/config.go
 // Brief: Internal config package implementation for 'config'.
 
-// Package config defines the flag plumbing and runtime options shared by ktl's
+// Package config defines the flag plumbing and runtime options shared by torque's
 // logging commands, translating Cobra/Viper flag values into a strongly typed
 // struct that the tailer and capture pipelines consume.
 package config

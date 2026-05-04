@@ -13,7 +13,7 @@ import (
 
 	"github.com/compose-spec/compose-go/v2/loader"
 	composetypes "github.com/compose-spec/compose-go/v2/types"
-	"github.com/ingresslabs/ktl/internal/secrets"
+	"github.com/ingresslabs/torque/internal/secrets"
 )
 
 type secretsGuard struct {
@@ -249,7 +249,7 @@ func loadComposeProjectForSecrets(opts Options) (*composetypes.Project, error) {
 	workingDir := filepath.Dir(opts.ComposeFiles[0])
 	projectName := strings.TrimSpace(opts.ComposeProject)
 	if projectName == "" {
-		projectName = "ktl"
+		projectName = "torque"
 	}
 	details := composetypes.ConfigDetails{
 		WorkingDir:  workingDir,

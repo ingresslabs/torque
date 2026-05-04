@@ -30,9 +30,9 @@ func TestResolveUnknown(t *testing.T) {
 
 func TestEnabledFromEnv(t *testing.T) {
 	env := []string{
-		"KTL_FEATURE_DEAD_FLAG=1",
+		"TORQUE_FEATURE_DEAD_FLAG=1",
 		"SOME_OTHER=value",
-		"KTL_FEATURE_BOGUS=0",
+		"TORQUE_FEATURE_BOGUS=0",
 	}
 	list := EnabledFromEnv(env)
 	if len(list) != 1 || list[0] != "dead-flag" {
@@ -57,7 +57,7 @@ func TestContextHelpers(t *testing.T) {
 }
 
 func TestEnabledFromEnvUsesProcessEnv(t *testing.T) {
-	t.Setenv("KTL_FEATURE_DEAD_FLAG", "true")
+	t.Setenv("TORQUE_FEATURE_DEAD_FLAG", "true")
 	list := EnabledFromEnv(nil)
 	if len(list) != 1 {
 		t.Fatalf("expected 1 env flag, got %d", len(list))

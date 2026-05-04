@@ -1,6 +1,6 @@
 package stack
 
-// RunIndexEntry is a compact summary of a run, used by `ktl stack runs`.
+// RunIndexEntry is a compact summary of a run, used by `torque stack runs`.
 type RunIndexEntry struct {
 	RunID      string    `json:"runId"`
 	RunRoot    string    `json:"runRoot"`

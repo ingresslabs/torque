@@ -1,6 +1,6 @@
 # `mega-showcase` stack fixture
 
-This fixture is a "busy" `ktl stack` demo intended to showcase:
+This fixture is a "busy" `torque stack` demo intended to showcase:
 
 - multi-namespace selection (`platform` + `platform-c2`)
 - inferred DAG edges (CRD → CR, ServiceAccount/RBAC, PVC refs, ConfigMap/Secret refs)
@@ -10,7 +10,7 @@ This fixture is a "busy" `ktl stack` demo intended to showcase:
 ## Run (real cluster)
 
 ```bash
-./bin/ktl stack --config testdata/stack/showcase/mega apply \
+./bin/torque stack --config testdata/stack/showcase/mega apply \
   --kubeconfig ~/.kube/archimedes.yaml \
   --takeover --helm-logs
 ```

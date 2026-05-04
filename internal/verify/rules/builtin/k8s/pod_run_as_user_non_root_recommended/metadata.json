@@ -6,7 +6,7 @@
   "descriptionText": "Recommend setting securityContext.runAsUser to a non-zero UID (defense in depth).",
   "descriptionUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-pss-04",
+  "descriptionID": "torque-pss-04",
   "cloudProvider": "common",
   "cwe": "250",
   "riskScore": "2.0"

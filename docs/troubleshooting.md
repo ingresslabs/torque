@@ -11,13 +11,13 @@ Why:
 
 What to run:
 ```bash
-ktl list -n <namespace>
-ktl apply plan --chart ./chart --release <name> -n <namespace>
+torque list -n <namespace>
+torque apply plan --chart ./chart --release <name> -n <namespace>
 ```
 
 Next steps:
 - Confirm `--kubeconfig` / `--context` and `-n` match the target cluster/namespace.
-- Prefer `ktl apply plan` first when uncertain.
+- Prefer `torque apply plan` first when uncertain.
 
 ### Symptom: diff looks wrong / resources missing
 
@@ -26,11 +26,11 @@ Why:
 
 What to run:
 ```bash
-ktl apply plan --chart ./chart --release <name> -n <namespace>
+torque apply plan --chart ./chart --release <name> -n <namespace>
 ```
 
 Next steps:
-- Check which values files are passed and whether any `KTL_*` env overrides apply.
+- Check which values files are passed and whether any `TORQUE_*` env overrides apply.
 
 ## RBAC / Kubernetes auth
 
@@ -42,12 +42,12 @@ Why:
 What to run:
 ```bash
 kubectl auth can-i --list -n <namespace>
-ktl apply plan --chart ./chart --release <name> -n <namespace>
+torque apply plan --chart ./chart --release <name> -n <namespace>
 ```
 
 Next steps:
 - Use the correct `--context`/`--kubeconfig`.
-- If you need read-only discovery first, start with `ktl apply plan` or `ktl stack` (read-only).
+- If you need read-only discovery first, start with `torque apply plan` or `torque stack` (read-only).
 
 ## Timeouts / stuck rollouts
 
@@ -58,15 +58,15 @@ Why:
 
 What to run:
 ```bash
-ktl logs '<workload|pod-regex>' -n <namespace> --highlight ERROR
+torque logs '<workload|pod-regex>' -n <namespace> --highlight ERROR
 kubectl get pods -n <namespace>
 kubectl describe pod -n <namespace> <pod>
 ```
 
 Next steps:
 - Look for Warning events like `FailedScheduling`, `ImagePullBackOff`, `ErrImagePull`.
-- If using `ktl stack`, follow the run stream:
-  - `ktl stack status --follow`
+- If using `torque stack`, follow the run stream:
+  - `torque stack status --follow`
 
 ## Stack selection surprises
 
@@ -77,13 +77,13 @@ Why:
 
 What to run:
 ```bash
-ktl env --match stack
-ktl stack --config <stack-root>
+torque env --match stack
+torque stack --config <stack-root>
 ```
 
 Next steps:
-- Temporarily remove filters (`KTL_STACK_TAG`, `KTL_STACK_RELEASE`, `KTL_STACK_FROM_PATH`, `KTL_STACK_GIT_RANGE`).
-- Use `ktl stack explain <name>` to understand why a release is/was selected.
+- Temporarily remove filters (`TORQUE_STACK_TAG`, `TORQUE_STACK_RELEASE`, `TORQUE_STACK_FROM_PATH`, `TORQUE_STACK_GIT_RANGE`).
+- Use `torque stack explain <name>` to understand why a release is/was selected.
 
 ## Build sandbox / BuildKit issues
 
@@ -94,8 +94,8 @@ Why:
 
 What to run:
 ```bash
-export KTL_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
-ktl build . --tag ghcr.io/acme/app:dev --sandbox-logs
+export TORQUE_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
+torque build . --tag ghcr.io/acme/app:dev --sandbox-logs
 ```
 
 Next steps:

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/version"
+	"github.com/ingresslabs/torque/internal/version"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -77,13 +77,13 @@ func ComputeEffectiveInputHashWithOptions(n *ResolvedRelease, opts EffectiveInpu
 	verify := digestVerify(n)
 
 	input := &EffectiveInput{
-		APIVersion: "ktl.dev/stack-effective-input/v1",
+		APIVersion: "torque.dev/stack-effective-input/v1",
 
 		StackGitCommit: gid.Commit,
 		StackGitDirty:  gid.Dirty,
 
-		KtlVersion:   version.Version,
-		KtlGitCommit: version.GitCommit,
+		TorqueVersion:   version.Version,
+		TorqueGitCommit: version.GitCommit,
 
 		NodeID: n.ID,
 
@@ -105,8 +105,8 @@ func ComputeEffectiveInputHashWithOptions(n *ResolvedRelease, opts EffectiveInpu
 		StackGitCommit string `json:"stackGitCommit,omitempty"`
 		StackGitDirty  bool   `json:"stackGitDirty,omitempty"`
 
-		KtlVersion   string `json:"ktlVersion,omitempty"`
-		KtlGitCommit string `json:"ktlGitCommit,omitempty"`
+		TorqueVersion   string `json:"torqueVersion,omitempty"`
+		TorqueGitCommit string `json:"torqueGitCommit,omitempty"`
 
 		NodeID string `json:"nodeId"`
 
@@ -130,13 +130,13 @@ func ComputeEffectiveInputHashWithOptions(n *ResolvedRelease, opts EffectiveInpu
 	}
 
 	hashInput := effectiveInputHashV1{
-		APIVersion: "ktl.dev/stack-effective-input-hash/v1",
+		APIVersion: "torque.dev/stack-effective-input-hash/v1",
 
 		StackGitCommit: input.StackGitCommit,
 		StackGitDirty:  input.StackGitDirty,
 
-		KtlVersion:   input.KtlVersion,
-		KtlGitCommit: input.KtlGitCommit,
+		TorqueVersion:   input.TorqueVersion,
+		TorqueGitCommit: input.TorqueGitCommit,
 
 		NodeID: input.NodeID,
 
@@ -239,7 +239,7 @@ func digestHelmChart(ch *chart.Chart) string {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-chart.v1")
+	write("torque.stack-chart.v1")
 	if ch == nil {
 		return "sha256:" + hex.EncodeToString(h.Sum(nil))
 	}
@@ -264,7 +264,7 @@ func digestSet(m map[string]string) string {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-set.v1")
+	write("torque.stack-set.v1")
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -283,7 +283,7 @@ func digestCluster(n *ResolvedRelease) string {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-cluster.v1")
+	write("torque.stack-cluster.v1")
 	write(n.Cluster.Name)
 	write(n.Cluster.Context)
 	write(n.Namespace)
@@ -313,7 +313,7 @@ func digestApply(n *ResolvedRelease) EffectiveApplyInput {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-apply.v1")
+	write("torque.stack-apply.v1")
 	write(fmt.Sprintf("atomic=%t", atomic))
 	write(fmt.Sprintf("wait=%t", wait))
 	write(fmt.Sprintf("createNamespace=%t", createNamespace))
@@ -338,7 +338,7 @@ func digestDelete(n *ResolvedRelease) EffectiveDeleteInput {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-delete.v1")
+	write("torque.stack-delete.v1")
 	write("timeout=" + timeout.String())
 	return EffectiveDeleteInput{
 		Timeout: timeout.String(),
@@ -373,7 +373,7 @@ func digestVerify(n *ResolvedRelease) EffectiveVerifyInput {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
-	write("ktl.stack-verify.v1")
+	write("torque.stack-verify.v1")
 	write(fmt.Sprintf("enabled=%t", enabled))
 	write(fmt.Sprintf("failOnWarnings=%t", failOnWarnings))
 	write(fmt.Sprintf("warnOnly=%t", warnOnly))

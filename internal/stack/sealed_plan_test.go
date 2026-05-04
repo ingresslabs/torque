@@ -202,7 +202,7 @@ func writeSealedDirFixture(t *testing.T, opts sealedDirFixtureOptions) (sealedDi
 	}
 
 	rp := &RunPlan{
-		APIVersion: "ktl.dev/stack-run/v1",
+		APIVersion: "torque.dev/stack-run/v1",
 		RunID:      "",
 		StackRoot:  ".",
 		StackName:  "demo-stack",
@@ -257,7 +257,7 @@ func writeSealedDirFixture(t *testing.T, opts sealedDirFixtureOptions) (sealedDi
 	}
 
 	manifest := &InputBundleManifest{
-		APIVersion: "ktl.dev/stack-input-bundle/v1",
+		APIVersion: "torque.dev/stack-input-bundle/v1",
 		CreatedAt:  time.Now().UTC().Format(time.RFC3339Nano),
 		PlanHash:   manifestPlanHash,
 		Nodes: []InputBundleNode{

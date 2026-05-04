@@ -15,7 +15,7 @@ func TestShowcaseMega_PlanInferAndRun(t *testing.T) {
 	root := t.TempDir()
 	copyDir(t, srcRoot, root)
 	// Never trust developer-local artifacts under testdata (e.g. sqlite state from a real run).
-	_ = os.RemoveAll(filepath.Join(root, ".ktl"))
+	_ = os.RemoveAll(filepath.Join(root, ".torque"))
 
 	u, err := Discover(root)
 	if err != nil {

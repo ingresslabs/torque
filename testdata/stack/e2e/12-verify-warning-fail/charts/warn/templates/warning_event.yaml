@@ -3,7 +3,7 @@ kind: Event
 metadata:
   name: {{ printf "%s-warning" .Release.Name | quote }}
 type: Warning
-reason: KtlVerifyDemo
+reason: TorqueVerifyDemo
 message: "demo warning event emitted by fixture"
 involvedObject:
   apiVersion: v1
@@ -11,4 +11,4 @@ involvedObject:
   name: {{ .Release.Name | quote }}
   namespace: {{ .Release.Namespace | quote }}
 source:
-  component: "ktl-e2e"
+  component: "torque-e2e"

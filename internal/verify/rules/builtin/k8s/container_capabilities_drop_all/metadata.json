@@ -6,7 +6,7 @@
   "descriptionText": "Containers should drop all Linux capabilities (securityContext.capabilities.drop includes 'ALL').",
   "descriptionUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted",
   "platform": "Kubernetes",
-  "descriptionID": "ktl-pss-02",
+  "descriptionID": "torque-pss-02",
   "cloudProvider": "common",
   "cwe": "250",
   "riskScore": "7.0"

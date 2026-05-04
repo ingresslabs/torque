@@ -30,14 +30,14 @@ Flags:
   --matrix-safe          Run a minimal test pass for Go version matrix (unit tests only).
 
   --json-out <path>     Write go test -json output to <path> (unit tests stage).
-  --update-goldens      Set KTL_UPDATE_RULE_GOLDENS=1 (and KTL_UPDATE_GOLDENS=1) for this run.
+  --update-goldens      Set TORQUE_UPDATE_RULE_GOLDENS=1 (and TORQUE_UPDATE_GOLDENS=1) for this run.
 
 Environment:
-  KTL_UPDATE_RULE_GOLDENS=1 / KTL_UPDATE_GOLDENS=1
+  TORQUE_UPDATE_RULE_GOLDENS=1 / TORQUE_UPDATE_GOLDENS=1
     Update snapshots/goldens where supported.
 
   Real-cluster e2e requires:
-    KTL_STACK_VERIFY_E2E_NAMESPACE=...
+    TORQUE_STACK_VERIFY_E2E_NAMESPACE=...
     KUBECONFIG=...
 USAGE
 }
@@ -126,8 +126,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "${UPDATE_GOLDENS}" == "1" ]]; then
-  export KTL_UPDATE_RULE_GOLDENS=1
-  export KTL_UPDATE_GOLDENS=1
+  export TORQUE_UPDATE_RULE_GOLDENS=1
+  export TORQUE_UPDATE_GOLDENS=1
 fi
 
 if [[ "${RUN_MATRIX_SAFE}" == "1" ]]; then
@@ -140,7 +140,7 @@ if [[ "${RUN_MATRIX_SAFE}" == "1" ]]; then
   RUN_RACE_SELECTED=0
 fi
 
-echo "ktl testpoint"
+echo "torque testpoint"
 echo "  ci:            ${CI_MODE}"
 echo "  fmt:           ${RUN_FMT}"
 echo "  lint:          ${RUN_LINT}"
@@ -213,14 +213,14 @@ if [[ "${RUN_CHARTS_E2E}" == "1" ]]; then
 fi
 
 if [[ "${RUN_E2E_REAL}" == "1" ]]; then
-  if [[ -z "${KTL_STACK_VERIFY_E2E_NAMESPACE:-}" ]]; then
-    die "KTL_STACK_VERIFY_E2E_NAMESPACE is required for --e2e-real"
+  if [[ -z "${TORQUE_STACK_VERIFY_E2E_NAMESPACE:-}" ]]; then
+    die "TORQUE_STACK_VERIFY_E2E_NAMESPACE is required for --e2e-real"
   fi
   if [[ -z "${KUBECONFIG:-}" ]]; then
     die "KUBECONFIG is required for --e2e-real"
   fi
   echo ">> real-cluster e2e: stack verify"
-  go test -tags=integration ./cmd/ktl -run TestStackVerify_E2E_RealCluster -count=1
+  go test -tags=integration ./cmd/torque -run TestStackVerify_E2E_RealCluster -count=1
 fi
 
 echo

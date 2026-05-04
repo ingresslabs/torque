@@ -30,7 +30,7 @@ func ExportRunBundle(ctx context.Context, root string, runID string, outPath str
 		return "", fmt.Errorf("run id is required")
 	}
 	if strings.TrimSpace(outPath) == "" {
-		outPath = filepath.Join(root, ".ktl", "stack", "exports", runID+".tgz")
+		outPath = filepath.Join(root, ".torque", "stack", "exports", runID+".tgz")
 	}
 
 	src, err := openStackStateStore(root, true)
@@ -39,7 +39,7 @@ func ExportRunBundle(ctx context.Context, root string, runID string, outPath str
 	}
 	defer src.Close()
 
-	tmpRoot, err := os.MkdirTemp("", "ktl-stack-export-*")
+	tmpRoot, err := os.MkdirTemp("", "torque-stack-export-*")
 	if err != nil {
 		return "", err
 	}
@@ -73,11 +73,11 @@ func ExportRunBundle(ctx context.Context, root string, runID string, outPath str
 
 	// Read run_digest for convenience.
 	var runDigest string
-	_ = dst.db.QueryRowContext(ctx, `SELECT run_digest FROM ktl_stack_runs WHERE run_id = ?`, runID).Scan(&runDigest)
+	_ = dst.db.QueryRowContext(ctx, `SELECT run_digest FROM torque_stack_runs WHERE run_id = ?`, runID).Scan(&runDigest)
 	runDigest = strings.TrimSpace(runDigest)
 
 	manifest := RunBundleManifest{
-		APIVersion:  "ktl.dev/stack-bundle/v1",
+		APIVersion:  "torque.dev/stack-bundle/v1",
 		Kind:        "StackRunBundle",
 		CreatedAt:   time.Now().UTC().Format(time.RFC3339Nano),
 		RunID:       runID,
@@ -113,7 +113,7 @@ SELECT stack_root, stack_name, profile, command, concurrency, fail_mode, status,
   created_at_ns, updated_at_ns, completed_at_ns,
   created_by, host, pid, ci_run_url, git_author, kubeconfig, kube_context,
   selector_json, plan_json, summary_json, last_event_digest, run_digest
-FROM ktl_stack_runs WHERE run_id = ?
+FROM torque_stack_runs WHERE run_id = ?
 `, runID).Scan(&stackRoot, &stackName, &profile, &command, &concurrency, &failMode, &status,
 		&createdAtNS, &updatedAtNS, &completedAtNS,
 		&createdBy, &host, &pid, &ciURL, &gitAuthor, &kubeconfig, &kubeContext,
@@ -122,7 +122,7 @@ FROM ktl_stack_runs WHERE run_id = ?
 		return err
 	}
 	_, err = dst.ExecContext(ctx, `
-INSERT INTO ktl_stack_runs (
+INSERT INTO torque_stack_runs (
   run_id, stack_root, stack_name, profile, command, concurrency, fail_mode, status,
   created_at_ns, updated_at_ns, completed_at_ns,
   created_by, host, pid, ci_run_url, git_author, kubeconfig, kube_context,
@@ -138,7 +138,7 @@ INSERT INTO ktl_stack_runs (
 func copyRunNodes(ctx context.Context, src *sql.DB, dst *sql.DB, runID string) error {
 	rows, err := src.QueryContext(ctx, `
 SELECT node_id, status, attempt, error, last_error_class, last_error_digest, updated_at_ns
-FROM ktl_stack_nodes WHERE run_id = ?
+FROM torque_stack_nodes WHERE run_id = ?
 ORDER BY node_id ASC
 `, runID)
 	if err != nil {
@@ -153,7 +153,7 @@ ORDER BY node_id ASC
 			return err
 		}
 		_, err := dst.ExecContext(ctx, `
-INSERT INTO ktl_stack_nodes (run_id, node_id, status, attempt, error, last_error_class, last_error_digest, updated_at_ns)
+INSERT INTO torque_stack_nodes (run_id, node_id, status, attempt, error, last_error_class, last_error_digest, updated_at_ns)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `, runID, nodeID, status, attempt, nodeErr, lastClass, lastDigest, updatedAt)
 		if err != nil {
@@ -166,7 +166,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 func copyRunEvents(ctx context.Context, src *sql.DB, dst *sql.DB, runID string) error {
 	rows, err := src.QueryContext(ctx, `
 SELECT ts_ns, node_id, type, attempt, message, error_class, error_message, error_digest, seq, prev_digest, digest, crc32
-FROM ktl_stack_events
+FROM torque_stack_events
 WHERE run_id = ?
 ORDER BY id ASC
 `, runID)
@@ -183,7 +183,7 @@ ORDER BY id ASC
 			return err
 		}
 		_, err := dst.ExecContext(ctx, `
-INSERT INTO ktl_stack_events (run_id, ts_ns, node_id, type, attempt, message, error_class, error_message, error_digest, seq, prev_digest, digest, crc32)
+INSERT INTO torque_stack_events (run_id, ts_ns, node_id, type, attempt, message, error_class, error_message, error_digest, seq, prev_digest, digest, crc32)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `, runID, tsNS, nodeID, typ, attempt, msg, errClass, errMsg, errDigest, seq, prevDigest, digest, crc32)
 		if err != nil {
@@ -198,7 +198,7 @@ func copyRunNodeSteps(ctx context.Context, src *sql.DB, dst *sql.DB, runID strin
 SELECT node_id, attempt, step,
   started_at_ns, completed_at_ns, status, message,
   error_class, error_message, error_digest, cursor_json
-FROM ktl_stack_node_steps
+FROM torque_stack_node_steps
 WHERE run_id = ?
 ORDER BY node_id ASC, attempt ASC, step ASC
 `, runID)
@@ -215,7 +215,7 @@ ORDER BY node_id ASC, attempt ASC, step ASC
 			return err
 		}
 		_, err := dst.ExecContext(ctx, `
-INSERT INTO ktl_stack_node_steps (
+INSERT INTO torque_stack_node_steps (
   run_id, node_id, attempt, step,
   started_at_ns, completed_at_ns, status, message,
   error_class, error_message, error_digest, cursor_json
@@ -229,7 +229,7 @@ INSERT INTO ktl_stack_node_steps (
 }
 
 func ExtractBundleToTempDir(bundlePath string) (string, error) {
-	// Uses `tar` for simplicity and speed; bundle format is controlled by ktl.
+	// Uses `tar` for simplicity and speed; bundle format is controlled by torque.
 	bundlePath = strings.TrimSpace(bundlePath)
 	if bundlePath == "" {
 		return "", fmt.Errorf("bundle path is required")
@@ -237,7 +237,7 @@ func ExtractBundleToTempDir(bundlePath string) (string, error) {
 	if _, err := os.Stat(bundlePath); err != nil {
 		return "", err
 	}
-	tmp, err := os.MkdirTemp("", "ktl-bundle-*")
+	tmp, err := os.MkdirTemp("", "torque-bundle-*")
 	if err != nil {
 		return "", err
 	}

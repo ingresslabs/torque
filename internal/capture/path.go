@@ -22,9 +22,9 @@ func ResolvePath(commandPath, requested string, now time.Time) (string, error) {
 		base = strings.ReplaceAll(base, ":", "-")
 		base = strings.Trim(base, "-")
 		if base == "" {
-			base = "ktl"
+			base = "torque"
 		}
-		name := fmt.Sprintf("ktl-capture-%s-%s.sqlite", base, now.UTC().Format("20060102-150405"))
+		name := fmt.Sprintf("torque-capture-%s-%s.sqlite", base, now.UTC().Format("20060102-150405"))
 		return filepath.Join(wd, name), nil
 	}
 	return requested, nil

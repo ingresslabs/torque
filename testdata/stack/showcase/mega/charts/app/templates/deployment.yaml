@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Values.appName | quote }}
   annotations:
-    ktl.io/depends-on: {{ .Values.dependsOn | quote }}
+    torque.io/depends-on: {{ .Values.dependsOn | quote }}
 spec:
   selector:
     matchLabels:

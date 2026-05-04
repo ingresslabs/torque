@@ -59,7 +59,7 @@ func TestRun_ResumeSeedsSucceededFromSteps(t *testing.T) {
 	}
 	// Simulate a run that completed all apply phases, but never wrote NODE_SUCCEEDED.
 	if _, err := store.db.ExecContext(ctx, `
-INSERT INTO ktl_stack_node_steps (
+INSERT INTO torque_stack_node_steps (
   run_id, node_id, attempt, step,
   started_at_ns, completed_at_ns, status, message
 ) VALUES
@@ -69,7 +69,7 @@ INSERT INTO ktl_stack_node_steps (
 	`, run1ID, "c1/ns/app", run1ID, "c1/ns/app", run1ID, "c1/ns/app"); err != nil {
 		t.Fatalf("insert node steps: %v", err)
 	}
-	if _, err := store.db.ExecContext(ctx, `UPDATE ktl_stack_nodes SET attempt = 1 WHERE run_id = ? AND node_id = ?`, run1ID, "c1/ns/app"); err != nil {
+	if _, err := store.db.ExecContext(ctx, `UPDATE torque_stack_nodes SET attempt = 1 WHERE run_id = ? AND node_id = ?`, run1ID, "c1/ns/app"); err != nil {
 		t.Fatalf("update attempt: %v", err)
 	}
 	_ = store.Close()

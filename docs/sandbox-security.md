@@ -1,6 +1,6 @@
 # Sandbox Security
 
-`ktl build` sandbox profiles constrain the local build process before BuildKit receives the build request. They are defense-in-depth controls for local and CI runners, not a replacement for trusted builders, pinned inputs, policy checks, SBOMs, or image signatures.
+`torque build` sandbox profiles constrain the local build process before BuildKit receives the build request. They are defense-in-depth controls for local and CI runners, not a replacement for trusted builders, pinned inputs, policy checks, SBOMs, or image signatures.
 
 ## Threat Model
 
@@ -19,8 +19,8 @@ They do not make arbitrary build contexts safe to run on sensitive hosts. Treat 
 ## Validation
 
 ```bash
-export KTL_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
-ktl build . --tag ghcr.io/acme/app:dev --sandbox-logs
+export TORQUE_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
+torque build . --tag ghcr.io/acme/app:dev --sandbox-logs
 ```
 
-For release work, pair sandboxed builds with `ktl build` attestations and verifier policy checks so the deploy plan can show both how an image was built and whether the rendered workload is acceptable.
+For release work, pair sandboxed builds with `torque build` attestations and verifier policy checks so the deploy plan can show both how an image was built and whether the rendered workload is acceptable.

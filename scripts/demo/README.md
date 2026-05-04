@@ -6,7 +6,7 @@ This folder contains a reproducible terminal demo script plus an ffmpeg renderer
 
 - A deterministic demo run (build / attestations / capture / plan visualize / apply UI *when possible*).
 - A `lowerthirds.txt` timeline you can tweak.
-- A one-shot `ffmpeg` command wrapper to produce `ktl-demo-lowerthirds.mp4`.
+- A one-shot `ffmpeg` command wrapper to produce `torque-demo-lowerthirds.mp4`.
 
 ## Step 1 — Record the screen (macOS)
 
@@ -33,10 +33,10 @@ Edit `scripts/demo/lowerthirds.txt` if you need different timestamps/text.
 Then:
 
 ```bash
-./scripts/demo/add-lowerthirds.sh /path/to/ktl-demo.mov
+./scripts/demo/add-lowerthirds.sh /path/to/torque-demo.mov
 ```
 
-Output: `./ktl-demo-lowerthirds.mp4` (in the current working directory).
+Output: `./torque-demo-lowerthirds.mp4` (in the current working directory).
 
 ## Notes
 

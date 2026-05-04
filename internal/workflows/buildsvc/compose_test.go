@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	appcompose "github.com/ingresslabs/ktl/pkg/compose"
+	appcompose "github.com/ingresslabs/torque/pkg/compose"
 )
 
 type fakeComposeRunner struct {
@@ -22,8 +22,8 @@ func TestRunComposeBuild_SortsServiceOutput(t *testing.T) {
 	svc := &service{
 		composeRunner: fakeComposeRunner{
 			results: []appcompose.ServiceBuildResult{
-				{Service: "worker", Tags: []string{"ktl-test/worker:dev"}},
-				{Service: "api", Tags: []string{"ktl-test/api:dev"}},
+				{Service: "worker", Tags: []string{"torque-test/worker:dev"}},
+				{Service: "api", Tags: []string{"torque-test/api:dev"}},
 			},
 		},
 	}
@@ -33,7 +33,7 @@ func TestRunComposeBuild_SortsServiceOutput(t *testing.T) {
 		t.Fatalf("runComposeBuild() err = %v", err)
 	}
 
-	if got := out.String(); got != "api: ktl-test/api:dev\nworker: ktl-test/worker:dev\n" {
+	if got := out.String(); got != "api: torque-test/api:dev\nworker: torque-test/worker:dev\n" {
 		t.Fatalf("unexpected output:\n%s", got)
 	}
 }

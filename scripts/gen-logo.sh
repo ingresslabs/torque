@@ -5,9 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="$ROOT_DIR/docs/assets/logo"
 mkdir -p "$OUT_DIR"
 
-ICON="$OUT_DIR/ktl-logo-icon.png"
-ICON_SMALL="$OUT_DIR/ktl-logo-icon-256.png"
-MARK_PNG="$OUT_DIR/.ktl-logo-mark-render.png"
+ICON="$OUT_DIR/torque-logo-icon.png"
+ICON_SMALL="$OUT_DIR/torque-logo-icon-256.png"
+MARK_PNG="$OUT_DIR/.torque-logo-mark-render.png"
 
 BLUE="#326CE5"
 BLUE_SOFT="#6B9EFF"
@@ -19,9 +19,11 @@ BORDER="#d9e6ff"
 magick -size 920x920 xc:none \
   -stroke "$BLUE" -strokewidth 20 -fill none -draw "circle 460,460 460,76" \
   -stroke "rgba(107,158,255,0.55)" -strokewidth 3 -draw "circle 460,460 460,104" \
-  -stroke "$BLUE" -strokewidth 20 -draw "line 460,120 460,800" -draw "line 120,460 800,460" \
-  -strokewidth 13 -draw "line 460,460 700,220" -draw "line 460,460 220,700" \
-  -strokewidth 8 -stroke "rgba(50,108,229,0.78)" -draw "line 460,460 700,700" -draw "line 460,460 220,220" \
+  -stroke "$BLUE" -strokewidth 22 -draw "line 240,268 680,268" -draw "line 460,268 460,700" \
+  -strokewidth 16 -draw "line 350,700 570,700" \
+  -strokewidth 10 -stroke "rgba(50,108,229,0.78)" \
+    -draw "path 'M 240,560 C 314,693 483,754 621,681'" \
+    -draw "path 'M 680,360 C 606,227 437,166 299,239'" \
   -stroke none -fill "$BLUE_SOFT" -draw "circle 460,460 460,434" \
   -fill "$SURFACE" -draw "circle 460,460 460,451" \
   "$MARK_PNG"

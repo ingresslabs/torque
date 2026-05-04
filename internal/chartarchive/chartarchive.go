@@ -31,12 +31,12 @@ const (
 
 const (
 	createMetaTableStmt = `
-CREATE TABLE IF NOT EXISTS ktl_archive_meta (
+CREATE TABLE IF NOT EXISTS torque_archive_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );`
 	createFilesTableStmt = `
-CREATE TABLE IF NOT EXISTS ktl_chart_files (
+CREATE TABLE IF NOT EXISTS torque_chart_files (
   path TEXT PRIMARY KEY,
   mode INTEGER NOT NULL,
   size INTEGER NOT NULL,
@@ -120,7 +120,7 @@ func PackageDir(ctx context.Context, chartDir string, opts PackageOptions) (*Pac
 		}
 	}
 
-	tmpFile, err := os.CreateTemp(outDir, "ktl-chart-*.sqlite")
+	tmpFile, err := os.CreateTemp(outDir, "torque-chart-*.sqlite")
 	if err != nil {
 		return nil, fmt.Errorf("create temp sqlite: %w", err)
 	}
@@ -258,18 +258,18 @@ func writeArchive(ctx context.Context, path string, chartDir string, ch *chart.C
 
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	if err := insertMeta(tx, ctx, map[string]string{
-		"ktl_archive_type":    archiveType,
-		"ktl_archive_version": archiveVersion,
-		"created_at":          now,
-		"chart_name":          chartName(ch),
-		"chart_version":       chartVersion(ch),
-		"chart_app_version":   chartAppVersion(ch),
-		"chart_api_version":   chartAPIVersion(ch),
+		"torque_archive_type":    archiveType,
+		"torque_archive_version": archiveVersion,
+		"created_at":             now,
+		"chart_name":             chartName(ch),
+		"chart_version":          chartVersion(ch),
+		"chart_app_version":      chartAppVersion(ch),
+		"chart_api_version":      chartAPIVersion(ch),
 	}); err != nil {
 		return nil, err
 	}
 
-	stmt, err := tx.PrepareContext(ctx, `INSERT INTO ktl_chart_files(path, mode, size, sha256, data) VALUES(?, ?, ?, ?, ?)`)
+	stmt, err := tx.PrepareContext(ctx, `INSERT INTO torque_chart_files(path, mode, size, sha256, data) VALUES(?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, fmt.Errorf("prepare insert: %w", err)
 	}
@@ -342,7 +342,7 @@ func insertMeta(tx *sql.Tx, ctx context.Context, values map[string]string) error
 	if tx == nil {
 		return errors.New("meta transaction is required")
 	}
-	stmt, err := tx.PrepareContext(ctx, `INSERT OR REPLACE INTO ktl_archive_meta(key, value) VALUES(?, ?)`)
+	stmt, err := tx.PrepareContext(ctx, `INSERT OR REPLACE INTO torque_archive_meta(key, value) VALUES(?, ?)`)
 	if err != nil {
 		return fmt.Errorf("prepare meta insert: %w", err)
 	}

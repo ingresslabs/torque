@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ktl verify report</title>
+<title>torque verify report</title>
 <style>
 :root{color-scheme:light;--ink:#0b1f2a;--muted:rgba(11,31,42,0.62);--navy:#0b3a53;--brass:#b08d57;--surface:rgba(255,255,255,0.92);--surface-soft:rgba(255,255,255,0.84);--border:rgba(11,31,42,0.12);--shadow:0 26px 60px rgba(11,31,42,0.12);--shadow-soft:0 16px 34px rgba(11,31,42,0.10);--ease:cubic-bezier(.16,1,.3,1);} 
 *{box-sizing:border-box;}body{margin:0;padding:44px 52px 72px;font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:radial-gradient(1200px 700px at 18% 12%, #ffffff 0%, #eef2f7 38%, #dce3f1 100%);color:var(--ink);}h1{margin:0;font-size:2.3rem;letter-spacing:-0.03em;font-weight:650;}h2{margin:1.2rem 0 0.6rem;font-size:1.05rem;letter-spacing:0.01em;}p{margin:0.25rem 0;color:var(--muted);}a{color:var(--navy);text-decoration:none;}a:hover{text-decoration:underline;} 
@@ -68,10 +68,10 @@ body.print .toolbar,body.print aside,body.print .drawer,body.print .drawer-backd
 <div class="drawer-backdrop" id="drawerBackdrop"></div>
 <div class="drawer" id="drawer"></div>
 <div class="toast" id="toast">Copied</div>
-<script type="application/json" id="ktlVerifyData">{"report":{"tool":"ktl-verify","engine":{"name":"builtin","ruleset":"builtin@test"},"mode":"warn","failOn":"high","passed":true,"blocked":false,"evaluatedAt":"2026-02-06T00:00:00Z","inputs":[{"kind":"manifest","source":"rendered.yaml","renderedSha256":"abc123"}],"summary":{"total":1,"bySeverity":{"medium":1},"byRule":{"k8s/container_image_tag_latest":1},"byRuleSeverity":{"k8s/container_image_tag_latest":{"medium":1}},"passed":true,"blocked":false},"findings":[{"ruleId":"k8s/container_image_tag_latest","severity":"medium","category":"Supply Chain","message":"Image tag should not be latest","fieldPath":"spec.template.spec.containers.0.image","location":"metadata.name={{web}}.spec.template.spec.containers.name={{web}}.image","expected":"pin to tag/digest","observed":"nginx:latest","subject":{"kind":"Deployment","namespace":"default","name":"web"},"helpUrl":"https://example.invalid/docs"}]},"fixPlan":[{"kind":"Deployment","namespace":"default","name":"web","ruleId":"k8s/container_image_tag_latest","title":"Pin container images to a tag or digest","patchYaml":"apiVersion: v1\nkind: Deployment\nmetadata:\n  name: web\n  namespace: default\nspec:\n  template:\n    spec:\n  containers:\n    - name: \u003ccontainer\u003e\n      image: \u003crepo\u003e:\u003ctag\u003e\n"}],"namespaces":["default"],"topRules":[{"key":"k8s/container_image_tag_latest","count":1}],"topResources":[{"key":"default/Deployment/web","count":1}]}</script>
+<script type="application/json" id="torqueVerifyData">{"report":{"tool":"torque-verify","engine":{"name":"builtin","ruleset":"builtin@test"},"mode":"warn","failOn":"high","passed":true,"blocked":false,"evaluatedAt":"2026-02-06T00:00:00Z","inputs":[{"kind":"manifest","source":"rendered.yaml","renderedSha256":"abc123"}],"summary":{"total":1,"bySeverity":{"medium":1},"byRule":{"k8s/container_image_tag_latest":1},"byRuleSeverity":{"k8s/container_image_tag_latest":{"medium":1}},"passed":true,"blocked":false},"findings":[{"ruleId":"k8s/container_image_tag_latest","severity":"medium","category":"Supply Chain","message":"Image tag should not be latest","fieldPath":"spec.template.spec.containers.0.image","location":"metadata.name={{web}}.spec.template.spec.containers.name={{web}}.image","expected":"pin to tag/digest","observed":"nginx:latest","subject":{"kind":"Deployment","namespace":"default","name":"web"},"helpUrl":"https://example.invalid/docs"}]},"fixPlan":[{"kind":"Deployment","namespace":"default","name":"web","ruleId":"k8s/container_image_tag_latest","title":"Pin container images to a tag or digest","patchYaml":"apiVersion: v1\nkind: Deployment\nmetadata:\n  name: web\n  namespace: default\nspec:\n  template:\n    spec:\n  containers:\n    - name: \u003ccontainer\u003e\n      image: \u003crepo\u003e:\u003ctag\u003e\n"}],"namespaces":["default"],"topRules":[{"key":"k8s/container_image_tag_latest","count":1}],"topResources":[{"key":"default/Deployment/web","count":1}]}</script>
 <script>
 (function(){
-  var raw = document.getElementById('ktlVerifyData');
+  var raw = document.getElementById('torqueVerifyData');
   if(!raw){ return; }
   var data = {};
   try { data = JSON.parse(raw.textContent || '{}'); } catch(e) { data = {}; }
@@ -245,7 +245,7 @@ body.print .toolbar,body.print aside,body.print .drawer,body.print .drawer-backd
     hero.innerHTML = '';
     var wrap = ce('div','hero');
     var left = ce('div');
-    left.appendChild(text(ce('h1'), 'ktl verify report'));
+    left.appendChild(text(ce('h1'), 'torque verify report'));
     left.appendChild(text(ce('div','subtitle'), 'Evaluated: ' + fmtRFC3339(rep.evaluatedAt)));
     wrap.appendChild(left);
     var right = ce('div','subtitle hero-right');
@@ -334,7 +334,7 @@ body.print .toolbar,body.print aside,body.print .drawer,body.print .drawer-backd
       var btn = ce('button','btn'); btn.type='button'; btn.textContent='Copy PR Summary';
       btn.onclick = function(){
         var lines = [];
-        lines.push('### ktl verify');
+        lines.push('### torque verify');
         lines.push('');
         lines.push('- New/Changed: ' + newCount);
         lines.push('- Fixed: ' + fixedCount);

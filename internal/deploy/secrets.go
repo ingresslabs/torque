@@ -1,6 +1,6 @@
 package deploy
 
-import "github.com/ingresslabs/ktl/internal/secretstore"
+import "github.com/ingresslabs/torque/internal/secretstore"
 
 // SecretOptions configures deploy-time secret resolution.
 type SecretOptions struct {

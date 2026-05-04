@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/ingresslabs/ktl/internal/tailer"
+	"github.com/ingresslabs/torque/internal/tailer"
 	"golang.org/x/term"
 )
 
@@ -89,7 +89,7 @@ func (s Streams) IsTerminal(w io.Writer) bool {
 	return false
 }
 
-// Options contains everything needed to execute a ktl build workflow.
+// Options contains everything needed to execute a torque build workflow.
 type Options struct {
 	ContextDir         string
 	Dockerfile         string

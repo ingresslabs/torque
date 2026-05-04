@@ -1,8 +1,8 @@
 // File: internal/tailer/tailer.go
 // Brief: Internal tailer package implementation for 'tailer'.
 
-// Package tailer implements ktl's high-performance, color-aware log streamer
-// used by the 'ktl logs' family of commands, coordinating informers, filters,
+// Package tailer implements torque's high-performance, color-aware log streamer
+// used by the 'torque logs' family of commands, coordinating informers, filters,
 // and observer hooks.
 package tailer
 
@@ -26,7 +26,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-logr/logr"
-	"github.com/ingresslabs/ktl/internal/config"
+	"github.com/ingresslabs/torque/internal/config"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -201,7 +201,7 @@ func New(client kubernetes.Interface, opts *config.Options, logger logr.Logger, 
 	if err != nil {
 		return nil, err
 	}
-	tmpl, err := template.New("ktl").Parse(opts.Template)
+	tmpl, err := template.New("torque").Parse(opts.Template)
 	if err != nil {
 		return nil, fmt.Errorf("parse template: %w", err)
 	}
@@ -1359,7 +1359,7 @@ func formatEventSource(ev *corev1.Event) string {
 	return fmt.Sprintf("%s: %s", component, message)
 }
 
-// DefaultColorPalette returns the vibrant color rotation used when rendering ktl log streams.
+// DefaultColorPalette returns the vibrant color rotation used when rendering torque log streams.
 func DefaultColorPalette() []*color.Color {
 	return []*color.Color{
 		color.New(color.Bold, color.FgHiCyan),

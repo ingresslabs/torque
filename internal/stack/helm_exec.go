@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/deploy"
-	"github.com/ingresslabs/ktl/internal/kube"
+	"github.com/ingresslabs/torque/internal/deploy"
+	"github.com/ingresslabs/torque/internal/kube"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -101,7 +101,7 @@ func (e *helmExecutor) RunNode(ctx context.Context, node *runNode, command strin
 		settings.SetNamespace(node.Namespace)
 	}
 
-	helmDebug := strings.TrimSpace(os.Getenv("KTL_STACK_HELM_DEBUG")) == "1"
+	helmDebug := strings.TrimSpace(os.Getenv("TORQUE_STACK_HELM_DEBUG")) == "1"
 	helmLogEnabled := e.helmLogs || helmDebug
 	settings.Debug = helmLogEnabled
 

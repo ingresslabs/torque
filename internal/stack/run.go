@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/deploy"
+	"github.com/ingresslabs/torque/internal/deploy"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -75,7 +75,7 @@ func Run(ctx context.Context, opts RunOptions, out io.Writer, errOut io.Writer) 
 		return fmt.Errorf("unknown stack command %q", opts.Command)
 	}
 	if opts.RemoteAgentAddr != nil && strings.TrimSpace(*opts.RemoteAgentAddr) != "" {
-		return fmt.Errorf("ktl stack %s: --remote-agent is not supported yet", cmd)
+		return fmt.Errorf("torque stack %s: --remote-agent is not supported yet", cmd)
 	}
 	concurrency := opts.Concurrency
 	if concurrency <= 0 {
@@ -873,7 +873,7 @@ func (r *runState) WriteSummarySnapshot(s *RunSummary) {
 func (r *runState) BuildSummary(status string, startedAt time.Time, snap schedulerSnapshot) *RunSummary {
 	r.lastSnapshot = snap
 	s := &RunSummary{
-		APIVersion: "ktl.dev/stack-run/v1",
+		APIVersion: "torque.dev/stack-run/v1",
 		RunID:      r.RunID,
 		Status:     status,
 		StartedAt:  startedAt.UTC().Format(time.RFC3339Nano),

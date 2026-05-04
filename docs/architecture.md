@@ -1,12 +1,12 @@
-# KTL Architecture (Current)
+# TORQUE Architecture (Current)
 
 This repo is a single-module Go CLI with an optional companion agent.
 
 ## Layout
-- `cmd/ktl`: end-user CLI (Cobra) and CLI-only helpers.
-- `cmd/ktl-agent`: gRPC agent used by `--remote-agent` / `--mirror-bus`.
+- `cmd/torque`: end-user CLI (Cobra) and CLI-only helpers.
+- `cmd/torque-agent`: gRPC agent used by `--remote-agent` / `--mirror-bus`.
 - `internal/*`: non-exported libraries used by the CLI/agent (tailing, deploy/apply, UI mirroring, BuildKit workflows, config/feature flags).
-- `pkg/*`: reusable non-`internal` packages (BuildKit/Compose/registry helpers and generated API stubs under `pkg/api/ktl/api/v1`).
+- `pkg/*`: reusable non-`internal` packages (BuildKit/Compose/registry helpers and generated API stubs under `pkg/api/torque/api/v1`).
 - `testdata/*`: fixtures and golden files.
 
 ## Main Commands (wired today)
@@ -24,13 +24,13 @@ This repo is a single-module Go CLI with an optional companion agent.
 - `secrets`
 - `version`
 
-The root command wiring lives in `cmd/ktl/main.go`.
+The root command wiring lives in `cmd/torque/main.go`.
 
 Legacy/experimental commands (`analyze`, `up`, `wait`) remain callable for compatibility but are hidden from the focused CLI surface.
 
 ## Companion Binaries
 - `verifier`: standalone policy verifier. The older `verify` binary remains as a compatibility shim for existing CI scripts.
-- `ktl-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.
+- `torque-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.
 
 ## Internal Package Map (Purpose, Key Types, Invariants)
 
@@ -62,7 +62,7 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 
 ### `internal/api/convert`
 
-- Purpose: translate between internal runtime structs and protobuf API types (`pkg/api/ktl/api/v1`).
+- Purpose: translate between internal runtime structs and protobuf API types (`pkg/api/torque/api/v1`).
 - Key types: `BuildConfig`, `DeployApplyConfig`, `DeployDestroyConfig`.
 - Invariants: conversion is one-way “boundary glue”; don’t leak protobuf types into core packages.
 
@@ -86,7 +86,7 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 
 ### `internal/deployplan`
 
-- Purpose: shared apply-plan rendering helpers for `ktl apply plan`.
+- Purpose: shared apply-plan rendering helpers for `torque apply plan`.
 - Key types: `ResourceKey`, `ManifestDoc`, `QuotaReport`, `QuotaHeadroom`.
 - Invariants: manifest parsing, graph node IDs, manifest blob/diff rendering, and quota/headroom calculations stay here rather than being copied into command packages.
 

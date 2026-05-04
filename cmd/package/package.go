@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ingresslabs/ktl/internal/chartarchive"
-	"github.com/ingresslabs/ktl/internal/version"
+	"github.com/ingresslabs/torque/internal/chartarchive"
+	"github.com/ingresslabs/torque/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -26,14 +26,14 @@ func newPackageCommand() *cobra.Command {
 	var showVersion bool
 
 	cmd := &cobra.Command{
-		Use:           "ktl-package [CHART_DIR]",
+		Use:           "torque-package [CHART_DIR]",
 		Short:         "Package a chart directory into a sqlite chart archive",
 		Args:          cobra.MaximumNArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if showVersion {
-				fmt.Fprintf(cmd.OutOrStdout(), "ktl-package %s\n", version.Version)
+				fmt.Fprintf(cmd.OutOrStdout(), "torque-package %s\n", version.Version)
 				return nil
 			}
 			if quiet && jsonOut {
@@ -224,26 +224,26 @@ func newPackageCommand() *cobra.Command {
 	cmd.Flags().StringVar(&logLevel, "log-level", logLevel, "Log level: debug|info|warn|error (debug prints extra diagnostics)")
 	cmd.Flags().BoolVar(&showVersion, "version", false, "Print version and exit")
 	cmd.Example = `  # Package a chart directory (defaults to current directory)
-  ktl-package ./chart
+  torque-package ./chart
 
   # Write to a specific file
-  ktl-package ./chart --output dist/chart.sqlite
+  torque-package ./chart --output dist/chart.sqlite
 
   # Write into a directory (filename derived from Chart.yaml)
-  ktl-package ./chart --output dist/
+  torque-package ./chart --output dist/
 
   # Verify an existing archive
-  ktl-package --verify dist/chart.sqlite
+  torque-package --verify dist/chart.sqlite
 
   # Unpack an existing archive into ./demo-0.1.0
-  ktl-package --unpack dist/chart.sqlite
+  torque-package --unpack dist/chart.sqlite
   # Stream archive to stdout (for ssh/kubectl cp)
-  ktl-package ./chart --output - > chart.sqlite
+  torque-package ./chart --output - > chart.sqlite
   # Verify from stdin with a 64MB cap
-  ktl-package --verify - --max-stream-bytes 67108864 < chart.sqlite
+  torque-package --verify - --max-stream-bytes 67108864 < chart.sqlite
 
   # Package then verify
-  ktl-package ./chart --output dist/chart.sqlite && ktl-package --verify dist/chart.sqlite`
+  torque-package ./chart --output dist/chart.sqlite && torque-package --verify dist/chart.sqlite`
 	return cmd
 }
 
@@ -251,7 +251,7 @@ func materializeStdin(maxBytes int64) (string, error) {
 	if maxBytes <= 0 {
 		maxBytes = 0 // unlimited
 	}
-	tmpFile, err := os.CreateTemp("", "ktl-package-stdin-*")
+	tmpFile, err := os.CreateTemp("", "torque-package-stdin-*")
 	if err != nil {
 		return "", fmt.Errorf("create temp archive: %w", err)
 	}

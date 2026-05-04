@@ -1,89 +1,89 @@
 # Recipes (golden paths)
 
-Copy/paste workflows that cover the common “happy paths” for `ktl`.
+Copy/paste workflows that cover the common “happy paths” for `torque`.
 
 ## Zero-conf onboarding
 
 ```bash
 # Initialize repo defaults and detect your kubecontext
-ktl init
+torque init
 
 # Generate a starter stack.yaml from existing cluster state
-ktl init from-cluster
-ktl init from-cluster --all-namespaces --dry-run
+torque init from-cluster
+torque init from-cluster --all-namespaces --dry-run
 # Exports installed Helm chart archives by default; add current values too
-ktl init from-cluster --all-namespaces --write-values
+torque init from-cluster --all-namespaces --write-values
 
 # Run the interactive setup wizard
-ktl init --interactive
+torque init --interactive
 
 # Scaffold chart/ and values/ plus gitignore entries
-ktl init --layout --gitignore
+torque init --layout --gitignore
 
 # Use an opinionated preset
-ktl init --preset prod
+torque init --preset prod
 
 # Apply an init template (built-in or URL)
-ktl init --template platform
-ktl init --template https://example.com/ktl-init.yaml
+torque init --template platform
+torque init --template https://example.com/torque-init.yaml
 
 # Scaffold a Vault secrets provider
-ktl init --secrets-provider vault
+torque init --secrets-provider vault
 
 # Preview the config without writing
-ktl init --dry-run
+torque init --dry-run
 
 # Generate a replayable init plan
-ktl init --plan --plan-output .ktl/init-plan.json
+torque init --plan --plan-output .torque/init-plan.json
 
 # Apply a saved init plan
-ktl init --apply-plan .ktl/init-plan.json
+torque init --apply-plan .torque/init-plan.json
 
 # Launch the interactive help UI
-ktl help --ui
+torque help --ui
 ```
 
 ## Apply a chart (with and without the UI)
 
 ```bash
 # Preview what will change
-ktl apply plan --chart ./chart --release foo -n default
+torque apply plan --chart ./chart --release foo -n default
 
 # Write a PR-ready Markdown summary
-ktl apply plan --chart ./chart --release foo -n default --github-comment --output plan.md
+torque apply plan --chart ./chart --release foo -n default --github-comment --output plan.md
 
 # Attach verifier and build evidence to the PR summary
 verifier --chart ./chart --release foo -n default --format json --report verify.json
-ktl build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
-ktl apply plan --chart ./chart --release foo -n default \
+torque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
+torque apply plan --chart ./chart --release foo -n default \
   --verify-report verify.json --build-capture ./build.sqlite \
   --github-comment --output plan.md
 
 # Deploy
-ktl apply --chart ./chart --release foo -n default
+torque apply --chart ./chart --release foo -n default
 
 # Deploy with the viewer UI
-ktl apply --chart ./chart --release foo -n default --ui
+torque apply --chart ./chart --release foo -n default --ui
 ```
 
 ## Build → verify → plan → apply
 
 ```bash
 # Build the image and capture build evidence.
-ktl build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
+torque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
 
 # Verify the rendered chart.
 verifier --chart ./chart --release foo -n default --format json --report verify.json
 
 # Write a PR-ready plan with verifier and build evidence attached.
-ktl apply plan --chart ./chart --release foo -n default \
+torque apply plan --chart ./chart --release foo -n default \
   --verify-report verify.json --build-capture ./build.sqlite \
   --github-comment --output plan.md
 
 # Apply with the verify report enforced, capture the rollout, and explain it.
-ktl apply --chart ./chart --release foo -n default \
+torque apply --chart ./chart --release foo -n default \
   --require-verified verify.json --capture ./apply.sqlite --yes
-ktl explain ./apply.sqlite --format markdown
+torque explain ./apply.sqlite --format markdown
 ```
 
 ## 5-minute demo (public chart)
@@ -93,12 +93,12 @@ Do this:
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
-ktl apply plan --chart bitnami/nginx --release demo-nginx -n default --visualize
-ktl apply --chart bitnami/nginx --release demo-nginx -n default --yes
-ktl delete --release demo-nginx -n default --yes
+torque apply plan --chart bitnami/nginx --release demo-nginx -n default --visualize
+torque apply --chart bitnami/nginx --release demo-nginx -n default --yes
+torque delete --release demo-nginx -n default --yes
 ```
 
-## Recommended `.ktl.yaml` layout
+## Recommended `.torque.yaml` layout
 
 Do this:
 ```yaml
@@ -116,8 +116,8 @@ secrets:
 ## Apply with secret references
 
 ```bash
-# Define providers in .ktl.yaml (or pass --secret-config)
-cat > .ktl.yaml <<'YAML'
+# Define providers in .torque.yaml (or pass --secret-config)
+cat > .torque.yaml <<'YAML'
 secrets:
   defaultProvider: local
   providers:
@@ -132,15 +132,15 @@ db:
   password: secret://local/db/password
 YAML
 
-ktl apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local
-ktl apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local
-ktl stack apply --config ./stacks/prod --secret-provider local --yes
+torque apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local
+torque apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local
+torque stack apply --config ./stacks/prod --secret-provider local --yes
 ```
 
 ## Vault-backed secrets
 
 ```bash
-cat > .ktl.yaml <<'YAML'
+cat > .torque.yaml <<'YAML'
 secrets:
   defaultProvider: vault
   providers:
@@ -154,9 +154,9 @@ secrets:
       mount: secret
       kvVersion: 2
       key: value
-      # kubernetesRole: ktl
+      # kubernetesRole: torque
       # kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token
-      # awsRole: ktl
+      # awsRole: torque
       # awsRegion: us-east-1
       # awsHeaderValue: vault.example.com
 YAML
@@ -166,29 +166,29 @@ db:
   password: secret://vault/app/db#password
 YAML
 
-ktl apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault
-ktl apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault
-ktl stack apply --config ./stacks/prod --secret-provider vault --yes
+torque apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault
+torque apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault
+torque stack apply --config ./stacks/prod --secret-provider vault --yes
 ```
 
 Inspect providers and references:
 ```bash
-ktl secrets test --secret-provider vault --ref secret://vault/app/db#password
-ktl secrets list --secret-provider vault --path app --format json
+torque secrets test --secret-provider vault --ref secret://vault/app/db#password
+torque secrets list --secret-provider vault --path app --format json
 ```
 
 Minimal CLI workflow (sanity check before apply):
 ```bash
-ktl secrets test --secret-provider vault --ref secret://vault/app/db#password
-ktl secrets list --secret-provider vault --path app
+torque secrets test --secret-provider vault --ref secret://vault/app/db#password
+torque secrets list --secret-provider vault --path app
 ```
 
 ## Regression-proof plans
 
 Do this:
 ```bash
-ktl apply plan --chart ./chart --release foo -n default --baseline ./plan.json
-ktl apply plan --chart ./chart --release foo -n default --compare-to ./plan.json
+torque apply plan --chart ./chart --release foo -n default --baseline ./plan.json
+torque apply plan --chart ./chart --release foo -n default --compare-to ./plan.json
 ```
 
 ## Regression-proof verifier
@@ -202,67 +202,67 @@ verifier verify.yaml --compare-to ./baseline.json
 ## Share an `apply plan` visualization
 
 ```bash
-ktl apply plan --visualize --chart ./chart --release foo -n default
+torque apply plan --visualize --chart ./chart --release foo -n default
 ```
 
 ## Stack: minimal-flags workflow (plan → apply)
 
 ```bash
-export KTL_STACK_ROOT=./stacks/prod
+export TORQUE_STACK_ROOT=./stacks/prod
 
-# Read-only plan (default `ktl stack` behaves like `ktl stack plan`)
-ktl stack
+# Read-only plan (default `torque stack` behaves like `torque stack plan`)
+torque stack
 
 # Execute (DAG order)
-ktl stack apply --yes
+torque stack apply --yes
 
 # Capture the full stack run evidence bundle
-ktl stack apply --yes --capture ./stack.sqlite
+torque stack apply --yes --capture ./stack.sqlite
 ```
 
 ## Stack: resume / rerun failed
 
 ```bash
-export KTL_STACK_ROOT=./stacks/prod
+export TORQUE_STACK_ROOT=./stacks/prod
 
 # Resume the most recent run (frozen plan unless --replan is set)
-ktl stack apply --resume --yes
+torque stack apply --resume --yes
 
 # Convenience: resume and schedule only failed nodes
-ktl stack rerun-failed --yes
+torque stack rerun-failed --yes
 ```
 
 ## Stack: inspect runs
 
 ```bash
-export KTL_STACK_ROOT=./stacks/prod
+export TORQUE_STACK_ROOT=./stacks/prod
 
-ktl stack runs --limit 50
-ktl stack status --follow
-ktl stack audit --output html > stack-audit.html
+torque stack runs --limit 50
+torque stack status --follow
+torque stack audit --output html > stack-audit.html
 ```
 
 ## Build: share the build stream over WebSocket
 
 ```bash
-ktl build . --tag ghcr.io/acme/app:dev --ws-listen :9085
+torque build . --tag ghcr.io/acme/app:dev --ws-listen :9085
 ```
 
 ## Capture: record deploy/build/log evidence
 
 ```bash
 # Record a deploy evidence file
-ktl apply --chart ./chart --release foo -n default --capture ./apply.sqlite --capture-tag change=CHG-1234
+torque apply --chart ./chart --release foo -n default --capture ./apply.sqlite --capture-tag change=CHG-1234
 
 # Record a stack evidence file
-ktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
+torque stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
 
 # Save it as a CI/review artifact
-tar -czf ktl-evidence.tgz ./apply.sqlite
+tar -czf torque-evidence.tgz ./apply.sqlite
 
 # Explain a captured session locally or in CI logs
-ktl explain ./apply.sqlite
-ktl explain ./apply.sqlite --format markdown
+torque explain ./apply.sqlite
+torque explain ./apply.sqlite --format markdown
 ```
 
 ## Verifier: validate a chart render in CI
@@ -291,6 +291,6 @@ YAML
 verifier verify-chart-render.yaml
 
 # Package a chart then verify the archive
-ktl-package ./chart --output dist/chart.sqlite
-ktl-package --verify dist/chart.sqlite
+torque-package ./chart --output dist/chart.sqlite
+torque-package --verify dist/chart.sqlite
 ```

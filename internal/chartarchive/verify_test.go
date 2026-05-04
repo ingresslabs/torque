@@ -60,7 +60,7 @@ func TestVerifyArchive_DetectsTamper(t *testing.T) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	if _, err := db.Exec(`UPDATE ktl_chart_files SET data = ? WHERE path = 'values.yaml'`, []byte("tampered\n")); err != nil {
+	if _, err := db.Exec(`UPDATE torque_chart_files SET data = ? WHERE path = 'values.yaml'`, []byte("tampered\n")); err != nil {
 		t.Fatalf("tamper: %v", err)
 	}
 
@@ -87,7 +87,7 @@ func TestVerifyArchive_DetectsManifestMismatch(t *testing.T) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	if _, err := db.Exec(`UPDATE ktl_archive_meta SET value = ? WHERE key = 'file_manifest_json'`, `[]`); err != nil {
+	if _, err := db.Exec(`UPDATE torque_archive_meta SET value = ? WHERE key = 'file_manifest_json'`, `[]`); err != nil {
 		t.Fatalf("tamper manifest: %v", err)
 	}
 

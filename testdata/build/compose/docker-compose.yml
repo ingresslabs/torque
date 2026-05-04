@@ -3,9 +3,9 @@ services:
     build:
       context: ./services/api
       dockerfile: Dockerfile
-    image: ktl-test/api:dev
+    image: torque-test/api:dev
   worker:
     build:
       context: ./services/worker
       dockerfile: Dockerfile
-    image: ktl-test/worker:dev
+    image: torque-test/worker:dev

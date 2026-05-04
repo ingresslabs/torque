@@ -22,7 +22,7 @@ func TestBuiltinRules_GovernanceAndSnapshots(t *testing.T) {
 		t.Fatalf("expected builtin rules, got none")
 	}
 
-	update := strings.TrimSpace(os.Getenv("KTL_UPDATE_RULE_GOLDENS")) != ""
+	update := strings.TrimSpace(os.Getenv("TORQUE_UPDATE_RULE_GOLDENS")) != ""
 	commonDirs := []string{verifyTestdata("internal", "verify", "rules", "builtin", "lib")}
 
 	for _, rule := range rs.Rules {
@@ -164,9 +164,9 @@ func writeOrCompareSnapshot(t *testing.T, update bool, path string, fs []Finding
 	}
 	want, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("read snapshot %s (set KTL_UPDATE_RULE_GOLDENS=1 to generate): %v", path, err)
+		t.Fatalf("read snapshot %s (set TORQUE_UPDATE_RULE_GOLDENS=1 to generate): %v", path, err)
 	}
 	if string(want) != string(raw) {
-		t.Fatalf("snapshot mismatch: %s (set KTL_UPDATE_RULE_GOLDENS=1 to update)", path)
+		t.Fatalf("snapshot mismatch: %s (set TORQUE_UPDATE_RULE_GOLDENS=1 to update)", path)
 	}
 }

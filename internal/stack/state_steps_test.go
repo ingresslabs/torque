@@ -62,7 +62,7 @@ func TestStackStateStore_AppendEvent_WritesNodeSteps(t *testing.T) {
 	var startedAtNS, completedAtNS int64
 	if err := s.db.QueryRowContext(ctx, `
 SELECT step, status, started_at_ns, completed_at_ns
-FROM ktl_stack_node_steps
+FROM torque_stack_node_steps
 WHERE run_id = ? AND node_id = ? AND attempt = ? AND step = ?
 `, runID, "c1/ns/app", 1, "upgrade").Scan(&gotStep, &gotStatus, &startedAtNS, &completedAtNS); err != nil {
 		t.Fatalf("query step: %v", err)

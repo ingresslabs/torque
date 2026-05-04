@@ -15,7 +15,7 @@ import (
 	"github.com/moby/buildkit/client"
 )
 
-const dockerFallbackBuilderName = "ktl-buildkit"
+const dockerFallbackBuilderName = "torque-buildkit"
 
 var dockerLookPath = exec.LookPath
 var dockerBuildxRunner = runDockerBuildxImpl

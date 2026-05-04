@@ -2,8 +2,8 @@ services:
   api:
     build:
       context: ./services/api
-    image: ktl-e2e/api:latest
+    image: torque-e2e/api:latest
   worker:
     build:
       context: ./services/worker
-    image: ktl-e2e/worker:latest
+    image: torque-e2e/worker:latest

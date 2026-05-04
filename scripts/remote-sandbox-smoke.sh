@@ -3,11 +3,11 @@ set -euo pipefail
 
 HOST="${1:-root@188.124.37.233}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REMOTE_DIR="${REMOTE_DIR:-/root/ktl}"
+REMOTE_DIR="${REMOTE_DIR:-/root/torque}"
 SANDBOX_CFG="${SANDBOX_CFG:-${REMOTE_DIR}/sandbox/linux-ci.cfg}"
 
-echo "==> Building linux/amd64 ktl locally"
-(cd "${REPO_ROOT}" && GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o /tmp/ktl-linux-amd64 ./cmd/ktl)
+echo "==> Building linux/amd64 torque locally"
+(cd "${REPO_ROOT}" && GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o /tmp/torque-linux-amd64 ./cmd/torque)
 
 echo "==> Syncing repo to ${HOST}:${REMOTE_DIR}"
 rsync -az --delete \
@@ -17,15 +17,15 @@ rsync -az --delete \
   --exclude '**/node_modules' \
   "${REPO_ROOT}/" "${HOST}:${REMOTE_DIR}/"
 
-echo "==> Uploading ktl binary"
+echo "==> Uploading torque binary"
 ssh "${HOST}" mkdir -p "${REMOTE_DIR}/bin"
-scp /tmp/ktl-linux-amd64 "${HOST}:${REMOTE_DIR}/bin/ktl"
-ssh "${HOST}" chmod +x "${REMOTE_DIR}/bin/ktl"
+scp /tmp/torque-linux-amd64 "${HOST}:${REMOTE_DIR}/bin/torque"
+ssh "${HOST}" chmod +x "${REMOTE_DIR}/bin/torque"
 
 echo "==> Dockerfile fixture (sandbox)"
-ssh "${HOST}" "${REMOTE_DIR}/bin/ktl" build "${REMOTE_DIR}/testdata/build/dockerfiles/basic" --no-cache --sandbox --sandbox-config "${SANDBOX_CFG}" >/dev/null
+ssh "${HOST}" "${REMOTE_DIR}/bin/torque" build "${REMOTE_DIR}/testdata/build/dockerfiles/basic" --no-cache --sandbox --sandbox-config "${SANDBOX_CFG}" >/dev/null
 
 echo "==> Compose fixture (sandbox)"
-ssh "${HOST}" "${REMOTE_DIR}/bin/ktl" build "${REMOTE_DIR}/testdata/build/compose" --no-cache --sandbox --sandbox-config "${SANDBOX_CFG}" >/dev/null
+ssh "${HOST}" "${REMOTE_DIR}/bin/torque" build "${REMOTE_DIR}/testdata/build/compose" --no-cache --sandbox --sandbox-config "${SANDBOX_CFG}" >/dev/null
 
 echo "OK"

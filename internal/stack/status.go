@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/ui"
+	"github.com/ingresslabs/torque/internal/ui"
 )
 
 type StatusOptions struct {

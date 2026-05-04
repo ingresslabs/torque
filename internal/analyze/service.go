@@ -1255,7 +1255,7 @@ func checkResources(pod *corev1.Pod) []string {
 
 func findLocalDocs() string {
 	candidates := []string{
-		".ktl/knowledge.md",
+		".torque/knowledge.md",
 		"TROUBLESHOOTING.md",
 		"docs/troubleshooting.md",
 		"docs/runbook.md",

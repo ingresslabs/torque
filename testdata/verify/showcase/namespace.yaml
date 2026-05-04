@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ktl-verify-showcase
+  name: torque-verify-showcase
   labels:
-    ktl.dev/showcase: "verify"
+    torque.dev/showcase: "verify"
 

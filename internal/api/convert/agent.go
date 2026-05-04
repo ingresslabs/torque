@@ -8,9 +8,9 @@ package convert
 import (
 	"time"
 
-	"github.com/ingresslabs/ktl/internal/config"
-	"github.com/ingresslabs/ktl/internal/tailer"
-	apiv1 "github.com/ingresslabs/ktl/pkg/api/ktl/api/v1"
+	"github.com/ingresslabs/torque/internal/config"
+	"github.com/ingresslabs/torque/internal/tailer"
+	apiv1 "github.com/ingresslabs/torque/pkg/api/torque/api/v1"
 )
 
 // ToProtoLogRecord converts a Tailer log record into a protobuf line.
