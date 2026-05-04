@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -90,11 +91,12 @@ func BuildDockerfile(ctx context.Context, opts DockerfileBuildOptions) (*BuildRe
 		logWriter:     opts.ProgressOutput,
 		dockerContext: opts.DockerContext,
 	}
-	c, _, err := cf.new(clientCtx, builderAddr)
+	c, _, dockerContext, err := cf.new(clientCtx, builderAddr)
 	if err != nil {
 		return nil, err
 	}
 	defer c.Close()
+	opts.DockerContext = dockerContext
 
 	if len(opts.Platforms) == 0 {
 		if platforms, derr := detectBuilderPlatforms(clientCtx, c); derr == nil && len(platforms) > 0 {
@@ -182,7 +184,7 @@ func BuildDockerfile(ctx context.Context, opts DockerfileBuildOptions) (*BuildRe
 		}}, solveOpt.CacheImports...)
 	}
 
-	exports, ociPath, err := buildExportEntries(opts, absContext)
+	exports, ociPath, err := buildExportEntries(clientCtx, opts, absContext)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +241,23 @@ func BuildDockerfile(ctx context.Context, opts DockerfileBuildOptions) (*BuildRe
 			}
 		}
 		return nil, err
+	}
+	if ociPath != "" {
+		if err := repairOCILayoutIndex(ociPath); err != nil {
+			err = fmt.Errorf("repair OCI layout index: %w", err)
+			if opts.PhaseEmitter != nil {
+				msg := err.Error()
+				opts.PhaseEmitter.EmitPhase("solve", "completed", "Solve complete")
+				opts.PhaseEmitter.EmitPhase("export", "failed", msg)
+				if opts.Push {
+					opts.PhaseEmitter.EmitPhase("push", "failed", msg)
+				}
+				if opts.LoadToContainerd {
+					opts.PhaseEmitter.EmitPhase("load", "failed", msg)
+				}
+			}
+			return nil, err
+		}
 	}
 	if opts.PhaseEmitter != nil {
 		opts.PhaseEmitter.EmitPhase("solve", "completed", "Solve complete")
@@ -416,8 +435,8 @@ func convertCacheSpecs(specs []CacheSpec) []client.CacheOptionsEntry {
 	return entries
 }
 
-func buildExportEntries(opts DockerfileBuildOptions, contextDir string) ([]client.ExportEntry, string, error) {
-	exports := make([]client.ExportEntry, 0, len(opts.ExtraOutputs)+2)
+func buildExportEntries(ctx context.Context, opts DockerfileBuildOptions, contextDir string) ([]client.ExportEntry, string, error) {
+	exports := make([]client.ExportEntry, 0, len(opts.ExtraOutputs)+3)
 	var ociPath string
 
 	if len(opts.ExtraOutputs) == 0 && !opts.SkipDefaultOCILayout {
@@ -453,7 +472,7 @@ func buildExportEntries(opts DockerfileBuildOptions, contextDir string) ([]clien
 
 	if len(opts.Tags) > 0 || opts.Push || opts.LoadToContainerd {
 		if len(opts.Tags) == 0 {
-			return nil, "", errors.New("at least one --tag is required when pushing or loading into containerd")
+			return nil, "", errors.New("at least one --tag is required when pushing or loading into the local container runtime")
 		}
 		attrs := map[string]string{}
 		attrs[string(exptypes.OptKeyName)] = strings.Join(opts.Tags, ",")
@@ -461,10 +480,18 @@ func buildExportEntries(opts DockerfileBuildOptions, contextDir string) ([]clien
 		if opts.Push {
 			attrs[string(exptypes.OptKeyPush)] = "true"
 		}
-		if opts.LoadToContainerd {
-			attrs[string(exptypes.OptKeyUnpack)] = "true"
-		}
 		exports = append(exports, client.ExportEntry{Type: client.ExporterImage, Attrs: attrs})
+	}
+
+	if opts.LoadToContainerd {
+		entry := client.ExportEntry{
+			Type: client.ExporterDocker,
+			Attrs: map[string]string{
+				string(exptypes.OptKeyName): strings.Join(opts.Tags, ","),
+			},
+			Output: dockerLoadOutput(ctx, opts.DockerContext, opts.ProgressOutput),
+		}
+		exports = append(exports, entry)
 	}
 
 	if len(exports) == 0 {
@@ -472,6 +499,65 @@ func buildExportEntries(opts DockerfileBuildOptions, contextDir string) ([]clien
 	}
 
 	return exports, ociPath, nil
+}
+
+func dockerLoadOutput(ctx context.Context, dockerContext string, output io.Writer) filesync.FileOutputFunc {
+	return func(map[string]string) (io.WriteCloser, error) {
+		return newDockerLoadWriteCloser(ctx, dockerContext, output)
+	}
+}
+
+func newDockerLoadWriteCloser(ctx context.Context, dockerContext string, output io.Writer) (io.WriteCloser, error) {
+	if _, err := dockerLookPath("docker"); err != nil {
+		return nil, fmt.Errorf("docker CLI not found: %w", err)
+	}
+	if output == nil {
+		output = io.Discard
+	}
+	args := []string{}
+	if dockerContext != "" {
+		args = append(args, "--context", dockerContext)
+	}
+	args = append(args, "load")
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, fmt.Errorf("open docker load stdin: %w", err)
+	}
+	cmd.Stdout = output
+	cmd.Stderr = output
+	if err := cmd.Start(); err != nil {
+		_ = stdin.Close()
+		return nil, fmt.Errorf("start docker load: %w", err)
+	}
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+	return &commandWriteCloser{
+		writer: stdin,
+		wait:   done,
+		name:   "docker load",
+	}, nil
+}
+
+type commandWriteCloser struct {
+	writer io.WriteCloser
+	wait   <-chan error
+	name   string
+}
+
+func (w *commandWriteCloser) Write(p []byte) (int, error) {
+	return w.writer.Write(p)
+}
+
+func (w *commandWriteCloser) Close() error {
+	closeErr := w.writer.Close()
+	waitErr := <-w.wait
+	if waitErr != nil {
+		waitErr = fmt.Errorf("%s: %w", w.name, waitErr)
+	}
+	return errors.Join(closeErr, waitErr)
 }
 
 func convertOutputSpec(spec OutputSpec) (client.ExportEntry, error) {

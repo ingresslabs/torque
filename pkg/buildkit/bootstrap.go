@@ -40,17 +40,17 @@ type buildkitClientFactory struct {
 	dockerContext string
 }
 
-func (f buildkitClientFactory) new(ctx context.Context, addr string) (*client.Client, string, error) {
+func (f buildkitClientFactory) new(ctx context.Context, addr string) (*client.Client, string, string, error) {
 	c, err := dialBuildkitWithDockerContext(ctx, addr, f.dockerContext)
 	if err == nil {
-		return c, addr, nil
+		return c, addr, f.dockerContext, nil
 	}
 	if !f.allowFallback || !isDialError(err) {
-		return nil, addr, fmt.Errorf("connect to buildkitd at %s: %w", addr, err)
+		return nil, addr, f.dockerContext, fmt.Errorf("connect to buildkitd at %s: %w", addr, err)
 	}
 	fallbackAddr, fallbackCtx, fbErr := ensureDockerBackedBuilder(ctx, f.logWriter, f.dockerContext)
 	if fbErr != nil {
-		return nil, addr, fmt.Errorf("connect to buildkitd at %s and fallback failed: %w", addr, errors.Join(err, fbErr))
+		return nil, addr, f.dockerContext, fmt.Errorf("connect to buildkitd at %s and fallback failed: %w", addr, errors.Join(err, fbErr))
 	}
 	if f.dockerContext == "" {
 		f.dockerContext = fallbackCtx
@@ -58,10 +58,10 @@ func (f buildkitClientFactory) new(ctx context.Context, addr string) (*client.Cl
 
 	c, err = dialBuildkitWithDockerContext(ctx, fallbackAddr, f.dockerContext)
 	if err != nil {
-		return nil, fallbackAddr, fmt.Errorf("connect to buildkitd at %s after fallback: %w", fallbackAddr, err)
+		return nil, fallbackAddr, f.dockerContext, fmt.Errorf("connect to buildkitd at %s after fallback: %w", fallbackAddr, err)
 	}
 
-	return c, fallbackAddr, nil
+	return c, fallbackAddr, f.dockerContext, nil
 }
 
 func ensureDockerBackedBuilder(ctx context.Context, logWriter io.Writer, dockerContext string) (string, string, error) {

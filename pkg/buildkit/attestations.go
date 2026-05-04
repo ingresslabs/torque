@@ -56,19 +56,27 @@ type inTotoStatement struct {
 }
 
 type ociIndex struct {
-	Manifests []struct {
+	SchemaVersion int    `json:"schemaVersion,omitempty"`
+	MediaType     string `json:"mediaType,omitempty"`
+	Manifests     []struct {
 		MediaType    string            `json:"mediaType"`
 		Digest       string            `json:"digest"`
-		Annotations  map[string]string `json:"annotations"`
-		ArtifactType string            `json:"artifactType"`
-		Platform     any               `json:"platform"`
+		Size         int64             `json:"size,omitempty"`
+		Annotations  map[string]string `json:"annotations,omitempty"`
+		ArtifactType string            `json:"artifactType,omitempty"`
+		Platform     any               `json:"platform,omitempty"`
 	} `json:"manifests"`
 }
 
 type ociManifest struct {
 	SchemaVersion int    `json:"schemaVersion"`
 	MediaType     string `json:"mediaType"`
-	Subject       *struct {
+	Config        *struct {
+		MediaType string `json:"mediaType"`
+		Digest    string `json:"digest"`
+		Size      int64  `json:"size"`
+	} `json:"config"`
+	Subject *struct {
 		Digest string `json:"digest"`
 	} `json:"subject"`
 	Layers []struct {

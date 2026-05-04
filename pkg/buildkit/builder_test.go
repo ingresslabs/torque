@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/moby/buildkit/client"
+	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	ocispecs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -45,6 +46,50 @@ func TestDetectBuilderPlatformsUsesWorkers(t *testing.T) {
 	}
 	if len(got) != 1 || got[0] != "linux/amd64" {
 		t.Fatalf("unexpected platforms: %v", got)
+	}
+}
+
+func TestBuildExportEntriesLoadUsesDockerExporter(t *testing.T) {
+	contextDir := t.TempDir()
+	tags := []string{"example.com/app:dev"}
+
+	exports, ociPath, err := buildExportEntries(context.Background(), DockerfileBuildOptions{
+		Tags:             tags,
+		LoadToContainerd: true,
+	}, contextDir)
+	if err != nil {
+		t.Fatalf("buildExportEntries returned error: %v", err)
+	}
+	if ociPath == "" {
+		t.Fatalf("expected default OCI output path")
+	}
+
+	var sawImage, sawDocker bool
+	for _, export := range exports {
+		switch export.Type {
+		case client.ExporterImage:
+			sawImage = true
+			if got := export.Attrs[string(exptypes.OptKeyName)]; got != tags[0] {
+				t.Fatalf("image exporter name = %q, want %q", got, tags[0])
+			}
+			if _, ok := export.Attrs[string(exptypes.OptKeyUnpack)]; ok {
+				t.Fatalf("image exporter should not use unpack for --load: %#v", export.Attrs)
+			}
+		case client.ExporterDocker:
+			sawDocker = true
+			if got := export.Attrs[string(exptypes.OptKeyName)]; got != tags[0] {
+				t.Fatalf("docker exporter name = %q, want %q", got, tags[0])
+			}
+			if export.Output == nil {
+				t.Fatalf("docker exporter should stream to docker load")
+			}
+		}
+	}
+	if !sawImage {
+		t.Fatalf("expected image exporter for named build")
+	}
+	if !sawDocker {
+		t.Fatalf("expected docker exporter for --load")
 	}
 }
 
