@@ -6,6 +6,7 @@ package chartarchive
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -89,6 +90,14 @@ appVersion: "1.0.0"
 	if contentSHA == "" {
 		t.Fatalf("expected content_sha256 to be populated")
 	}
+	var manifestJSON string
+	if err := db.QueryRow(`SELECT value FROM ktl_archive_meta WHERE key = 'file_manifest_json'`).Scan(&manifestJSON); err != nil {
+		t.Fatalf("read file_manifest_json: %v", err)
+	}
+	var manifest []FileManifestEntry
+	if err := json.Unmarshal([]byte(manifestJSON), &manifest); err != nil {
+		t.Fatalf("parse file manifest: %v", err)
+	}
 
 	var count int
 	if err := db.QueryRow(`SELECT COUNT(1) FROM ktl_chart_files`).Scan(&count); err != nil {
@@ -97,6 +106,9 @@ appVersion: "1.0.0"
 	if count == 0 {
 		t.Fatalf("expected files to be packaged")
 	}
+	if len(manifest) != count {
+		t.Fatalf("manifest entries=%d sqlite rows=%d", len(manifest), count)
+	}
 
 	var secretCount int
 	if err := db.QueryRow(`SELECT COUNT(1) FROM ktl_chart_files WHERE path = 'secret.txt'`).Scan(&secretCount); err != nil {
@@ -104,6 +116,50 @@ appVersion: "1.0.0"
 	}
 	if secretCount != 0 {
 		t.Fatalf("expected secret.txt to be ignored by .helmignore")
+	}
+}
+
+func TestPackageDirIncludesSubcharts(t *testing.T) {
+	chartDir := t.TempDir()
+	writeChartFile(t, chartDir, "Chart.yaml", "apiVersion: v2\nname: parent\nversion: 0.1.0\n")
+	writeChartFile(t, chartDir, "values.yaml", "replicaCount: 1\n")
+	writeChartFile(t, chartDir, "charts/worker/Chart.yaml", "apiVersion: v2\nname: worker\nversion: 0.1.0\n")
+	writeChartFile(t, chartDir, "charts/worker/templates/job.yaml", "kind: Job\n")
+
+	res, err := PackageDir(context.Background(), chartDir, PackageOptions{OutputPath: t.TempDir()})
+	if err != nil {
+		t.Fatalf("package: %v", err)
+	}
+	db, err := sql.Open("sqlite", res.ArchivePath)
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+
+	for _, path := range []string{
+		"Chart.yaml",
+		"values.yaml",
+		"charts/worker/Chart.yaml",
+		"charts/worker/templates/job.yaml",
+	} {
+		var count int
+		if err := db.QueryRow(`SELECT COUNT(1) FROM ktl_chart_files WHERE path = ?`, path).Scan(&count); err != nil {
+			t.Fatalf("query %s: %v", path, err)
+		}
+		if count != 1 {
+			t.Fatalf("expected %s to be packaged, count=%d", path, count)
+		}
+	}
+}
+
+func writeChartFile(t *testing.T, root string, rel string, body string) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", rel, err)
+	}
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatalf("write %s: %v", rel, err)
 	}
 }
 

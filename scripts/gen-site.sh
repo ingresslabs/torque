@@ -19,7 +19,10 @@ fi
 
 mkdir -p "${OUT_DIR}"
 touch "${OUT_DIR}/.nojekyll"
-rm -rf "${OUT_DIR}/assets"
+mkdir -p "${OUT_DIR}/assets"
+for asset in ktl-showcase.gif ktl-security.gif; do
+  cp "${repo_root}/docs/assets/${asset}" "${OUT_DIR}/assets/${asset}"
+done
 
 if [[ ! -x "${KTL_BIN}" ]]; then
   echo ">> building ${KTL_BIN}"
@@ -117,4 +120,4 @@ mv "${tmp_html}" "${OUT_DIR}/index.html"
 mv "${tmp_json}" "${OUT_DIR}/index.json"
 
 echo ">> wrote:"
-ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/index.json" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'
+ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/index.json" "${OUT_DIR}/assets/ktl-showcase.gif" "${OUT_DIR}/assets/ktl-security.gif" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'

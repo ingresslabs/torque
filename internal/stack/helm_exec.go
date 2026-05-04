@@ -401,7 +401,9 @@ func (e *helmExecutor) RunNode(ctx context.Context, node *runNode, command strin
 			}
 		}
 		clusterKey := stackClusterCacheKey(node.Cluster.Name, kubeconfigPath, kubeCtx)
-		if err := maybeVerify(ctx, e.run, clusterKey, kubeClient, obs, node, manifest, node.Verify, e.dryRun); err != nil {
+		// `--diff` is implemented as a Helm dry-run preview, so no live resources
+		// are guaranteed to exist for the verifier to inspect.
+		if err := maybeVerify(ctx, e.run, clusterKey, kubeClient, obs, node, manifest, node.Verify, e.dryRun || diffEnabled); err != nil {
 			return wrapNodeErr(node.ResolvedRelease, err)
 		}
 		if e.cacheApply && e.run != nil && e.run.store != nil && !e.dryRun {

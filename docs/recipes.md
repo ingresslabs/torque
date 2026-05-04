@@ -8,6 +8,12 @@ Copy/paste workflows that cover the common “happy paths” for `ktl`.
 # Initialize repo defaults and detect your kubecontext
 ktl init
 
+# Generate a starter stack.yaml from existing cluster state
+ktl init from-cluster
+ktl init from-cluster --all-namespaces --dry-run
+# Exports installed Helm chart archives by default; add current values too
+ktl init from-cluster --all-namespaces --write-values
+
 # Run the interactive setup wizard
 ktl init --interactive
 
@@ -43,11 +49,41 @@ ktl help --ui
 # Preview what will change
 ktl apply plan --chart ./chart --release foo -n default
 
+# Write a PR-ready Markdown summary
+ktl apply plan --chart ./chart --release foo -n default --github-comment --output plan.md
+
+# Attach verifier and build evidence to the PR summary
+verifier --chart ./chart --release foo -n default --format json --report verify.json
+ktl build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
+ktl apply plan --chart ./chart --release foo -n default \
+  --verify-report verify.json --build-capture ./build.sqlite \
+  --github-comment --output plan.md
+
 # Deploy
 ktl apply --chart ./chart --release foo -n default
 
 # Deploy with the viewer UI
 ktl apply --chart ./chart --release foo -n default --ui
+```
+
+## Build → verify → plan → apply
+
+```bash
+# Build the image and capture build evidence.
+ktl build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
+
+# Verify the rendered chart.
+verifier --chart ./chart --release foo -n default --format json --report verify.json
+
+# Write a PR-ready plan with verifier and build evidence attached.
+ktl apply plan --chart ./chart --release foo -n default \
+  --verify-report verify.json --build-capture ./build.sqlite \
+  --github-comment --output plan.md
+
+# Apply with the verify report enforced, capture the rollout, and explain it.
+ktl apply --chart ./chart --release foo -n default \
+  --require-verified verify.json --capture ./apply.sqlite --yes
+ktl explain ./apply.sqlite --format markdown
 ```
 
 ## 5-minute demo (public chart)
@@ -179,6 +215,9 @@ ktl stack
 
 # Execute (DAG order)
 ktl stack apply --yes
+
+# Capture the full stack run evidence bundle
+ktl stack apply --yes --capture ./stack.sqlite
 ```
 
 ## Stack: resume / rerun failed
@@ -206,7 +245,24 @@ ktl stack audit --output html > stack-audit.html
 ## Build: share the build stream over WebSocket
 
 ```bash
-ktl build --context . --tag ghcr.io/acme/app:dev --ws-listen :9085
+ktl build . --tag ghcr.io/acme/app:dev --ws-listen :9085
+```
+
+## Capture: record deploy/build/log evidence
+
+```bash
+# Record a deploy evidence file
+ktl apply --chart ./chart --release foo -n default --capture ./apply.sqlite --capture-tag change=CHG-1234
+
+# Record a stack evidence file
+ktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
+
+# Save it as a CI/review artifact
+tar -czf ktl-evidence.tgz ./apply.sqlite
+
+# Explain a captured session locally or in CI logs
+ktl explain ./apply.sqlite
+ktl explain ./apply.sqlite --format markdown
 ```
 
 ## Verifier: validate a chart render in CI
@@ -235,6 +291,6 @@ YAML
 verifier verify-chart-render.yaml
 
 # Package a chart then verify the archive
-package ./chart --output dist/chart.sqlite
-package --verify dist/chart.sqlite
+ktl-package ./chart --output dist/chart.sqlite
+ktl-package --verify dist/chart.sqlite
 ```

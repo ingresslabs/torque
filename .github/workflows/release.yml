@@ -52,11 +52,13 @@ jobs:
             -X github.com/ingresslabs/ktl/internal/version.GitTreeState=clean \
             -X github.com/ingresslabs/ktl/internal/version.BuildDate=${build_date}"
           mkdir -p dist
-          for tool in ktl helmer verifier verify package; do
+          for spec in ktl:ktl verifier:verifier verify:verify package:ktl-package; do
+            cmd="${spec%%:*}"
+            tool="${spec##*:}"
             outdir="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}"
             mkdir -p "${outdir}"
             GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} CGO_ENABLED=0 \
-              go build -trimpath -ldflags "${ldflags}" -o "${outdir}/${tool}" "./cmd/${tool}"
+              go build -trimpath -ldflags "${ldflags}" -o "${outdir}/${tool}" "./cmd/${cmd}"
             cat > "${outdir}/README.txt" <<TXT
           This archive contains a single binary built from https://github.com/${{ github.repository }}
           Install:
@@ -85,7 +87,7 @@ jobs:
           set -euo pipefail
           syft="${{ steps.syft.outputs.cmd }}"
           tag="${{ github.ref_name }}"
-          for tool in ktl helmer verifier verify package; do
+          for tool in ktl verifier verify ktl-package; do
             bin="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}/${tool}"
             spdx="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}.sbom.spdx.json"
             cdx="dist/${tool}-${{ matrix.os }}-${{ matrix.arch }}-${tag}.sbom.cdx.json"
@@ -155,13 +157,6 @@ jobs:
           subject-path: dist/verify-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
           sbom-path: dist/verify-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
-      - name: Attest SBOM (helmer)
-        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
-        continue-on-error: true
-        with:
-          subject-path: dist/helmer-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
-          sbom-path: dist/helmer-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
-
       - name: Attest SBOM (verifier)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
         continue-on-error: true
@@ -169,12 +164,12 @@ jobs:
           subject-path: dist/verifier-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
           sbom-path: dist/verifier-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
-      - name: Attest SBOM (package)
+      - name: Attest SBOM (ktl-package)
         uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3
         continue-on-error: true
         with:
-          subject-path: dist/package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
-          sbom-path: dist/package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
+          subject-path: dist/ktl-package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
+          sbom-path: dist/ktl-package-${{ matrix.os }}-${{ matrix.arch }}-${{ github.ref_name }}.sbom.spdx.json
 
       - name: Upload release assets
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2

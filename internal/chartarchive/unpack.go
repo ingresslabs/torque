@@ -83,15 +83,16 @@ func UnpackArchive(ctx context.Context, archivePath string, opts UnpackOptions) 
 		return nil, fmt.Errorf("stat destination: %w", err)
 	}
 
-	rows, err := db.QueryContext(ctx, `SELECT path, mode, sha256, data FROM ktl_chart_files ORDER BY path ASC`)
+	rows, err := db.QueryContext(ctx, `SELECT path, mode, size, sha256, data FROM ktl_chart_files ORDER BY path ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("read chart files: %w", err)
 	}
 	defer rows.Close()
 
 	var (
-		files int
-		bytes int64
+		files    int
+		bytes    int64
+		manifest []FileManifestEntry
 	)
 
 	var jobs []struct {
@@ -104,22 +105,32 @@ func UnpackArchive(ctx context.Context, archivePath string, opts UnpackOptions) 
 		var (
 			relPath string
 			mode    int64
+			size    int64
 			sha     string
 			data    []byte
 		)
-		if err := rows.Scan(&relPath, &mode, &sha, &data); err != nil {
+		if err := rows.Scan(&relPath, &mode, &size, &sha, &data); err != nil {
 			return nil, fmt.Errorf("scan chart file: %w", err)
 		}
-		clean := filepath.Clean(relPath)
-		if clean == "." || strings.HasPrefix(clean, "..") || filepath.IsAbs(clean) {
-			return nil, fmt.Errorf("invalid file path in archive: %s", relPath)
+		if err := validateArchivePath(relPath); err != nil {
+			return nil, err
 		}
+		clean := filepath.Clean(relPath)
 		actual := sha256.Sum256(data)
 		actualHex := fmt.Sprintf("%x", actual[:])
 		if strings.TrimSpace(sha) != actualHex {
 			return nil, fmt.Errorf("sha256 mismatch for %s", relPath)
 		}
+		if size != int64(len(data)) {
+			return nil, fmt.Errorf("size mismatch for %s (expected %d got %d)", relPath, size, len(data))
+		}
 		recordDigest(digest, relPath, actualHex)
+		manifest = append(manifest, FileManifestEntry{
+			Path:   relPath,
+			Mode:   mode,
+			Size:   size,
+			SHA256: actualHex,
+		})
 		jobs = append(jobs, struct {
 			path string
 			mode int64
@@ -134,6 +145,12 @@ func UnpackArchive(ctx context.Context, archivePath string, opts UnpackOptions) 
 	contentSHA := fmt.Sprintf("%x", digest.Sum(nil))
 	if expected := strings.TrimSpace(meta["content_sha256"]); expected != "" && expected != contentSHA {
 		return nil, fmt.Errorf("content_sha256 mismatch (expected %s got %s)", expected, contentSHA)
+	}
+	if err := verifyMetaCounts(meta, files, bytes); err != nil {
+		return nil, err
+	}
+	if _, err := verifyManifestMeta(meta, manifest); err != nil {
+		return nil, err
 	}
 
 	workerCount := opts.Workers

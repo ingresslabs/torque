@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash"
@@ -55,13 +56,21 @@ type PackageOptions struct {
 }
 
 type PackageResult struct {
-	ArchivePath   string
-	ChartDir      string
-	ChartName     string
-	ChartVersion  string
-	ContentSHA256 string
-	FileCount     int
-	TotalBytes    int64
+	ArchivePath    string
+	ChartDir       string
+	ChartName      string
+	ChartVersion   string
+	ManifestSHA256 string
+	ContentSHA256  string
+	FileCount      int
+	TotalBytes     int64
+}
+
+type FileManifestEntry struct {
+	Path   string `json:"path"`
+	Mode   int64  `json:"mode"`
+	Size   int64  `json:"size"`
+	SHA256 string `json:"sha256"`
 }
 
 func PackageDir(ctx context.Context, chartDir string, opts PackageOptions) (*PackageResult, error) {
@@ -270,6 +279,7 @@ func writeArchive(ctx context.Context, path string, chartDir string, ch *chart.C
 		fileCount  int
 		totalBytes int64
 		digest     = sha256.New()
+		manifest   []FileManifestEntry
 	)
 	for _, f := range chartFilesSorted(ch) {
 		select {
@@ -280,23 +290,36 @@ func writeArchive(ctx context.Context, path string, chartDir string, ch *chart.C
 		if strings.TrimSpace(f.Name) == "" {
 			continue
 		}
-		mode, size := fileModeAndSize(chartDir, f.Name, int64(len(f.Data)))
+		mode := fileMode(chartDir, f.Name)
+		size := int64(len(f.Data))
 		fileHash := sha256.Sum256(f.Data)
 		fileHashHex := fmt.Sprintf("%x", fileHash[:])
 		recordDigest(digest, f.Name, fileHashHex)
 		if _, err := stmt.ExecContext(ctx, f.Name, mode, size, fileHashHex, f.Data); err != nil {
 			return nil, fmt.Errorf("insert file %s: %w", f.Name, err)
 		}
+		manifest = append(manifest, FileManifestEntry{
+			Path:   f.Name,
+			Mode:   mode,
+			Size:   size,
+			SHA256: fileHashHex,
+		})
 		fileCount++
 		totalBytes += int64(len(f.Data))
 	}
 
 	contentSHA := fmt.Sprintf("%x", digest.Sum(nil))
+	manifestJSON, manifestSHA, err := encodeFileManifest(manifest)
+	if err != nil {
+		return nil, err
+	}
 	if err := insertMeta(tx, ctx, map[string]string{
-		"chart_dir":      chartDir,
-		"content_sha256": contentSHA,
-		"file_count":     strconv.Itoa(fileCount),
-		"total_bytes":    strconv.FormatInt(totalBytes, 10),
+		"chart_dir":            chartDir,
+		"content_sha256":       contentSHA,
+		"file_manifest_json":   string(manifestJSON),
+		"file_manifest_sha256": manifestSHA,
+		"file_count":           strconv.Itoa(fileCount),
+		"total_bytes":          strconv.FormatInt(totalBytes, 10),
 	}); err != nil {
 		return nil, err
 	}
@@ -305,12 +328,13 @@ func writeArchive(ctx context.Context, path string, chartDir string, ch *chart.C
 		return nil, fmt.Errorf("commit: %w", err)
 	}
 	return &PackageResult{
-		ChartDir:      chartDir,
-		ChartName:     chartName(ch),
-		ChartVersion:  chartVersion(ch),
-		ContentSHA256: contentSHA,
-		FileCount:     fileCount,
-		TotalBytes:    totalBytes,
+		ChartDir:       chartDir,
+		ChartName:      chartName(ch),
+		ChartVersion:   chartVersion(ch),
+		ManifestSHA256: manifestSHA,
+		ContentSHA256:  contentSHA,
+		FileCount:      fileCount,
+		TotalBytes:     totalBytes,
 	}, nil
 }
 
@@ -367,16 +391,16 @@ func chartAPIVersion(ch *chart.Chart) string {
 	return ""
 }
 
-func fileModeAndSize(chartDir string, relative string, fallbackSize int64) (int64, int64) {
+func fileMode(chartDir string, relative string) int64 {
 	if chartDir == "" || relative == "" {
-		return 0o644, fallbackSize
+		return 0o644
 	}
 	candidate := filepath.Join(chartDir, filepath.FromSlash(relative))
 	info, err := os.Stat(candidate)
 	if err != nil {
-		return 0o644, fallbackSize
+		return 0o644
 	}
-	return int64(info.Mode().Perm()), info.Size()
+	return int64(info.Mode().Perm())
 }
 
 func validateChartDir(chartDir string) error {
@@ -414,4 +438,21 @@ func recordDigest(h hash.Hash, path string, fileSHA256 string) {
 	_, _ = h.Write([]byte{'\n'})
 	_, _ = h.Write([]byte(fileSHA256))
 	_, _ = h.Write([]byte{'\n'})
+}
+
+func encodeFileManifest(entries []FileManifestEntry) ([]byte, string, error) {
+	raw, err := json.Marshal(entries)
+	if err != nil {
+		return nil, "", fmt.Errorf("encode file manifest: %w", err)
+	}
+	sum := sha256.Sum256(raw)
+	return raw, fmt.Sprintf("%x", sum[:]), nil
+}
+
+func validateArchivePath(path string) error {
+	clean := filepath.Clean(path)
+	if clean == "." || strings.HasPrefix(clean, "..") || filepath.IsAbs(clean) {
+		return fmt.Errorf("invalid file path in archive: %s", path)
+	}
+	return nil
 }

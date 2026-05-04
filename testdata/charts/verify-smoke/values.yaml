@@ -1,9 +1,11 @@
 replicaCount: 1
 
 image:
-  repository: nginx
+  repository: nginxinc/nginx-unprivileged
   tag: "stable"
   pullPolicy: IfNotPresent
+
+containerPort: 8080
 
 service:
   type: ClusterIP

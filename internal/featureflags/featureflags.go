@@ -26,11 +26,6 @@ const (
 // Name is the canonical identifier for a feature flag (kebab-case).
 type Name string
 
-const (
-	// FeatureDeployPlanHTMLV3 guards the in-progress plan visualization refresh.
-	FeatureDeployPlanHTMLV3 Name = "deploy-plan-html-v3"
-)
-
 // Definition tracks the metadata for a feature flag.
 type Definition struct {
 	Name        Name
@@ -39,14 +34,7 @@ type Definition struct {
 	Default     bool
 }
 
-var registry = map[Name]Definition{
-	FeatureDeployPlanHTMLV3: {
-		Name:        FeatureDeployPlanHTMLV3,
-		Description: "Switch ktl apply plan visualize output to the v3 UI components.",
-		Stage:       StageExperimental,
-		Default:     false,
-	},
-}
+var registry = map[Name]Definition{}
 
 // ErrUnknownFeature is returned when a caller references a flag that has not been registered.
 var ErrUnknownFeature = errors.New("unknown feature flag")
@@ -97,7 +85,7 @@ func (f Flags) EnabledNames() []Name {
 	return names
 }
 
-// EnvVar returns the environment variable that toggles the flag (e.g. KTL_FEATURE_DEPLOY_PLAN_HTML_V3).
+// EnvVar returns the environment variable that toggles the flag (e.g. KTL_FEATURE_FOO).
 func (d Definition) EnvVar() string {
 	return envVarForName(d.Name)
 }

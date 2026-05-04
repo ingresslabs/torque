@@ -43,6 +43,16 @@ if ! command -v kubectl >/dev/null 2>&1; then
   exit 2
 fi
 
+file_matches() {
+  local pattern="$1"
+  local file="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -n "${pattern}" "${file}" >/dev/null
+  else
+    grep -En "${pattern}" "${file}" >/dev/null
+  fi
+}
+
 echo "ktl stack real-cluster e2e"
 echo "  iterations:  ${ITERATIONS}"
 echo "  fixtures:    ${ROOT_BASE}"
@@ -231,7 +241,7 @@ run_ok_fixture() {
   rm -f "${status_raw_out}"
   ./bin/ktl "${ktl_args[@]}" stack status --root "${root}" --format raw --tail 200 >"${status_raw_out}"
   if [[ "$(basename "${root}")" == "11-verify-enabled" ]]; then
-    if ! rg -n "\"phase\"\\s*:\\s*\"verify\"" "${status_raw_out}" >/dev/null 2>&1; then
+    if ! file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"; then
       echo "expected verify phase events for ${root}" >&2
       exit 1
     fi
@@ -296,7 +306,7 @@ run_ok_fixture() {
 
   # Follow does not auto-stop; ensure we observed completion and then stop it.
   for _ in {1..40}; do
-    if rg -n "\"type\"\\s*:\\s*\"RUN_COMPLETED\"" "${follow_out}" >/dev/null 2>&1; then
+    if file_matches '"type"[[:space:]]*:[[:space:]]*"RUN_COMPLETED"' "${follow_out}"; then
       break
     fi
     sleep 0.25
@@ -339,11 +349,11 @@ run_expected_fail_apply_fixture() {
   status_raw_out="${root}/.status.raw.jsonl"
   rm -f "${status_raw_out}"
   ./bin/ktl "${ktl_args[@]}" stack status --root "${root}" --format raw --tail 200 >"${status_raw_out}"
-  if ! rg -n "\"phase\"\\s*:\\s*\"verify\"" "${status_raw_out}" >/dev/null 2>&1; then
+  if ! file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"; then
     echo "expected verify phase events for ${root}" >&2
     exit 1
   fi
-  if ! rg -n "\"status\"\\s*:\\s*\"failed\"" "${status_raw_out}" >/dev/null 2>&1; then
+  if ! file_matches '"status"[[:space:]]*:[[:space:]]*"failed"' "${status_raw_out}"; then
     echo "expected verify failure status for ${root}" >&2
     exit 1
   fi

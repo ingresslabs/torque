@@ -66,10 +66,11 @@ func Compile(u *Universe, opts CompileOptions) (*Plan, error) {
 	for clusterName, list := range byCluster {
 		seenName := map[string]string{}
 		for _, n := range list {
-			if prev, ok := seenName[n.Name]; ok {
-				return nil, fmt.Errorf("duplicate release name %q in cluster %q (%s vs %s)", n.Name, clusterName, prev, n.ID)
+			key := strings.TrimSpace(n.Namespace) + "/" + strings.TrimSpace(n.Name)
+			if prev, ok := seenName[key]; ok {
+				return nil, fmt.Errorf("duplicate release %q in namespace %q cluster %q (%s vs %s)", n.Name, n.Namespace, clusterName, prev, n.ID)
 			}
-			seenName[n.Name] = n.ID
+			seenName[key] = n.ID
 		}
 	}
 

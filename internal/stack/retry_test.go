@@ -10,6 +10,7 @@ func TestClassifyError(t *testing.T) {
 		{"429 Too Many Requests", "RATE_LIMIT"},
 		{"helm upgrade: another operation (install/upgrade/rollback) is in progress", "HELM_BUSY"},
 		{"context deadline exceeded", "TIMEOUT"},
+		{"verify: not ready (top blockers: Deployment/web status=Pending)", "TIMEOUT"},
 		{"connection reset by peer", "TRANSPORT"},
 		{"server error 500", "SERVER_5XX"},
 		{"forbidden", "OTHER"},

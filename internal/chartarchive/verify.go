@@ -4,21 +4,25 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
+	"strconv"
 	"strings"
 
 	_ "modernc.org/sqlite"
 )
 
 type VerifyResult struct {
-	ArchivePath   string `json:"archivePath"`
-	ChartName     string `json:"chartName,omitempty"`
-	ChartVersion  string `json:"chartVersion,omitempty"`
-	ChartDir      string `json:"chartDir,omitempty"`
-	FileCount     int    `json:"fileCount"`
-	TotalBytes    int64  `json:"totalBytes"`
-	ContentSHA256 string `json:"contentSha256,omitempty"`
+	ArchivePath    string `json:"archivePath"`
+	ChartName      string `json:"chartName,omitempty"`
+	ChartVersion   string `json:"chartVersion,omitempty"`
+	ChartDir       string `json:"chartDir,omitempty"`
+	ManifestSHA256 string `json:"manifestSha256,omitempty"`
+	FileCount      int    `json:"fileCount"`
+	TotalBytes     int64  `json:"totalBytes"`
+	ContentSHA256  string `json:"contentSha256,omitempty"`
 }
 
 func VerifyArchive(ctx context.Context, path string) (*VerifyResult, error) {
@@ -49,7 +53,7 @@ func VerifyArchive(ctx context.Context, path string) (*VerifyResult, error) {
 		return nil, fmt.Errorf("unexpected archive version %q (want %q)", meta["ktl_archive_version"], archiveVersion)
 	}
 
-	rows, err := db.QueryContext(ctx, `SELECT path, sha256, size, data FROM ktl_chart_files ORDER BY path ASC`)
+	rows, err := db.QueryContext(ctx, `SELECT path, mode, sha256, size, data FROM ktl_chart_files ORDER BY path ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("read chart files: %w", err)
 	}
@@ -59,26 +63,39 @@ func VerifyArchive(ctx context.Context, path string) (*VerifyResult, error) {
 	var (
 		fileCount  int
 		totalBytes int64
+		manifest   []FileManifestEntry
 	)
 	for rows.Next() {
 		var (
 			p    string
+			mode int64
 			sha  string
 			size int64
 			data []byte
 		)
-		if err := rows.Scan(&p, &sha, &size, &data); err != nil {
+		if err := rows.Scan(&p, &mode, &sha, &size, &data); err != nil {
 			return nil, fmt.Errorf("scan chart file: %w", err)
+		}
+		if err := validateArchivePath(p); err != nil {
+			return nil, err
 		}
 		actual := sha256.Sum256(data)
 		actualHex := fmt.Sprintf("%x", actual[:])
 		if strings.TrimSpace(sha) != actualHex {
 			return nil, fmt.Errorf("sha256 mismatch for %s", p)
 		}
+		if size != int64(len(data)) {
+			return nil, fmt.Errorf("size mismatch for %s (expected %d got %d)", p, size, len(data))
+		}
 		recordDigest(digest, p, actualHex)
+		manifest = append(manifest, FileManifestEntry{
+			Path:   p,
+			Mode:   mode,
+			Size:   size,
+			SHA256: actualHex,
+		})
 		fileCount++
 		totalBytes += int64(len(data))
-		_ = size
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate chart files: %w", err)
@@ -88,15 +105,23 @@ func VerifyArchive(ctx context.Context, path string) (*VerifyResult, error) {
 	if expected := strings.TrimSpace(meta["content_sha256"]); expected != "" && expected != contentSHA {
 		return nil, fmt.Errorf("content_sha256 mismatch (expected %s got %s)", expected, contentSHA)
 	}
+	if err := verifyMetaCounts(meta, fileCount, totalBytes); err != nil {
+		return nil, err
+	}
+	manifestSHA, err := verifyManifestMeta(meta, manifest)
+	if err != nil {
+		return nil, err
+	}
 
 	return &VerifyResult{
-		ArchivePath:   path,
-		ChartName:     strings.TrimSpace(meta["chart_name"]),
-		ChartVersion:  strings.TrimSpace(meta["chart_version"]),
-		ChartDir:      strings.TrimSpace(meta["chart_dir"]),
-		FileCount:     fileCount,
-		TotalBytes:    totalBytes,
-		ContentSHA256: firstNonEmpty(strings.TrimSpace(meta["content_sha256"]), contentSHA),
+		ArchivePath:    path,
+		ChartName:      strings.TrimSpace(meta["chart_name"]),
+		ChartVersion:   strings.TrimSpace(meta["chart_version"]),
+		ChartDir:       strings.TrimSpace(meta["chart_dir"]),
+		ManifestSHA256: manifestSHA,
+		FileCount:      fileCount,
+		TotalBytes:     totalBytes,
+		ContentSHA256:  firstNonEmpty(strings.TrimSpace(meta["content_sha256"]), contentSHA),
 	}, nil
 }
 
@@ -127,4 +152,56 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func verifyMetaCounts(meta map[string]string, fileCount int, totalBytes int64) error {
+	if raw := strings.TrimSpace(meta["file_count"]); raw != "" {
+		expected, err := strconv.Atoi(raw)
+		if err != nil {
+			return fmt.Errorf("invalid file_count metadata %q", raw)
+		}
+		if expected != fileCount {
+			return fmt.Errorf("file_count mismatch (expected %d got %d)", expected, fileCount)
+		}
+	}
+	if raw := strings.TrimSpace(meta["total_bytes"]); raw != "" {
+		expected, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid total_bytes metadata %q", raw)
+		}
+		if expected != totalBytes {
+			return fmt.Errorf("total_bytes mismatch (expected %d got %d)", expected, totalBytes)
+		}
+	}
+	return nil
+}
+
+func verifyManifestMeta(meta map[string]string, actual []FileManifestEntry) (string, error) {
+	raw := strings.TrimSpace(meta["file_manifest_json"])
+	if raw == "" {
+		return "", nil
+	}
+	var expected []FileManifestEntry
+	if err := json.Unmarshal([]byte(raw), &expected); err != nil {
+		return "", fmt.Errorf("parse file_manifest_json: %w", err)
+	}
+	if len(expected) != len(actual) {
+		return "", fmt.Errorf("file manifest count mismatch (expected %d got %d)", len(expected), len(actual))
+	}
+	for i := range expected {
+		if err := validateArchivePath(expected[i].Path); err != nil {
+			return "", err
+		}
+	}
+	if !reflect.DeepEqual(expected, actual) {
+		return "", fmt.Errorf("file manifest mismatch")
+	}
+	_, manifestSHA, err := encodeFileManifest(expected)
+	if err != nil {
+		return "", err
+	}
+	if expectedSHA := strings.TrimSpace(meta["file_manifest_sha256"]); expectedSHA != "" && expectedSHA != manifestSHA {
+		return "", fmt.Errorf("file_manifest_sha256 mismatch (expected %s got %s)", expectedSHA, manifestSHA)
+	}
+	return firstNonEmpty(strings.TrimSpace(meta["file_manifest_sha256"]), manifestSHA), nil
 }

@@ -18,8 +18,8 @@ LDFLAGS ?= -s -w \
 	-X github.com/ingresslabs/ktl/internal/version.GitTreeState=$(GIT_TREE_STATE) \
 	-X github.com/ingresslabs/ktl/internal/version.BuildDate=$(BUILD_DATE)
 RELEASE_PLATFORMS ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
-RELEASE_TOOLS ?= $(BINARY) helmer verifier verify package
-RELEASE_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(foreach tool,$(RELEASE_TOOLS),$(DIST_DIR)/$(tool)-$(subst /,-,$(platform))))
+RELEASE_TOOLS ?= $(BINARY) verifier verify
+RELEASE_TOOL_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(foreach tool,$(RELEASE_TOOLS),$(DIST_DIR)/$(tool)-$(subst /,-,$(platform))))
 GH ?= gh
 RELEASE_TAG ?= $(VERSION)
 GH_RELEASE_TITLE ?= $(BINARY) $(RELEASE_TAG)
@@ -40,16 +40,14 @@ RELEASE_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 CHANGELOG_FILE ?= $(DIST_DIR)/CHANGELOG-$(RELEASE_TAG).md
 PREVIOUS_TAG ?= $(shell git describe --tags --abbrev=0 HEAD~1 2>/dev/null)
 
-CAPTURE_BINARY ?= capture
-CAPTURE_PKG ?= ./cmd/capture
 VERIFY_BINARY ?= verify
 VERIFY_PKG ?= ./cmd/verify
-HELMER_BINARY ?= helmer
-HELMER_PKG ?= ./cmd/helmer
 VERIFIER_BINARY ?= verifier
 VERIFIER_PKG ?= ./cmd/verifier
-PACKAGECLI_BINARY ?= package
+PACKAGECLI_BINARY ?= ktl-package
 PACKAGECLI_PKG ?= ./cmd/package
+RELEASE_PACKAGECLI_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(DIST_DIR)/$(PACKAGECLI_BINARY)-$(subst /,-,$(platform)))
+RELEASE_ARTIFACTS := $(RELEASE_TOOL_ARTIFACTS) $(RELEASE_PACKAGECLI_ARTIFACTS)
 LOGS_BINARY ?= logs
 LOGS_PKG ?= ./cmd/ktl
 LOGS_BUILD_MODE ?= logs-only
@@ -57,7 +55,7 @@ LOGS_LDFLAGS ?= $(LDFLAGS) -X github.com/ingresslabs/ktl/cmd/ktl.buildMode=$(LOG
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build build-% build-capture build-helmer build-verifier build-verify build-packagecli build-logs build-all install install-capture install-helmer install-verifier install-verify install-packagecli install-all release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog test test-short test-integration fmt lint tidy verify preflight docs site site-check proto proto-lint clean loc print-% test-ci smoke-package-verify verify-charts-e2e testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
+.PHONY: help build build-% build-verifier build-verify build-packagecli build-logs build-all install install-verifier install-verify install-packagecli install-all release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog test test-short test-integration fmt lint tidy verify preflight docs site site-check proto proto-lint clean loc print-% test-ci smoke-package-verify verify-charts-e2e testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
 PACKAGE_IMAGE ?= ktl-packager
 PACKAGE_PLATFORMS ?= linux/amd64
 
@@ -71,27 +69,17 @@ build: ## Build ktl for the current platform into ./bin/ktl
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY) $(PKG)
 
-build-capture: ## Build capture for the current platform into ./bin/capture
-	@echo ">> building $(CAPTURE_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
-	@mkdir -p $(BIN_DIR)
-	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(CAPTURE_BINARY) $(CAPTURE_PKG)
-
 build-verify: ## Build verify for the current platform into ./bin/verify
 	@echo ">> building $(VERIFY_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(VERIFY_BINARY) $(VERIFY_PKG)
-
-build-helmer: ## Build helmer for the current platform into ./bin/helmer
-	@echo ">> building $(HELMER_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
-	@mkdir -p $(BIN_DIR)
-	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(HELMER_BINARY) $(HELMER_PKG)
 
 build-verifier: ## Build verifier for the current platform into ./bin/verifier
 	@echo ">> building $(VERIFIER_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(VERIFIER_BINARY) $(VERIFIER_PKG)
 
-build-packagecli: ## Build package CLI for the current platform into ./bin/package
+build-packagecli: ## Build chart archive CLI for the current platform into ./bin/ktl-package
 	@echo ">> building $(PACKAGECLI_BINARY) for $(HOST_GOOS)/$(HOST_GOARCH)"
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(PACKAGECLI_BINARY) $(PACKAGECLI_PKG)
@@ -128,35 +116,29 @@ build-%: ## Build ktl for <os>-<arch> into ./bin/ktl-<os>-<arch>[.exe]
 	echo ">> building $(BINARY) for $$os/$$arch -> $$out"; \
 	GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $$out $(PKG)
 
-build-all: build build-helmer build-verifier build-verify build-packagecli ## Build ktl and standalone toolkit binaries
+build-all: build build-verifier build-verify build-packagecli ## Build ktl and standalone toolkit binaries
 
 install: ## Install ktl into GOPATH/bin or GOBIN
 	@echo ">> installing $(BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PKG)
 
-install-capture: ## Install capture into GOPATH/bin or GOBIN
-	@echo ">> installing $(CAPTURE_BINARY) ($(VERSION))"
-	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(CAPTURE_PKG)
-
 install-verify: ## Install verify into GOPATH/bin or GOBIN
 	@echo ">> installing $(VERIFY_BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(VERIFY_PKG)
-
-install-helmer: ## Install helmer into GOPATH/bin or GOBIN
-	@echo ">> installing $(HELMER_BINARY) ($(VERSION))"
-	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(HELMER_PKG)
 
 install-verifier: ## Install verifier into GOPATH/bin or GOBIN
 	@echo ">> installing $(VERIFIER_BINARY) ($(VERSION))"
 	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(VERIFIER_PKG)
 
-install-packagecli: ## Install package CLI into GOPATH/bin or GOBIN
+install-packagecli: ## Install ktl-package into GOPATH/bin or GOBIN
 	@echo ">> installing $(PACKAGECLI_BINARY) ($(VERSION))"
-	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PACKAGECLI_PKG)
+	@dest="$$($(GO) env GOBIN)"; \
+	if [ -z "$$dest" ]; then dest="$$($(GO) env GOPATH)/bin"; fi; \
+	mkdir -p "$$dest"; \
+	$(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "$$dest/$(PACKAGECLI_BINARY)" $(PACKAGECLI_PKG)
 
 install-all: ## Install ktl and standalone toolkit binaries
 	$(MAKE) install
-	$(MAKE) install-helmer
 	$(MAKE) install-verifier
 	$(MAKE) install-verify
 	$(MAKE) install-packagecli
@@ -172,6 +154,10 @@ release: ## Cross-build release artifacts into ./dist
 			echo "   - $$os/$$arch -> $$out"; \
 			GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -trimpath -ldflags '$(LDFLAGS)' -o $$out ./cmd/$$tool; \
 		done; \
+		out="$(DIST_DIR)/$(PACKAGECLI_BINARY)-$$os-$$arch"; \
+		if [ "$$os" = "windows" ]; then out="$$out.exe"; fi; \
+		echo "   - $$os/$$arch -> $$out"; \
+		GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 $(GO) build $(GOFLAGS) -trimpath -ldflags '$(LDFLAGS)' -o $$out $(PACKAGECLI_PKG); \
 	done
 
 dist-checksums: release ## Generate sha256 checksums for release artifacts in ./dist
@@ -337,7 +323,7 @@ test-integration: ## Run integration tests (requires cluster access)
 
 smoke-package-verify: ## Package a sample chart and verify the archive (local smoke)
 	@mkdir -p $(DIST_DIR)
-	go run ./cmd/package --output $(DIST_DIR)/smoke-chart.sqlite ./testdata/charts/drift-guard
+	go run ./cmd/package --force --output $(DIST_DIR)/smoke-chart.sqlite ./testdata/charts/drift-guard
 	go run ./cmd/package --verify $(DIST_DIR)/smoke-chart.sqlite
 
 test-ci: ## Run fmt, lint, test, and package/verify smoke (CI parity)
@@ -377,10 +363,12 @@ fmt: ## Format all Go files in the module
 lint: ## Run go vet (and staticcheck when available)
 	@echo ">> go vet ./..."
 	@$(GOVET) ./...
-	@command -v staticcheck >/dev/null 2>&1 && { \
+	@if command -v staticcheck >/dev/null 2>&1; then \
 		echo ">> staticcheck ./..."; \
 		staticcheck ./...; \
-	} || echo ">> staticcheck not installed; skipping"
+	else \
+		echo ">> staticcheck not installed; skipping"; \
+	fi
 
 tidy: ## Ensure go.mod/go.sum are tidy
 	$(GO) mod tidy

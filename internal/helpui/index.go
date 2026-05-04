@@ -203,17 +203,6 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
-	if md := strings.TrimSpace(ktldocs.HelmerMD); md != "" {
-		entries = append(entries, Entry{
-			ID:       "doc:helmer",
-			Kind:     "doc",
-			Title:    "Helmer",
-			Subtitle: "Standalone Helm plan preview CLI",
-			Content:  md,
-			Tags:     []string{"doc", "helmer", "helm", "plan", "visualize"},
-		})
-	}
-
 	if md := strings.TrimSpace(ktldocs.CaptureMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:capture",
@@ -255,28 +244,6 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 			Subtitle: "Common errors and recovery steps",
 			Content:  md,
 			Tags:     []string{"doc", "troubleshooting", "support"},
-		})
-	}
-
-	if md := strings.TrimSpace(ktldocs.RecipesMD); md != "" {
-		entries = append(entries, Entry{
-			ID:       "doc:recipes",
-			Kind:     "doc",
-			Title:    "Recipes",
-			Subtitle: "Golden paths (copy/paste workflows)",
-			Content:  md,
-			Tags:     []string{"doc", "recipes", "golden-paths"},
-		})
-	}
-
-	if md := strings.TrimSpace(ktldocs.TroubleshootingMD); md != "" {
-		entries = append(entries, Entry{
-			ID:       "doc:troubleshooting",
-			Kind:     "doc",
-			Title:    "Troubleshooting",
-			Subtitle: "Symptom → why → what to run next",
-			Content:  md,
-			Tags:     []string{"doc", "troubleshooting", "debug"},
 		})
 	}
 

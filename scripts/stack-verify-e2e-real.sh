@@ -39,6 +39,16 @@ if ! command -v kubectl >/dev/null 2>&1; then
   exit 2
 fi
 
+file_matches() {
+  local pattern="$1"
+  local file="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -n "${pattern}" "${file}" >/dev/null
+  else
+    grep -En "${pattern}" "${file}" >/dev/null
+  fi
+}
+
 echo "ktl stack verify real-cluster e2e"
 echo "  fixtures:    ${ROOT_BASE}"
 echo "  kubeconfig:  ${KUBECONFIG_PATH}"
@@ -131,8 +141,8 @@ must_fail "verify should fail" ./bin/ktl "${ktl_args[@]}" stack apply --root "${
 echo ">> status shows verify failed (${root})"
 status_raw_out="${root}/.status.raw.jsonl"
 ./bin/ktl "${ktl_args[@]}" stack status --root "${root}" --format raw --tail 200 >"${status_raw_out}"
-rg -n "\"phase\"\\s*:\\s*\"verify\"" "${status_raw_out}" >/dev/null
-rg -n "\"status\"\\s*:\\s*\"failed\"" "${status_raw_out}" >/dev/null
+file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"
+file_matches '"status"[[:space:]]*:[[:space:]]*"failed"' "${status_raw_out}"
 
 echo ">> fix image and re-apply (${root})"
 python3 - "${root}" <<'PY'

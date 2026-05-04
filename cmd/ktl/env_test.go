@@ -37,7 +37,7 @@ func TestEnvCommandPrintsCatalogAndValues(t *testing.T) {
 			t.Fatalf("expected header to mention %q, got:\n%s", want, got)
 		}
 	}
-	for _, want := range []string{"KTL_CONFIG", "KTL_SANDBOX_DISABLE", "NO_COLOR", "KTL_FEATURE_<FLAG>"} {
+	for _, want := range []string{"KTL_CONFIG", "KTL_SANDBOX_DISABLE", "NO_COLOR", "KTL_BUILDKIT_HOST"} {
 		if !bytes.Contains([]byte(got), []byte(want)) {
 			t.Fatalf("expected output to contain %q, got:\n%s", want, got)
 		}

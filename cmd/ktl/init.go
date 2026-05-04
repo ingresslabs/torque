@@ -396,6 +396,7 @@ getting-started checklist.`),
 	cmd.Flags().StringVar(&opts.template, "template", "", "Apply a config template (name, path, or URL). Built-ins: platform, secure")
 	cmd.Flags().StringVar(&opts.secretsFile, "secrets-file", opts.secretsFile, "Local secrets file path to reference in .ktl.yaml")
 	cmd.Flags().StringVar(&opts.secretsProvider, "secrets-provider", opts.secretsProvider, "Secrets provider to scaffold (local, vault, aws, k8s)")
+	cmd.AddCommand(newInitFromClusterCommand(kubeconfig, kubeContext))
 	decorateCommandHelp(cmd, "Onboarding")
 	return cmd
 }

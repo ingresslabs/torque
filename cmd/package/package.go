@@ -26,14 +26,14 @@ func newPackageCommand() *cobra.Command {
 	var showVersion bool
 
 	cmd := &cobra.Command{
-		Use:           "package [CHART_DIR]",
+		Use:           "ktl-package [CHART_DIR]",
 		Short:         "Package a chart directory into a sqlite chart archive",
 		Args:          cobra.MaximumNArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if showVersion {
-				fmt.Fprintf(cmd.OutOrStdout(), "package %s\n", version.Version)
+				fmt.Fprintf(cmd.OutOrStdout(), "ktl-package %s\n", version.Version)
 				return nil
 			}
 			if quiet && jsonOut {
@@ -224,26 +224,26 @@ func newPackageCommand() *cobra.Command {
 	cmd.Flags().StringVar(&logLevel, "log-level", logLevel, "Log level: debug|info|warn|error (debug prints extra diagnostics)")
 	cmd.Flags().BoolVar(&showVersion, "version", false, "Print version and exit")
 	cmd.Example = `  # Package a chart directory (defaults to current directory)
-  package ./chart
+  ktl-package ./chart
 
   # Write to a specific file
-  package ./chart --output dist/chart.sqlite
+  ktl-package ./chart --output dist/chart.sqlite
 
   # Write into a directory (filename derived from Chart.yaml)
-  package ./chart --output dist/
+  ktl-package ./chart --output dist/
 
   # Verify an existing archive
-  package --verify dist/chart.sqlite
+  ktl-package --verify dist/chart.sqlite
 
   # Unpack an existing archive into ./demo-0.1.0
-  package --unpack dist/chart.sqlite
+  ktl-package --unpack dist/chart.sqlite
   # Stream archive to stdout (for ssh/kubectl cp)
-  package ./chart --output - > chart.sqlite
+  ktl-package ./chart --output - > chart.sqlite
   # Verify from stdin with a 64MB cap
-  package --verify - --max-stream-bytes 67108864 < chart.sqlite
+  ktl-package --verify - --max-stream-bytes 67108864 < chart.sqlite
 
   # Package then verify
-  package ./chart --output dist/chart.sqlite && package --verify dist/chart.sqlite`
+  ktl-package ./chart --output dist/chart.sqlite && ktl-package --verify dist/chart.sqlite`
 	return cmd
 }
 

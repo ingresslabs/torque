@@ -384,15 +384,6 @@ func defaultPath(value, dir, name string) string {
 	return filepath.Join(dir, name)
 }
 
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	return ""
-}
-
 func (r defaultShipRunner) RunBuild(cmd *cobra.Command, opts shipOptions, paths shipPaths) error {
 	buildCmd := newBuildCommandWithService(r.buildService, r.globalProfile, r.globalLogLevel, r.kubeconfig, r.kubeContext)
 	return executeShipChild(cmd, buildCmd, shipBuildArgs(opts, paths), r.globalProfile)

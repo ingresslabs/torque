@@ -12,6 +12,7 @@ This repo is a single-module Go CLI with an optional companion agent.
 ## Main Commands (wired today)
 - `init`
 - `build`
+- `explain`
 - `apply` (and `apply plan`)
 - `delete`
 - `stack`
@@ -24,6 +25,12 @@ This repo is a single-module Go CLI with an optional companion agent.
 - `version`
 
 The root command wiring lives in `cmd/ktl/main.go`.
+
+Legacy/experimental commands (`analyze`, `up`, `wait`) remain callable for compatibility but are hidden from the focused CLI surface.
+
+## Companion Binaries
+- `verifier`: standalone policy verifier. The older `verify` binary remains as a compatibility shim for existing CI scripts.
+- `ktl-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.
 
 ## Internal Package Map (Purpose, Key Types, Invariants)
 
@@ -76,6 +83,12 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 - Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).
 - Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.
 - Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.
+
+### `internal/deployplan`
+
+- Purpose: shared apply-plan rendering helpers for `ktl apply plan`.
+- Key types: `ResourceKey`, `ManifestDoc`, `QuotaReport`, `QuotaHeadroom`.
+- Invariants: manifest parsing, graph node IDs, manifest blob/diff rendering, and quota/headroom calculations stay here rather than being copied into command packages.
 
 ### `internal/secretstore`
 

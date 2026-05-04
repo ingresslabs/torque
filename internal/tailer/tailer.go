@@ -329,6 +329,9 @@ func (t *Tailer) runFollow(ctx context.Context) error {
 		synced = append(synced, informer.HasSynced)
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), synced...) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		return fmt.Errorf("failed to sync informers before context cancellation")
 	}
 	t.log.V(1).Info("informers synced, waiting for context cancellation", "namespaceCount", len(informers))
@@ -443,6 +446,9 @@ func (t *Tailer) followEvents(ctx context.Context) error {
 		synced = append(synced, informer.HasSynced)
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), synced...) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		return fmt.Errorf("failed to sync event informers before context cancellation")
 	}
 	t.log.V(1).Info("event informers synced")

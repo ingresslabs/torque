@@ -23,12 +23,13 @@ import (
 
 	_ "embed"
 
+	"github.com/ingresslabs/ktl/internal/capture"
 	"github.com/ingresslabs/ktl/internal/deploy"
 	"github.com/ingresslabs/ktl/internal/kube"
 	"github.com/ingresslabs/ktl/internal/secretstore"
 	"github.com/ingresslabs/ktl/internal/telemetry"
 	"github.com/ingresslabs/ktl/internal/ui"
-	"github.com/pmezard/go-difflib/difflib"
+	"github.com/ingresslabs/ktl/internal/verify"
 	"github.com/spf13/cobra"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
@@ -61,6 +62,9 @@ func newDeployPlanCommand(namespace *string, kubeconfig *string, kubeContext *st
 	var outputPath string
 	var visualize bool
 	var visualizeExplain bool
+	var githubComment bool
+	var verifyReportPaths []string
+	var buildCapturePaths []string
 	var compareSource string
 	var compareTo string
 	var compareExit bool
@@ -77,13 +81,19 @@ func newDeployPlanCommand(namespace *string, kubeconfig *string, kubeContext *st
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			resolvedFormat = resolveFormat()
+			if githubComment {
+				if visualize {
+					return fmt.Errorf("--github-comment cannot be combined with --visualize")
+				}
+				resolvedFormat = "markdown"
+			}
 			switch resolvedFormat {
-			case "text", "json", "yaml", "html", "visualize-html", "visualize-json", "visualize-yaml":
+			case "text", "json", "yaml", "html", "markdown", "visualize-html", "visualize-json", "visualize-yaml":
 			default:
-				return fmt.Errorf("unsupported format %q (expected text, json, yaml, html, or visualize)", resolvedFormat)
+				return fmt.Errorf("unsupported format %q (expected text, json, yaml, markdown, html, or visualize)", resolvedFormat)
 			}
 			if resolvedFormat == "text" && strings.TrimSpace(outputPath) != "" {
-				return fmt.Errorf("--output is only supported with --format=html, --format=json, --format=yaml, or --visualize")
+				return fmt.Errorf("--output is only supported with --format=html, --format=json, --format=yaml, --format=markdown, or --visualize")
 			}
 			if visualizeExplain && !visualize {
 				return fmt.Errorf("--visualize-explain requires --visualize")
@@ -184,6 +194,20 @@ func newDeployPlanCommand(namespace *string, kubeconfig *string, kubeContext *st
 				return err
 			}
 			planResult.Secrets = planSecretsFromAudit(secretAudit)
+			if len(verifyReportPaths) > 0 {
+				reports, err := loadPlanVerifyReports(verifyReportPaths, planResult.RenderedSHA256)
+				if err != nil {
+					return err
+				}
+				planResult.VerifyReports = reports
+			}
+			if len(buildCapturePaths) > 0 {
+				provenance, err := loadPlanBuildProvenance(cmd.Context(), buildCapturePaths, planResult.Images)
+				if err != nil {
+					return err
+				}
+				planResult.BuildProvenance = provenance
+			}
 			if timer != nil {
 				summary := telemetry.Summary{
 					Total:  timer.Total(),
@@ -230,6 +254,17 @@ func newDeployPlanCommand(namespace *string, kubeconfig *string, kubeContext *st
 			}
 
 			switch selectedFormat {
+			case "markdown":
+				markdown := renderDeployPlanMarkdown(planResult, githubComment)
+				if strings.TrimSpace(outputPath) != "" {
+					if err := os.WriteFile(outputPath, []byte(markdown), 0o644); err != nil {
+						return fmt.Errorf("write markdown: %w", err)
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), "Plan written to %s\n", outputPath)
+				} else {
+					fmt.Fprintln(cmd.OutOrStdout(), markdown)
+				}
+				return nil
 			case "html":
 				path := outputPath
 				if strings.TrimSpace(path) == "" {
@@ -377,10 +412,13 @@ func newDeployPlanCommand(namespace *string, kubeconfig *string, kubeContext *st
 	cmd.Flags().StringVar(&compareTo, "compare-to", "", "Compare against a previous plan (path or URL) and report regressions")
 	cmd.Flags().BoolVar(&compareExit, "compare-exit", true, "Exit non-zero when --compare-to detects regressions")
 	cmd.Flags().StringVar(&baselinePath, "baseline", "", "Write plan JSON baseline to this path")
-	cmd.Flags().StringVar(&format, "format", "text", "Output format: text, json, yaml, or html")
+	cmd.Flags().StringVar(&format, "format", "text", "Output format: text, json, yaml, markdown, or html")
 	cmd.Flags().StringVar(&outputPath, "output", "", "Write the rendered plan to this path (HTML defaults to ./ktl-deploy-plan-<release>-<timestamp>.html)")
+	cmd.Flags().BoolVar(&githubComment, "github-comment", false, "Render a GitHub PR comment markdown summary")
+	cmd.Flags().StringArrayVar(&verifyReportPaths, "verify-report", nil, "Attach verifier JSON report to the plan artifact (repeatable)")
+	cmd.Flags().StringArrayVar(&buildCapturePaths, "build-capture", nil, "Attach a ktl build capture SQLite file for image provenance (repeatable)")
 	cmd.Flags().BoolVar(&visualize, "visualize", false, "Render the interactive visualization")
-	cmd.Flags().BoolVar(&visualizeExplain, "visualize-explain", false, "Add an Explain Diff tab in --visualize output (experimental)")
+	cmd.Flags().BoolVar(&visualizeExplain, "visualize-explain", false, "Add an Explain Diff tab in --visualize output")
 	_ = cmd.MarkFlagRequired("chart")
 	_ = cmd.MarkFlagRequired("release")
 
@@ -414,6 +452,9 @@ func resolveDeployPlanFormat(format string, visualize bool) string {
 	if selected == "" {
 		selected = "text"
 	}
+	if selected == "md" {
+		selected = "markdown"
+	}
 	return selected
 }
 
@@ -442,6 +483,10 @@ type deployPlanResult struct {
 	SetStringValues   []string                `json:"setStringValues,omitempty"`
 	SetFileValues     []string                `json:"setFileValues,omitempty"`
 	Secrets           []planSecretRef         `json:"secrets,omitempty"`
+	Images            []planImageRef          `json:"images,omitempty"`
+	RenderedSHA256    string                  `json:"renderedSha256,omitempty"`
+	VerifyReports     []planVerifyReport      `json:"verifyReports,omitempty"`
+	BuildProvenance   []planBuildProvenance   `json:"buildProvenance,omitempty"`
 	GraphNodes        []deployGraphNode       `json:"graphNodes,omitempty"`
 	GraphEdges        []deployGraphEdge       `json:"graphEdges,omitempty"`
 	ManifestBlobs     map[string]string       `json:"manifestBlobs,omitempty"`
@@ -504,6 +549,48 @@ type planSecretRef struct {
 	Path      string `json:"path,omitempty"`
 	Reference string `json:"reference,omitempty"`
 	Masked    bool   `json:"masked,omitempty"`
+}
+
+type planImageRef struct {
+	Resource  string `json:"resource"`
+	Container string `json:"container,omitempty"`
+	Image     string `json:"image"`
+	Digest    string `json:"digest,omitempty"`
+	Pinned    bool   `json:"pinned"`
+}
+
+type planVerifyReport struct {
+	Path                    string           `json:"path,omitempty"`
+	Tool                    string           `json:"tool,omitempty"`
+	Mode                    verify.Mode      `json:"mode,omitempty"`
+	FailOn                  verify.Severity  `json:"failOn,omitempty"`
+	Passed                  bool             `json:"passed"`
+	Blocked                 bool             `json:"blocked"`
+	Summary                 verify.Summary   `json:"summary"`
+	Inputs                  []verify.Input   `json:"inputs,omitempty"`
+	Findings                []verify.Finding `json:"findings,omitempty"`
+	RenderedSHA256          string           `json:"renderedSha256,omitempty"`
+	RenderedSHA256Matches   bool             `json:"renderedSha256Matches"`
+	RenderedSHA256CheckNote string           `json:"renderedSha256CheckNote,omitempty"`
+}
+
+type planBuildProvenance struct {
+	Source           string                 `json:"source"`
+	Digest           string                 `json:"digest,omitempty"`
+	Tags             []string               `json:"tags,omitempty"`
+	Platforms        []string               `json:"platforms,omitempty"`
+	ExporterResponse map[string]string      `json:"exporterResponse,omitempty"`
+	Attestations     []map[string]any       `json:"attestations,omitempty"`
+	Policy           *planBuildPolicyReport `json:"policy,omitempty"`
+	Referenced       bool                   `json:"referencedByPlan"`
+	Verdict          string                 `json:"verdict"`
+	VerdictReason    string                 `json:"verdictReason,omitempty"`
+}
+
+type planBuildPolicyReport struct {
+	Passed    bool `json:"passed"`
+	DenyCount int  `json:"denyCount"`
+	WarnCount int  `json:"warnCount"`
 }
 
 func planSecretsFromAudit(report secretstore.AuditReport) []planSecretRef {
@@ -945,6 +1032,8 @@ func executeDeployPlan(ctx context.Context, actionCfg *action.Configuration, set
 		SetValues:         append([]string(nil), opts.SetValues...),
 		SetStringValues:   append([]string(nil), opts.SetStringValues...),
 		SetFileValues:     append([]string(nil), opts.SetFileValues...),
+		Images:            collectPlanImages(desiredDocs),
+		RenderedSHA256:    verify.ManifestDigestSHA256(templateResult.Manifest),
 		GraphNodes:        graphNodes,
 		GraphEdges:        graphEdges,
 		ManifestBlobs:     manifestBlobs,
@@ -1020,17 +1109,6 @@ func fetchLiveResource(ctx context.Context, kubeClient *kube.Client, obj *unstru
 	return live, "", nil
 }
 
-func docsToMap(docs []manifestDoc) map[resourceKey]manifestDoc {
-	result := make(map[resourceKey]manifestDoc, len(docs))
-	for _, doc := range docs {
-		if doc.Key.Name == "" || doc.Key.Kind == "" {
-			continue
-		}
-		result[doc.Key] = doc
-	}
-	return result
-}
-
 func buildPlanChanges(desired map[resourceKey]manifestDoc, previous map[resourceKey]manifestDoc, live map[resourceKey]*unstructured.Unstructured) ([]planResourceChange, planSummary) {
 	if live == nil {
 		live = map[resourceKey]*unstructured.Unstructured{}
@@ -1096,82 +1174,6 @@ func planWarnings(changes []planResourceChange) []string {
 		}
 	}
 	return warnings
-}
-
-func buildManifestBlobs(desired map[resourceKey]manifestDoc) map[string]string {
-	if len(desired) == 0 {
-		return nil
-	}
-	out := make(map[string]string, len(desired))
-	for key, doc := range desired {
-		if doc.Body == "" {
-			doc.Body = objectYAML(doc.Obj)
-		}
-		out[graphNodeID(key)] = doc.Body
-	}
-	return out
-}
-
-func buildManifestTemplateIndex(desired map[resourceKey]manifestDoc) map[string]string {
-	if len(desired) == 0 {
-		return nil
-	}
-	out := make(map[string]string)
-	for key, doc := range desired {
-		if doc.TemplateSource == "" {
-			continue
-		}
-		out[graphNodeID(key)] = doc.TemplateSource
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
-}
-
-func buildLiveManifestBlobs(live map[resourceKey]*unstructured.Unstructured) map[string]string {
-	if len(live) == 0 {
-		return nil
-	}
-	out := make(map[string]string, len(live))
-	for key, obj := range live {
-		if obj == nil {
-			continue
-		}
-		out[graphNodeID(key)] = objectYAML(obj.DeepCopy())
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
-}
-
-func buildManifestDiffs(live, rendered map[string]string) map[string]string {
-	if len(live) == 0 || len(rendered) == 0 {
-		return nil
-	}
-	diffs := make(map[string]string)
-	for id, desired := range rendered {
-		liveBody, ok := live[id]
-		if !ok || strings.TrimSpace(liveBody) == "" {
-			continue
-		}
-		if diff := diffStrings(liveBody, desired); strings.TrimSpace(diff) != "" {
-			diffs[id] = diff
-		}
-	}
-	if len(diffs) == 0 {
-		return nil
-	}
-	return diffs
-}
-
-func graphNodeID(key resourceKey) string {
-	ns := key.Namespace
-	if ns == "" {
-		ns = "cluster"
-	}
-	return fmt.Sprintf("%s|%s|%s", strings.ToLower(ns), strings.ToLower(key.Kind), strings.ToLower(key.Name))
 }
 
 func referenceToResourceKey(ref graphRef, fallbackNamespace string) resourceKey {
@@ -1432,60 +1434,220 @@ func extractNodeMeta(doc manifestDoc) map[string]string {
 	return meta
 }
 
+func collectPlanImages(docs map[resourceKey]manifestDoc) []planImageRef {
+	if len(docs) == 0 {
+		return nil
+	}
+	images := make([]planImageRef, 0)
+	for key, doc := range docs {
+		if doc.Obj == nil {
+			continue
+		}
+		resource := key.String()
+		kind := strings.ToLower(key.Kind)
+		switch kind {
+		case "pod":
+			images = append(images, collectImagesFromPodSpec(doc.Obj.Object, []string{"spec"}, resource)...)
+		case "deployment", "statefulset", "daemonset", "replicaset":
+			images = append(images, collectImagesFromPodSpec(doc.Obj.Object, []string{"spec", "template", "spec"}, resource)...)
+		case "job":
+			images = append(images, collectImagesFromPodSpec(doc.Obj.Object, []string{"spec", "template", "spec"}, resource)...)
+		case "cronjob":
+			images = append(images, collectImagesFromPodSpec(doc.Obj.Object, []string{"spec", "jobTemplate", "spec", "template", "spec"}, resource)...)
+		}
+	}
+	sort.Slice(images, func(i, j int) bool {
+		if images[i].Resource != images[j].Resource {
+			return images[i].Resource < images[j].Resource
+		}
+		if images[i].Container != images[j].Container {
+			return images[i].Container < images[j].Container
+		}
+		return images[i].Image < images[j].Image
+	})
+	return images
+}
+
+func collectImagesFromPodSpec(obj map[string]interface{}, path []string, resource string) []planImageRef {
+	spec, found, _ := unstructured.NestedMap(obj, path...)
+	if !found {
+		return nil
+	}
+	var refs []planImageRef
+	addContainers := func(field string) {
+		containers, found, _ := unstructured.NestedSlice(spec, field)
+		if !found {
+			return
+		}
+		for _, raw := range containers {
+			container, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			image := strings.TrimSpace(toString(container["image"]))
+			if image == "" {
+				continue
+			}
+			name := strings.TrimSpace(toString(container["name"]))
+			if field == "initContainers" && name != "" {
+				name = "init/" + name
+			}
+			digest := imageDigest(image)
+			refs = append(refs, planImageRef{
+				Resource:  resource,
+				Container: name,
+				Image:     image,
+				Digest:    digest,
+				Pinned:    digest != "",
+			})
+		}
+	}
+	addContainers("containers")
+	addContainers("initContainers")
+	return refs
+}
+
+func imageDigest(image string) string {
+	image = strings.TrimSpace(image)
+	idx := strings.LastIndex(image, "@sha256:")
+	if idx < 0 {
+		return ""
+	}
+	return image[idx+1:]
+}
+
+func loadPlanVerifyReports(paths []string, renderedSHA string) ([]planVerifyReport, error) {
+	var out []planVerifyReport
+	for _, path := range paths {
+		path = strings.TrimSpace(path)
+		if path == "" {
+			continue
+		}
+		rep, err := verify.LoadReport(path)
+		if err != nil {
+			return nil, fmt.Errorf("load verify report %s: %w", path, err)
+		}
+		if rep == nil {
+			continue
+		}
+		item := planVerifyReport{
+			Path:     path,
+			Tool:     strings.TrimSpace(rep.Tool),
+			Mode:     rep.Mode,
+			FailOn:   rep.FailOn,
+			Passed:   rep.Passed,
+			Blocked:  rep.Blocked,
+			Summary:  rep.Summary,
+			Inputs:   append([]verify.Input(nil), rep.Inputs...),
+			Findings: append([]verify.Finding(nil), rep.Findings...),
+		}
+		item.RenderedSHA256, item.RenderedSHA256Matches, item.RenderedSHA256CheckNote = compareVerifyRenderedDigest(rep, renderedSHA)
+		out = append(out, item)
+	}
+	return out, nil
+}
+
+func compareVerifyRenderedDigest(rep *verify.Report, renderedSHA string) (string, bool, string) {
+	renderedSHA = strings.TrimSpace(renderedSHA)
+	if rep == nil {
+		return "", false, "report missing"
+	}
+	for _, in := range rep.Inputs {
+		digest := strings.TrimSpace(in.RenderedSHA256)
+		if digest == "" {
+			continue
+		}
+		if renderedSHA == "" {
+			return digest, false, "plan rendered digest missing"
+		}
+		if digest != renderedSHA {
+			return digest, false, "verify report digest does not match this plan render"
+		}
+		return digest, true, ""
+	}
+	if renderedSHA == "" {
+		return "", false, "no rendered digest available"
+	}
+	return "", false, "verify report missing rendered digest"
+}
+
+func loadPlanBuildProvenance(ctx context.Context, paths []string, images []planImageRef) ([]planBuildProvenance, error) {
+	var out []planBuildProvenance
+	for _, path := range paths {
+		path = strings.TrimSpace(path)
+		if path == "" {
+			continue
+		}
+		artifacts, err := capture.ReadArtifacts(ctx, path,
+			"build.digest",
+			"build.tags_json",
+			"build.platforms_json",
+			"build.exporter_response_json",
+			"build.attestations_json",
+			"build.policy_post_report_json",
+		)
+		if err != nil {
+			return nil, err
+		}
+		item := planBuildProvenance{
+			Source: strings.TrimSpace(path),
+			Digest: strings.TrimSpace(capture.LatestArtifactText(artifacts, "build.digest")),
+		}
+		_ = json.Unmarshal([]byte(capture.LatestArtifactText(artifacts, "build.tags_json")), &item.Tags)
+		_ = json.Unmarshal([]byte(capture.LatestArtifactText(artifacts, "build.platforms_json")), &item.Platforms)
+		_ = json.Unmarshal([]byte(capture.LatestArtifactText(artifacts, "build.exporter_response_json")), &item.ExporterResponse)
+		_ = json.Unmarshal([]byte(capture.LatestArtifactText(artifacts, "build.attestations_json")), &item.Attestations)
+		if raw := strings.TrimSpace(capture.LatestArtifactText(artifacts, "build.policy_post_report_json")); raw != "" {
+			var policy planBuildPolicyReport
+			if err := json.Unmarshal([]byte(raw), &policy); err == nil {
+				item.Policy = &policy
+			}
+		}
+		item.Referenced = buildDigestReferencedByPlan(item.Digest, images)
+		item.Verdict, item.VerdictReason = buildProvenanceVerdict(item)
+		out = append(out, item)
+	}
+	return out, nil
+}
+
+func buildDigestReferencedByPlan(digest string, images []planImageRef) bool {
+	digest = strings.TrimSpace(digest)
+	if digest == "" {
+		return false
+	}
+	for _, image := range images {
+		if strings.TrimSpace(image.Digest) == digest {
+			return true
+		}
+	}
+	return false
+}
+
+func buildProvenanceVerdict(item planBuildProvenance) (string, string) {
+	if strings.TrimSpace(item.Digest) == "" {
+		return "unknown", "build digest missing"
+	}
+	if item.Policy != nil && item.Policy.DenyCount > 0 {
+		return "blocked", "build policy denied this image"
+	}
+	if !item.Referenced {
+		return "not-deployed", "build digest is not referenced by rendered workloads"
+	}
+	if item.Policy == nil {
+		return "unknown", "no build policy report attached"
+	}
+	if !item.Policy.Passed {
+		return "blocked", "build policy did not pass"
+	}
+	return "safe", "build digest is referenced by the plan and passed build policy"
+}
+
 func isWorkloadKind(kind string) bool {
 	switch strings.ToLower(kind) {
 	case "deployment", "statefulset", "daemonset", "job", "cronjob", "replicaset":
 		return true
 	}
 	return false
-}
-
-func objectYAML(obj *unstructured.Unstructured) string {
-	if obj == nil {
-		return ""
-	}
-	trimmed := trimUnstructured(obj.DeepCopy())
-	if trimmed == nil {
-		return ""
-	}
-	data, err := yaml.Marshal(trimmed.Object)
-	if err != nil {
-		return ""
-	}
-	return string(data)
-}
-
-func trimUnstructured(obj *unstructured.Unstructured) *unstructured.Unstructured {
-	if obj == nil {
-		return nil
-	}
-	unstructured.RemoveNestedField(obj.Object, "metadata", "managedFields")
-	unstructured.RemoveNestedField(obj.Object, "metadata", "resourceVersion")
-	unstructured.RemoveNestedField(obj.Object, "metadata", "uid")
-	unstructured.RemoveNestedField(obj.Object, "metadata", "selfLink")
-	unstructured.RemoveNestedField(obj.Object, "metadata", "generation")
-	unstructured.RemoveNestedField(obj.Object, "metadata", "creationTimestamp")
-	unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "kubectl.kubernetes.io/last-applied-configuration")
-	unstructured.RemoveNestedField(obj.Object, "status")
-	return obj
-}
-
-func diffStrings(current, desired string) string {
-	if current == desired {
-		return ""
-	}
-	ud := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(current),
-		B:        difflib.SplitLines(desired),
-		FromFile: "live",
-		ToFile:   "desired",
-		Context:  3,
-	}
-	diff, err := difflib.GetUnifiedDiffString(ud)
-	if err != nil {
-		return fmt.Sprintf("failed to render diff: %v", err)
-	}
-	return diff
 }
 
 func summarizeGraphEdges(nodes []deployGraphNode, edges []deployGraphEdge) []string {
@@ -1612,6 +1774,613 @@ func renderDeployPlan(out io.Writer, result *deployPlanResult) {
 	}
 }
 
+func renderDeployPlanMarkdown(result *deployPlanResult, githubComment bool) string {
+	if result == nil {
+		return ""
+	}
+	var b strings.Builder
+	namespace := strings.TrimSpace(result.Namespace)
+	if namespace == "" {
+		namespace = "(context namespace)"
+	}
+	if githubComment {
+		fmt.Fprintf(&b, "<!-- ktl apply plan: release=%s namespace=%s -->\n\n", markdownCommentValue(result.ReleaseName), markdownCommentValue(namespace))
+	}
+	fmt.Fprintf(&b, "## ktl apply plan: %s\n\n", markdownCode(result.ReleaseName))
+
+	risk, reasons := planRiskSummary(result)
+	rollback := rollbackCommand(result.ReleaseName, namespace)
+	metaRows := [][2]string{
+		{"Release", markdownCode(result.ReleaseName)},
+		{"Namespace", markdownCode(namespace)},
+		{"Chart", firstNonEmpty(result.ChartRef, result.RequestedChart, "(unknown)")},
+		{"Chart version", firstNonEmpty(result.ChartVersion, result.RequestedVersion, "(unspecified)")},
+		{"Cluster", firstNonEmpty(result.ClusterHost, "(not recorded)")},
+		{"Generated", formatPlanTime(result.GeneratedAt)},
+		{"Risk", risk},
+		{"Rollback", markdownCode(rollback)},
+	}
+	writeMarkdownTable(&b, []string{"Field", "Value"}, metaRows)
+
+	fmt.Fprintf(&b, "\n### Risk Summary\n\n")
+	if len(reasons) == 0 {
+		fmt.Fprintf(&b, "- No obvious high-risk signals in the plan artifact.\n")
+	} else {
+		for _, reason := range reasons {
+			fmt.Fprintf(&b, "- %s\n", reason)
+		}
+	}
+
+	fmt.Fprintf(&b, "\n### Planned Changes\n\n")
+	fmt.Fprintf(&b, "Creates: **%d**, updates: **%d**, deletes: **%d**, unchanged: **%d**.\n\n", result.Summary.Creates, result.Summary.Updates, result.Summary.Deletes, result.Summary.Unchanged)
+	if len(result.Changes) == 0 {
+		fmt.Fprintf(&b, "No resource changes detected.\n")
+	} else {
+		rows := make([][2]string, 0, minInt(len(result.Changes), 50))
+		for i, change := range result.Changes {
+			if i >= 50 {
+				break
+			}
+			rows = append(rows, [2]string{planChangeLabel(change.Kind), markdownCode(change.Key.String())})
+		}
+		writeMarkdownTable(&b, []string{"Change", "Resource"}, rows)
+		if len(result.Changes) > 50 {
+			fmt.Fprintf(&b, "\n_Showing 50 of %d resources._\n", len(result.Changes))
+		}
+	}
+
+	fmt.Fprintf(&b, "\n### Blast Radius\n\n")
+	for _, line := range planBlastRadius(result) {
+		fmt.Fprintf(&b, "- %s\n", line)
+	}
+
+	fmt.Fprintf(&b, "\n### Images\n\n")
+	if len(result.Images) == 0 {
+		fmt.Fprintf(&b, "No container images detected in rendered workload manifests.\n")
+	} else {
+		rows := make([][4]string, 0, minInt(len(result.Images), 50))
+		for i, image := range result.Images {
+			if i >= 50 {
+				break
+			}
+			pinned := "no"
+			if image.Pinned {
+				pinned = "yes"
+			}
+			rows = append(rows, [4]string{markdownCode(image.Resource), image.Container, markdownCode(image.Image), pinned})
+		}
+		writeMarkdownTable4(&b, []string{"Resource", "Container", "Image", "Digest pinned"}, rows)
+		if len(result.Images) > 50 {
+			fmt.Fprintf(&b, "\n_Showing 50 of %d images._\n", len(result.Images))
+		}
+	}
+
+	fmt.Fprintf(&b, "\n### Build Provenance\n\n")
+	writeBuildProvenanceMarkdown(&b, result.BuildProvenance)
+
+	fmt.Fprintf(&b, "\n### Secret References\n\n")
+	if len(result.Secrets) == 0 {
+		fmt.Fprintf(&b, "No `secret://` references were resolved for this plan.\n")
+	} else {
+		rows := make([][4]string, 0, len(result.Secrets))
+		for _, secret := range result.Secrets {
+			masked := "no"
+			if secret.Masked {
+				masked = "yes"
+			}
+			rows = append(rows, [4]string{secret.Provider, secret.Path, secret.Reference, masked})
+		}
+		writeMarkdownTable4(&b, []string{"Provider", "Path", "Reference", "Masked"}, rows)
+	}
+
+	fmt.Fprintf(&b, "\n### Quota And Headroom\n\n")
+	if len(result.DesiredQuotaByNS) == 0 && result.DesiredQuota == nil {
+		fmt.Fprintf(&b, "No quota estimate is available for this plan.\n")
+	} else {
+		writeQuotaMarkdown(&b, result)
+	}
+
+	fmt.Fprintf(&b, "\n### Policy Findings\n\n")
+	writeVerifyReportsMarkdown(&b, result.VerifyReports)
+
+	writeManifestDiffMarkdown(&b, result.ManifestDiffs)
+
+	if len(result.Warnings) > 0 {
+		fmt.Fprintf(&b, "\n### Warnings\n\n")
+		for _, warning := range result.Warnings {
+			fmt.Fprintf(&b, "- %s\n", warning)
+		}
+	}
+	if result.Telemetry != nil {
+		fmt.Fprintf(&b, "\n### API Timings\n\n")
+		fmt.Fprintf(&b, "- Total: %dms\n", result.Telemetry.TotalMs)
+		if result.Telemetry.KubeRequests > 0 {
+			fmt.Fprintf(&b, "- Kubernetes API requests: %d (avg %dms, max %dms)\n", result.Telemetry.KubeRequests, result.Telemetry.KubeAvgMs, result.Telemetry.KubeMaxMs)
+		}
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
+func planRiskSummary(result *deployPlanResult) (string, []string) {
+	if result == nil {
+		return "Unknown", nil
+	}
+	var reasons []string
+	level := "Low"
+	if result.Summary.Deletes > 0 {
+		level = "High"
+		reasons = append(reasons, fmt.Sprintf("%d delete(s) planned.", result.Summary.Deletes))
+	}
+	if quotaFails, quotaWarns := quotaStatusCounts(result); quotaFails > 0 {
+		level = "High"
+		reasons = append(reasons, fmt.Sprintf("%d quota headroom check(s) fail.", quotaFails))
+	} else if quotaWarns > 0 {
+		if level == "Low" {
+			level = "Medium"
+		}
+		reasons = append(reasons, fmt.Sprintf("%d quota headroom check(s) warn.", quotaWarns))
+	}
+	if result.Summary.Updates > 10 && level == "Low" {
+		level = "Medium"
+		reasons = append(reasons, fmt.Sprintf("%d updates planned.", result.Summary.Updates))
+	}
+	if len(result.Warnings) > 0 {
+		if level == "Low" {
+			level = "Medium"
+		}
+		reasons = append(reasons, fmt.Sprintf("%d planner warning(s) recorded.", len(result.Warnings)))
+	}
+	if n := countUnpinnedImages(result.Images); n > 0 {
+		if level == "Low" {
+			level = "Medium"
+		}
+		reasons = append(reasons, fmt.Sprintf("%d image reference(s) are not pinned by digest.", n))
+	}
+	if len(result.Secrets) > 0 {
+		reasons = append(reasons, fmt.Sprintf("%d secret reference(s) resolved.", len(result.Secrets)))
+	}
+	if blocked, high, medium, digestMismatch := verifyRiskCounts(result.VerifyReports); blocked > 0 || high > 0 || digestMismatch > 0 {
+		level = "High"
+		if blocked > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d verifier report(s) are blocked.", blocked))
+		}
+		if high > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d critical/high verifier finding(s) present.", high))
+		}
+		if digestMismatch > 0 {
+			reasons = append(reasons, fmt.Sprintf("%d verifier report(s) do not match this plan render.", digestMismatch))
+		}
+	} else if medium > 0 && level == "Low" {
+		level = "Medium"
+		reasons = append(reasons, fmt.Sprintf("%d medium verifier finding(s) present.", medium))
+	}
+	if blocked, unknown := buildProvenanceRiskCounts(result.BuildProvenance); blocked > 0 {
+		level = "High"
+		reasons = append(reasons, fmt.Sprintf("%d build provenance verdict(s) block deployment.", blocked))
+	} else if unknown > 0 && level == "Low" {
+		level = "Medium"
+		reasons = append(reasons, fmt.Sprintf("%d build provenance verdict(s) are unknown or not linked.", unknown))
+	}
+	if result.OfflineFallback {
+		if level == "Low" {
+			level = "Medium"
+		}
+		reasons = append(reasons, "Plan used offline fallback; live-state confidence is reduced.")
+	}
+	return level, reasons
+}
+
+func verifyRiskCounts(reports []planVerifyReport) (blocked int, high int, medium int, digestMismatch int) {
+	for _, rep := range reports {
+		if rep.Blocked {
+			blocked++
+		}
+		if rep.RenderedSHA256CheckNote != "" && !rep.RenderedSHA256Matches {
+			digestMismatch++
+		}
+		for _, finding := range rep.Findings {
+			switch finding.Severity {
+			case verify.SeverityCritical, verify.SeverityHigh:
+				high++
+			case verify.SeverityMedium:
+				medium++
+			}
+		}
+	}
+	return blocked, high, medium, digestMismatch
+}
+
+func buildProvenanceRiskCounts(items []planBuildProvenance) (blocked int, unknown int) {
+	for _, item := range items {
+		switch strings.ToLower(strings.TrimSpace(item.Verdict)) {
+		case "blocked":
+			blocked++
+		case "safe":
+		default:
+			unknown++
+		}
+	}
+	return blocked, unknown
+}
+
+func quotaStatusCounts(result *deployPlanResult) (fails int, warns int) {
+	for _, report := range planQuotaReports(result) {
+		for _, row := range report.Headroom {
+			switch strings.ToLower(strings.TrimSpace(row.Status)) {
+			case "fail":
+				fails++
+			case "warn":
+				warns++
+			}
+		}
+	}
+	return fails, warns
+}
+
+func countUnpinnedImages(images []planImageRef) int {
+	count := 0
+	for _, image := range images {
+		if !image.Pinned {
+			count++
+		}
+	}
+	return count
+}
+
+func rollbackCommand(release string, namespace string) string {
+	release = strings.TrimSpace(release)
+	if release == "" {
+		release = "<release>"
+	}
+	namespace = strings.TrimSpace(namespace)
+	if namespace == "" || namespace == "(context namespace)" {
+		return fmt.Sprintf("helm rollback %s", release)
+	}
+	return fmt.Sprintf("helm rollback %s -n %s", release, namespace)
+}
+
+func planBlastRadius(result *deployPlanResult) []string {
+	if result == nil || len(result.Changes) == 0 {
+		return []string{"No changed Kubernetes resources."}
+	}
+	namespaces := map[string]int{}
+	kinds := map[string]int{}
+	for _, change := range result.Changes {
+		ns := strings.TrimSpace(change.Key.Namespace)
+		if ns == "" {
+			ns = "(cluster/default)"
+		}
+		namespaces[ns]++
+		kind := strings.TrimSpace(change.Key.Kind)
+		if kind == "" {
+			kind = "(unknown)"
+		}
+		kinds[kind]++
+	}
+	return []string{
+		fmt.Sprintf("%d changed resource(s) across %d namespace/scope value(s).", len(result.Changes), len(namespaces)),
+		"Namespaces: " + summarizeStringCounts(namespaces),
+		"Kinds: " + summarizeStringCounts(kinds),
+	}
+}
+
+func summarizeStringCounts(counts map[string]int) string {
+	if len(counts) == 0 {
+		return "(none)"
+	}
+	keys := make([]string, 0, len(counts))
+	for key := range counts {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%d", key, counts[key]))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func writeQuotaMarkdown(b *strings.Builder, result *deployPlanResult) {
+	reports := planQuotaReports(result)
+	if len(reports) == 0 {
+		fmt.Fprintf(b, "No quota estimate is available for this plan.\n")
+		return
+	}
+	rows := make([][4]string, 0, len(reports))
+	for _, report := range reports {
+		status := "unknown"
+		fail, warn := 0, 0
+		for _, headroom := range report.Headroom {
+			switch strings.ToLower(strings.TrimSpace(headroom.Status)) {
+			case "fail":
+				fail++
+			case "warn":
+				warn++
+			}
+		}
+		switch {
+		case fail > 0:
+			status = fmt.Sprintf("fail (%d)", fail)
+		case warn > 0:
+			status = fmt.Sprintf("warn (%d)", warn)
+		case len(report.Headroom) > 0:
+			status = "pass"
+		}
+		desired := fmt.Sprintf("pods=%d, cpuReq=%s, memReq=%s, services=%d, secrets=%d, pvcs=%d",
+			report.Desired.Pods,
+			emptyAsZero(report.Desired.CPURequests.Value),
+			emptyAsZero(report.Desired.MemoryRequests.Value),
+			report.Desired.Services,
+			report.Desired.Secrets,
+			report.Desired.PVCs,
+		)
+		warnings := fmt.Sprintf("%d", len(report.Warnings))
+		rows = append(rows, [4]string{report.Namespace, desired, status, warnings})
+	}
+	writeMarkdownTable4(b, []string{"Namespace", "Desired", "Headroom", "Warnings"}, rows)
+}
+
+func planQuotaReports(result *deployPlanResult) []*quotaReport {
+	if result == nil {
+		return nil
+	}
+	seen := map[string]struct{}{}
+	var reports []*quotaReport
+	if len(result.DesiredQuotaByNS) > 0 {
+		keys := make([]string, 0, len(result.DesiredQuotaByNS))
+		for key := range result.DesiredQuotaByNS {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			report := result.DesiredQuotaByNS[key]
+			if report == nil {
+				continue
+			}
+			reports = append(reports, report)
+			seen[report.Namespace] = struct{}{}
+		}
+	}
+	if result.DesiredQuota != nil {
+		if _, ok := seen[result.DesiredQuota.Namespace]; !ok {
+			reports = append(reports, result.DesiredQuota)
+		}
+	}
+	return reports
+}
+
+func writeVerifyReportsMarkdown(b *strings.Builder, reports []planVerifyReport) {
+	if len(reports) == 0 {
+		fmt.Fprintf(b, "No verifier report is attached to this plan artifact. Run `verifier --format json --report verify.json` and pass `ktl apply plan --verify-report verify.json`.\n")
+		return
+	}
+	rows := make([][4]string, 0, len(reports))
+	for _, rep := range reports {
+		status := "passed"
+		if rep.Blocked {
+			status = "blocked"
+		} else if !rep.Passed {
+			status = "failed"
+		}
+		digest := "match"
+		if !rep.RenderedSHA256Matches {
+			digest = firstNonEmpty(rep.RenderedSHA256CheckNote, "unknown")
+		}
+		counts := fmt.Sprintf("total=%d critical=%d high=%d medium=%d low=%d info=%d",
+			rep.Summary.Total,
+			rep.Summary.BySev[verify.SeverityCritical],
+			rep.Summary.BySev[verify.SeverityHigh],
+			rep.Summary.BySev[verify.SeverityMedium],
+			rep.Summary.BySev[verify.SeverityLow],
+			rep.Summary.BySev[verify.SeverityInfo],
+		)
+		rows = append(rows, [4]string{firstNonEmpty(rep.Path, rep.Tool, "verifier"), status, counts, digest})
+	}
+	writeMarkdownTable4(b, []string{"Report", "Status", "Findings", "Rendered digest"}, rows)
+
+	var findings []verify.Finding
+	for _, rep := range reports {
+		findings = append(findings, rep.Findings...)
+	}
+	sort.SliceStable(findings, func(i, j int) bool {
+		return verifySeverityRank(findings[i].Severity) < verifySeverityRank(findings[j].Severity)
+	})
+	if len(findings) == 0 {
+		return
+	}
+	fmt.Fprintf(b, "\nTop findings:\n\n")
+	limit := minInt(len(findings), 20)
+	findingRows := make([][4]string, 0, limit)
+	for i := 0; i < limit; i++ {
+		f := findings[i]
+		subject := strings.TrimSpace(f.ResourceKey)
+		if subject == "" && (f.Subject.Kind != "" || f.Subject.Name != "") {
+			subject = strings.TrimSpace(strings.Join([]string{f.Subject.Namespace, f.Subject.Kind, f.Subject.Name}, " "))
+		}
+		findingRows = append(findingRows, [4]string{string(f.Severity), f.RuleID, subject, f.Message})
+	}
+	writeMarkdownTable4(b, []string{"Severity", "Rule", "Subject", "Message"}, findingRows)
+	if len(findings) > limit {
+		fmt.Fprintf(b, "\n_Showing %d of %d verifier findings._\n", limit, len(findings))
+	}
+}
+
+func verifySeverityRank(sev verify.Severity) int {
+	switch sev {
+	case verify.SeverityCritical:
+		return 0
+	case verify.SeverityHigh:
+		return 1
+	case verify.SeverityMedium:
+		return 2
+	case verify.SeverityLow:
+		return 3
+	case verify.SeverityInfo:
+		return 4
+	default:
+		return 5
+	}
+}
+
+func writeBuildProvenanceMarkdown(b *strings.Builder, items []planBuildProvenance) {
+	if len(items) == 0 {
+		fmt.Fprintf(b, "No `ktl build` capture is attached. Pass `--build-capture build.sqlite` to prove whether the exact built digest is referenced by this plan.\n")
+		return
+	}
+	rows := make([][4]string, 0, len(items))
+	for _, item := range items {
+		policy := "not attached"
+		if item.Policy != nil {
+			policy = fmt.Sprintf("passed=%t deny=%d warn=%d", item.Policy.Passed, item.Policy.DenyCount, item.Policy.WarnCount)
+		}
+		referenced := "no"
+		if item.Referenced {
+			referenced = "yes"
+		}
+		rows = append(rows, [4]string{
+			markdownCode(firstNonEmpty(item.Digest, "(missing)")),
+			item.Verdict,
+			referenced,
+			policy,
+		})
+	}
+	writeMarkdownTable4(b, []string{"Digest", "Verdict", "Referenced by plan", "Policy"}, rows)
+	for _, item := range items {
+		if item.VerdictReason != "" {
+			fmt.Fprintf(b, "- %s: %s\n", markdownCode(firstNonEmpty(item.Digest, item.Source)), item.VerdictReason)
+		}
+		if len(item.Attestations) > 0 {
+			fmt.Fprintf(b, "- %s: %d attestation file(s) recorded.\n", markdownCode(firstNonEmpty(item.Digest, item.Source)), len(item.Attestations))
+		}
+		if len(item.Tags) > 0 {
+			fmt.Fprintf(b, "- %s tags: %s\n", markdownCode(firstNonEmpty(item.Digest, item.Source)), markdownText(strings.Join(item.Tags, ", ")))
+		}
+	}
+}
+
+func writeManifestDiffMarkdown(b *strings.Builder, diffs map[string]string) {
+	fmt.Fprintf(b, "\n### Manifest Diffs\n\n")
+	if len(diffs) == 0 {
+		fmt.Fprintf(b, "No manifest diff hunks were recorded.\n")
+		return
+	}
+	keys := make([]string, 0, len(diffs))
+	for key := range diffs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	const maxResources = 20
+	const maxChars = 12000
+	written := 0
+	for i, key := range keys {
+		if i >= maxResources || written >= maxChars {
+			break
+		}
+		diff := strings.TrimRight(diffs[key], "\n")
+		if diff == "" {
+			continue
+		}
+		remaining := maxChars - written
+		if len(diff) > remaining {
+			diff = diff[:remaining] + "\n... truncated ..."
+		}
+		written += len(diff)
+		fmt.Fprintf(b, "<details><summary>%s</summary>\n\n```diff\n%s\n```\n\n</details>\n\n", markdownText(key), sanitizeFence(diff))
+	}
+	if len(keys) > maxResources || written >= maxChars {
+		fmt.Fprintf(b, "_Diff output truncated; use the JSON or HTML plan artifact for the full manifest diff._\n")
+	}
+}
+
+func writeMarkdownTable(b *strings.Builder, headers []string, rows [][2]string) {
+	if len(headers) != 2 {
+		return
+	}
+	fmt.Fprintf(b, "| %s | %s |\n", markdownText(headers[0]), markdownText(headers[1]))
+	fmt.Fprintf(b, "| --- | --- |\n")
+	for _, row := range rows {
+		fmt.Fprintf(b, "| %s | %s |\n", markdownCell(row[0]), markdownCell(row[1]))
+	}
+}
+
+func writeMarkdownTable4(b *strings.Builder, headers []string, rows [][4]string) {
+	if len(headers) != 4 {
+		return
+	}
+	fmt.Fprintf(b, "| %s | %s | %s | %s |\n", markdownText(headers[0]), markdownText(headers[1]), markdownText(headers[2]), markdownText(headers[3]))
+	fmt.Fprintf(b, "| --- | --- | --- | --- |\n")
+	for _, row := range rows {
+		fmt.Fprintf(b, "| %s | %s | %s | %s |\n", markdownCell(row[0]), markdownCell(row[1]), markdownCell(row[2]), markdownCell(row[3]))
+	}
+}
+
+func markdownCell(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		value = "-"
+	}
+	value = strings.ReplaceAll(value, "|", "\\|")
+	value = strings.ReplaceAll(value, "\n", "<br>")
+	return value
+}
+
+func markdownCode(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		value = "-"
+	}
+	value = strings.ReplaceAll(value, "`", "'")
+	return "`" + value + "`"
+}
+
+func markdownText(value string) string {
+	value = strings.TrimSpace(value)
+	value = strings.ReplaceAll(value, "|", "\\|")
+	return value
+}
+
+func markdownCommentValue(value string) string {
+	value = strings.TrimSpace(value)
+	value = strings.ReplaceAll(value, "--", "-")
+	value = strings.ReplaceAll(value, "\n", " ")
+	return value
+}
+
+func sanitizeFence(value string) string {
+	return strings.ReplaceAll(value, "```", "'''")
+}
+
+func formatPlanTime(ts time.Time) string {
+	if ts.IsZero() {
+		return "(not recorded)"
+	}
+	return ts.UTC().Format(time.RFC3339)
+}
+
+func emptyAsZero(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "0"
+	}
+	return value
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func writeStringMapSection(out io.Writer, title string, m map[string]string) {
 	if len(m) == 0 {
 		return
@@ -1731,6 +2500,10 @@ type deployVisualizePayload struct {
 	SetStringValues   []string                `json:"setStringValues,omitempty"`
 	SetFileValues     []string                `json:"setFileValues,omitempty"`
 	Secrets           []planSecretRef         `json:"secrets,omitempty"`
+	Images            []planImageRef          `json:"images,omitempty"`
+	RenderedSHA256    string                  `json:"renderedSha256,omitempty"`
+	VerifyReports     []planVerifyReport      `json:"verifyReports,omitempty"`
+	BuildProvenance   []planBuildProvenance   `json:"buildProvenance,omitempty"`
 	Nodes             []deployGraphNode       `json:"nodes"`
 	Edges             []deployGraphEdge       `json:"edges"`
 	Manifests         map[string]string       `json:"manifests"`
@@ -1773,6 +2546,10 @@ func buildDeployVisualizePayload(result *deployPlanResult, compare *deployPlanRe
 		SetStringValues:  append([]string(nil), result.SetStringValues...),
 		SetFileValues:    append([]string(nil), result.SetFileValues...),
 		Secrets:          append([]planSecretRef(nil), result.Secrets...),
+		Images:           append([]planImageRef(nil), result.Images...),
+		RenderedSHA256:   result.RenderedSHA256,
+		VerifyReports:    append([]planVerifyReport(nil), result.VerifyReports...),
+		BuildProvenance:  append([]planBuildProvenance(nil), result.BuildProvenance...),
 		Nodes:            result.GraphNodes,
 		Edges:            result.GraphEdges,
 		Manifests:        result.ManifestBlobs,

@@ -29,8 +29,10 @@ func newAnalyzeCommand(kubeconfig *string, kubeContext *string) *cobra.Command {
 	var duration time.Duration
 
 	cmd := &cobra.Command{
-		Use:   "analyze [POD_NAME]",
-		Short: "Analyze a Kubernetes pod for failures using local diagnostics",
+		Use:        "analyze [POD_NAME]",
+		Short:      "Analyze a Kubernetes pod for failures using local diagnostics",
+		Hidden:     true,
+		Deprecated: "use `ktl logs`, `ktl apply plan`, verifier, or stack health gates while this diagnostic surface is rebuilt",
 		Long: `Analyze a pod to determine why it is failing.
 It fetches the pod status, recent events, and logs, then runs them through a diagnostic engine.
 

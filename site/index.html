@@ -107,6 +107,23 @@
         flex: 1;
         text-align: right;
       }
+      .showcases {
+        width: min(900px, 100%);
+        margin: 18px auto 0;
+        display: grid;
+        gap: 14px;
+      }
+      .showcase {
+        margin: 0;
+      }
+      .showcase img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: #1b1b24;
+      }
       .filters {
         display: inline-flex;
         align-items: center;
@@ -195,6 +212,7 @@
           width: 100%;
           justify-content: flex-start;
         }
+        .showcases { margin-top: 14px; }
       }
       @media (max-width: 480px) {
         .chrome { padding: 28px 10px 44px; }
@@ -428,6 +446,14 @@
               <button class="chip" data-kind="doc" type="button">Docs</button>
             </div>
             <div class="helpMeta">ktl docs</div>
+          </div>
+          <div class="showcases" aria-label="ktl demos">
+            <figure class="showcase">
+              <img src="assets/ktl-showcase.gif" alt="ktl terminal demo showing build, plan, apply, stack, build stream, and logs" width="1200" height="620" decoding="async" />
+            </figure>
+            <figure class="showcase">
+              <img src="assets/ktl-security.gif" alt="ktl terminal demo showing verifier gates, strict sandbox builds, SBOM provenance, secret discovery, and verified apply" width="1200" height="620" decoding="async" />
+            </figure>
           </div>
         </div>
 

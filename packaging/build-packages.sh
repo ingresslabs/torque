@@ -26,12 +26,14 @@ trap 'rm -rf "${work}"' EXIT
 root="${work}/root"
 install -d "${root}/usr/bin"
 
-tools=(ktl helmer verifier verify package)
-for tool in "${tools[@]}"; do
+tools=(ktl:ktl verifier:verifier verify:verify package:ktl-package)
+for entry in "${tools[@]}"; do
+  cmd="${entry%%:*}"
+  tool="${entry##*:}"
   bin="${work}/${tool}"
   echo ">> building ${tool} ${VERSION} for ${TARGETOS}/${TARGETARCH}"
   GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" CGO_ENABLED=0 \
-    go build -trimpath -buildvcs=false -ldflags "${LDFLAGS}" -o "${bin}" "./cmd/${tool}"
+    go build -trimpath -buildvcs=false -ldflags "${LDFLAGS}" -o "${bin}" "./cmd/${cmd}"
   install -m 0755 "${bin}" "${root}/usr/bin/${tool}"
 done
 
@@ -60,10 +62,9 @@ fpm -s dir -t deb \
   -C "${root}" \
   --package "${OUT_DIR}/${name}_${VERSION}_${deb_arch}.deb" \
   usr/bin/ktl \
-  usr/bin/helmer \
   usr/bin/verifier \
   usr/bin/verify \
-  usr/bin/package
+  usr/bin/ktl-package
 
 echo ">> packaging rpm (${rpm_arch})"
 fpm -s dir -t rpm \
@@ -77,10 +78,9 @@ fpm -s dir -t rpm \
   -C "${root}" \
   --package "${OUT_DIR}/${name}-${VERSION}-1.${rpm_arch}.rpm" \
   usr/bin/ktl \
-  usr/bin/helmer \
   usr/bin/verifier \
   usr/bin/verify \
-  usr/bin/package
+  usr/bin/ktl-package
 
 echo ">> wrote:"
 ls -la "${OUT_DIR}" | sed -n '1,200p'

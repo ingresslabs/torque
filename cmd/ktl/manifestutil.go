@@ -1,99 +1,48 @@
 // File: cmd/ktl/manifestutil.go
-// Brief: CLI command wiring and implementation for 'manifestutil'.
+// Brief: Compatibility aliases for shared deploy plan manifest helpers.
 
-// manifestutil.go hosts helper types for parsing/rendering Helm manifests when generating plan reports and diffs.
 package main
 
 import (
-	"fmt"
-	"strings"
-
-	"helm.sh/helm/v3/pkg/releaseutil"
+	"github.com/ingresslabs/ktl/internal/deployplan"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/yaml"
 )
 
-type resourceKey struct {
-	Group     string `json:"group,omitempty"`
-	Version   string `json:"version,omitempty"`
-	Kind      string `json:"kind"`
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name"`
-}
+type resourceKey = deployplan.ResourceKey
+type manifestDoc = deployplan.ManifestDoc
 
-func (k resourceKey) String() string {
-	scope := k.Namespace
-	if scope == "" {
-		scope = "cluster"
-	}
-	group := k.Group
-	if group == "" {
-		group = "core"
-	}
-	return fmt.Sprintf("%s/%s %s (%s)", scope, k.Name, k.Kind, group)
-}
-
-type manifestDoc struct {
-	Key            resourceKey
-	Body           string
-	Obj            *unstructured.Unstructured
-	TemplateSource string
-}
-
-// parseManifestDocs converts a Helm manifest blob into structured entries.
 func parseManifestDocs(manifest string) []manifestDoc {
-	files := releaseutil.SplitManifests(manifest)
-	docs := make([]manifestDoc, 0, len(files))
-	for name, doc := range files {
-		trimmed := strings.TrimSpace(doc)
-		if trimmed == "" {
-			continue
-		}
-		var obj map[string]interface{}
-		if err := yaml.Unmarshal([]byte(trimmed), &obj); err != nil {
-			continue
-		}
-		u := &unstructured.Unstructured{Object: obj}
-		docs = append(docs, manifestDoc{
-			Key:            toResourceKey(u),
-			Body:           trimmed,
-			Obj:            u,
-			TemplateSource: pickTemplateSource(trimmed, name),
-		})
-	}
-	return docs
+	return deployplan.ParseManifestDocs(manifest)
 }
 
-func pickTemplateSource(manifestBody, fallback string) string {
-	lines := strings.Split(manifestBody, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		if strings.HasPrefix(line, "# Source:") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "# Source:"))
-		}
-		break
-	}
-	return fallback
+func docsToMap(docs []manifestDoc) map[resourceKey]manifestDoc {
+	return deployplan.DocsToMap(docs)
 }
 
-func toResourceKey(obj *unstructured.Unstructured) resourceKey {
-	group := ""
-	version := ""
-	parts := strings.SplitN(obj.GetAPIVersion(), "/", 2)
-	if len(parts) == 2 {
-		group = parts[0]
-		version = parts[1]
-	} else if len(parts) == 1 {
-		version = parts[0]
-	}
-	return resourceKey{
-		Group:     group,
-		Version:   version,
-		Kind:      obj.GetKind(),
-		Namespace: obj.GetNamespace(),
-		Name:      obj.GetName(),
-	}
+func buildManifestBlobs(desired map[resourceKey]manifestDoc) map[string]string {
+	return deployplan.BuildManifestBlobs(desired)
+}
+
+func buildManifestTemplateIndex(desired map[resourceKey]manifestDoc) map[string]string {
+	return deployplan.BuildManifestTemplateIndex(desired)
+}
+
+func buildLiveManifestBlobs(live map[resourceKey]*unstructured.Unstructured) map[string]string {
+	return deployplan.BuildLiveManifestBlobs(live)
+}
+
+func buildManifestDiffs(live, rendered map[string]string) map[string]string {
+	return deployplan.BuildManifestDiffs(live, rendered)
+}
+
+func graphNodeID(key resourceKey) string {
+	return deployplan.GraphNodeID(key)
+}
+
+func objectYAML(obj *unstructured.Unstructured) string {
+	return deployplan.ObjectYAML(obj)
+}
+
+func diffStrings(current, desired string) string {
+	return deployplan.DiffStrings(current, desired)
 }

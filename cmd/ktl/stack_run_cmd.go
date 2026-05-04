@@ -4,12 +4,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/ingresslabs/ktl/internal/capture"
 	"github.com/ingresslabs/ktl/internal/caststream"
 	"github.com/ingresslabs/ktl/internal/castutil"
 	"github.com/ingresslabs/ktl/internal/deploy"
@@ -121,6 +124,55 @@ func newStackRunCommand(kind stackRunKind, common stackCommandCommon) *cobra.Com
 
 				var observers []stack.RunEventObserver
 				var encMu sync.Mutex
+
+				var captureRecorder *capture.Recorder
+				if path := strings.TrimSpace(opts.CapturePath); path != "" {
+					resolved, err := capture.ResolvePath(cmd.CommandPath(), path, time.Now())
+					if err != nil {
+						return err
+					}
+					if strings.TrimSpace(runOpts.RunID) == "" {
+						runOpts.RunID = time.Now().UTC().Format("2006-01-02T15-04-05.000000000Z")
+					}
+					tagMap, err := parseCaptureTags(opts.CaptureTags)
+					if err != nil {
+						return err
+					}
+					host, _ := os.Hostname()
+					extra := map[string]string{
+						"stackName": strings.TrimSpace(p.StackName),
+						"stackRoot": strings.TrimSpace(p.StackRoot),
+						"command":   string(kind),
+					}
+					rec, err := capture.Open(resolved, capture.SessionMeta{
+						Command:   cmd.CommandPath(),
+						Args:      append([]string(nil), os.Args[1:]...),
+						RunID:     strings.TrimSpace(runOpts.RunID),
+						StartedAt: time.Now().UTC(),
+						Host:      host,
+						Tags:      tagMap,
+						Extra:     extra,
+					})
+					if err != nil {
+						return err
+					}
+					captureRecorder = rec
+					if raw, err := json.MarshalIndent(p, "", "  "); err == nil {
+						_ = rec.RecordArtifact(cmd.Context(), "stack.plan.json", string(raw))
+					}
+					if raw, err := json.MarshalIndent(stackCaptureRunOptions(runOpts), "", "  "); err == nil {
+						_ = rec.RecordArtifact(cmd.Context(), "stack.run_options.json", string(raw))
+					}
+					observers = append(observers, stack.RunEventObserverFunc(func(ev stack.RunEvent) {
+						_ = rec.RecordEvent(contextWithFallback(cmd.Context()), capture.EventMeta{
+							Kind:      "stack",
+							Source:    ev.Type,
+							Namespace: stackEventNamespace(ev),
+							Message:   ev.Message,
+						}, ev)
+					}))
+					fmt.Fprintf(errOut, "Capturing stack run to %s (session %s)\n", resolved, rec.SessionID())
+				}
 
 				var console *stack.RunConsole
 				if outFormat == "json" {
@@ -251,6 +303,9 @@ func newStackRunCommand(kind stackRunKind, common stackCommandCommon) *cobra.Com
 				}
 
 				runOpts.EventObservers = append(runOpts.EventObservers, observers...)
+				if captureRecorder != nil {
+					defer captureRecorder.Close()
+				}
 				if console != nil {
 					defer console.Done()
 				}
@@ -457,6 +512,8 @@ type stackRunCLIOptions struct {
 	DeleteConfirmThreshold int
 
 	WSListenAddr string
+	CapturePath  string
+	CaptureTags  []string
 
 	ConsoleWide        bool
 	ConsoleDetails     bool
@@ -518,6 +575,11 @@ func addStackRunFlags(cmd *cobra.Command, kind stackRunKind, opts *stackRunCLIOp
 		cmd.Flags().IntVar(&opts.DeleteConfirmThreshold, "delete-confirm-threshold", opts.DeleteConfirmThreshold, "Prompt when deleting at least this many releases (0 disables)")
 	}
 	cmd.Flags().Var(&validatedStringValue{dest: &opts.WSListenAddr, name: "--ws-listen", allowEmpty: true, validator: validateWSListenAddr}, "ws-listen", "Expose the stack run event stream over WebSocket at this address (e.g. :9090)")
+	cmd.Flags().Var(&validatedStringValue{dest: &opts.CapturePath, name: "--capture", allowEmpty: true, validator: nil}, "capture", "Capture stack run events and artifacts to a SQLite database at this path")
+	if flag := cmd.Flags().Lookup("capture"); flag != nil {
+		flag.NoOptDefVal = "__auto__"
+	}
+	cmd.Flags().StringArrayVar(&opts.CaptureTags, "capture-tag", nil, "Tag the capture session (KEY=VALUE). Repeatable.")
 
 	// Minimal-flag UX: keep knobs configurable via stack.yaml/env; hide overrides but keep them working.
 	_ = cmd.Flags().MarkHidden("fail-fast")
@@ -641,6 +703,56 @@ func buildRunOptions(kind stackRunKind, common stackCommandCommon, plan *stack.P
 		MaxAttempts:                maxAttemptsFromRetry(opts.Retry),
 		Selector:                   buildRunSelector(common),
 	}
+}
+
+type stackCaptureOptions struct {
+	RunID                  string            `json:"runId,omitempty"`
+	Command                string            `json:"command,omitempty"`
+	Concurrency            int               `json:"concurrency,omitempty"`
+	ProgressiveConcurrency bool              `json:"progressiveConcurrency,omitempty"`
+	FailMode               string            `json:"failMode,omitempty"`
+	MaxAttempts            int               `json:"maxAttempts,omitempty"`
+	DryRun                 bool              `json:"dryRun,omitempty"`
+	Diff                   bool              `json:"diff,omitempty"`
+	CacheApply             bool              `json:"cacheApply,omitempty"`
+	HelmLogs               bool              `json:"helmLogs,omitempty"`
+	Selector               stack.RunSelector `json:"selector,omitempty"`
+}
+
+func stackCaptureRunOptions(opts stack.RunOptions) stackCaptureOptions {
+	return stackCaptureOptions{
+		RunID:                  strings.TrimSpace(opts.RunID),
+		Command:                strings.TrimSpace(opts.Command),
+		Concurrency:            opts.Concurrency,
+		ProgressiveConcurrency: opts.ProgressiveConcurrency,
+		FailMode:               strings.TrimSpace(opts.FailMode),
+		MaxAttempts:            opts.MaxAttempts,
+		DryRun:                 opts.DryRun,
+		Diff:                   opts.Diff,
+		CacheApply:             opts.CacheApply,
+		HelmLogs:               opts.HelmLogs,
+		Selector:               opts.Selector,
+	}
+}
+
+func contextWithFallback(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.Background()
+	}
+	return ctx
+}
+
+func stackEventNamespace(ev stack.RunEvent) string {
+	if ev.Fields != nil {
+		if ns, ok := ev.Fields["namespace"].(string); ok && strings.TrimSpace(ns) != "" {
+			return strings.TrimSpace(ns)
+		}
+	}
+	parts := strings.Split(strings.TrimSpace(ev.NodeID), "/")
+	if len(parts) >= 2 {
+		return strings.TrimSpace(parts[1])
+	}
+	return ""
 }
 
 func buildRunSelector(common stackCommandCommon) stack.RunSelector {

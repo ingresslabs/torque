@@ -14,6 +14,7 @@ import (
 	_ "embed"
 
 	"github.com/go-logr/logr"
+	ktldocs "github.com/ingresslabs/ktl/docs"
 	"github.com/ingresslabs/ktl/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -60,6 +61,8 @@ func (s *Server) Run(ctx context.Context) error {
 	// - live UI: still supports /api/index.json for compatibility
 	mux.HandleFunc("/index.json", s.handleIndexJSON)
 	mux.HandleFunc("/api/index.json", s.handleIndexJSON)
+	mux.HandleFunc("/assets/ktl-showcase.gif", handleGIFAsset(ktldocs.KTLShowcaseGIF))
+	mux.HandleFunc("/assets/ktl-security.gif", handleGIFAsset(ktldocs.KTLSecurityGIF))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		_, _ = fmt.Fprint(w, "ok")
@@ -76,6 +79,21 @@ func (s *Server) Run(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func handleGIFAsset(data []byte) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "image/gif")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		if r.Method == http.MethodHead {
+			return
+		}
+		_, _ = w.Write(data)
+	}
 }
 
 type templateData struct {

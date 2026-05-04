@@ -23,9 +23,22 @@ var curatedExamples = map[string][]string{
 		"# Initialize another path\nktl init ./services/api",
 		"# Overwrite existing config\nktl init --force",
 	},
+	"ktl init from-cluster": {
+		"# Generate stack.yaml from the active namespace\nktl init from-cluster",
+		"# Preview adoption across all non-system namespaces\nktl init from-cluster --all-namespaces --dry-run",
+		"# Export installed charts and current Helm values\nktl init from-cluster --all-namespaces --write-values",
+		"# Adopt a specific namespace into another file\nktl init from-cluster -n prod --output stacks/prod.yaml",
+	},
 	"ktl build": {
-		"# Build an image from a directory\nktl build --context . --tag ghcr.io/acme/app:dev",
-		"# Share the build stream over WebSocket\nktl build --context . --ws-listen :9085",
+		"# Build an image from a directory\nktl build . --tag ghcr.io/acme/app:dev",
+		"# Capture build provenance for apply plan\nktl build . --tag ghcr.io/acme/app:dev --capture ./build.sqlite",
+		"# Share the build stream over WebSocket\nktl build . --ws-listen :9085",
+	},
+	"ktl explain": {
+		"# Explain a deploy capture\nktl explain ./apply.sqlite",
+		"# Explain a stack capture as JSON\nktl explain ./stack.sqlite --format json",
+		"# Write a Markdown explanation for CI logs or PR comments\nktl explain ./apply.sqlite --format markdown",
+		"# Explain a specific captured session\nktl explain ./apply.sqlite --session <session-id>",
 	},
 	"ktl help": {
 		"# Launch the interactive help UI\nktl help --ui",
@@ -33,6 +46,8 @@ var curatedExamples = map[string][]string{
 	},
 	"ktl apply plan": {
 		"# Preview a Helm upgrade\nktl apply plan --chart ./chart --release foo -n default",
+		"# Write a GitHub PR comment summary\nktl apply plan --chart ./chart --release foo -n default --github-comment --output plan.md",
+		"# Attach verifier and build evidence\nktl apply plan --chart ./chart --release foo -n default --verify-report verify.json --build-capture ./build.sqlite --github-comment",
 		"# Render a shareable HTML visualization\nktl apply plan --visualize --chart ./chart --release foo -n default",
 		"# Preview with secret references\nktl apply plan --chart ./chart --release foo -n default --secret-provider local",
 		"# Preview with Vault-backed secrets\nktl apply plan --chart ./chart --release foo -n default --secret-provider vault",
@@ -84,6 +99,7 @@ var curatedExamples = map[string][]string{
 	},
 	"ktl stack apply": {
 		"# Apply the selected releases (DAG order)\nktl stack apply --config ./stacks/prod --yes",
+		"# Capture a stack run evidence bundle\nktl stack apply --config ./stacks/prod --yes --capture ./stack.sqlite",
 		"# Resume the most recent run (uses stored frozen plan unless --replan is set)\nktl stack apply --config ./stacks/prod --resume --yes",
 		"# Enable manifest diffs (defaulted via env)\nKTL_STACK_APPLY_DIFF=1 ktl stack apply --config ./stacks/prod --yes",
 		"# Apply with secret references\nktl stack apply --config ./stacks/prod --secret-provider vault --yes",
@@ -126,11 +142,11 @@ var curatedExamples = map[string][]string{
 		"# HTML report\nverifier --manifest ./rendered.yaml --format html --report ./verify-report.html --open",
 		"# Print a suggested fix plan (table output only)\nverifier verify.yaml --fix",
 	},
-	"package": {
-		"# Package a chart directory\npackage ./chart --output dist/chart.sqlite",
-		"# Verify an existing archive\npackage --verify dist/chart.sqlite",
-		"# Package then verify (quiet with SHA)\npackage ./chart --output dist/chart.sqlite --print-sha --quiet && package --verify dist/chart.sqlite",
-		"# Stream an archive over ssh\npackage ./chart --output - | ssh host \"cat > chart.sqlite\"",
-		"# Unpack an archive into a directory\npackage --unpack dist/chart.sqlite --destination ./chart-unpacked",
+	"ktl-package": {
+		"# Package a chart directory\nktl-package ./chart --output dist/chart.sqlite",
+		"# Verify an existing archive\nktl-package --verify dist/chart.sqlite",
+		"# Package then verify (quiet with SHA)\nktl-package ./chart --output dist/chart.sqlite --print-sha --quiet && ktl-package --verify dist/chart.sqlite",
+		"# Stream an archive over ssh\nktl-package ./chart --output - | ssh host \"cat > chart.sqlite\"",
+		"# Unpack an archive into a directory\nktl-package --unpack dist/chart.sqlite --destination ./chart-unpacked",
 	},
 }

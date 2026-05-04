@@ -87,8 +87,10 @@ func newVerifyCommand(kubeconfigPath *string, kubeContext *string, logLevel *str
 
 	cmd := &cobra.Command{
 		Use:   "verify [config.yaml]",
-		Short: "Verify Kubernetes configuration",
+		Short: "Deprecated: use verifier for Kubernetes configuration checks",
 		Long: strings.TrimSpace(`
+The verify binary is deprecated and kept for compatibility. Use verifier for new CI and local workflows.
+
 Verify can run from a YAML config file, or directly from flags.
 
 YAML config (recommended for CI):

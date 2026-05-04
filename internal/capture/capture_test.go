@@ -43,6 +43,13 @@ func TestRecorderWritesSessionAndEvents(t *testing.T) {
 	if err := rec.RecordArtifact(context.Background(), "rendered_manifest", "kind: ConfigMap\n"); err != nil {
 		t.Fatalf("RecordArtifact: %v", err)
 	}
+	if err := rec.RecordEvent(context.Background(), EventMeta{
+		Kind:    "stack",
+		Source:  "NODE_RUNNING",
+		Message: "node started",
+	}, map[string]any{"nodeId": "dev/app"}); err != nil {
+		t.Fatalf("RecordEvent: %v", err)
+	}
 
 	if err := rec.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
@@ -72,8 +79,8 @@ func TestRecorderWritesSessionAndEvents(t *testing.T) {
 	if err := db.QueryRow(`SELECT COUNT(*) FROM ktl_capture_events`).Scan(&eventCount); err != nil {
 		t.Fatalf("count events: %v", err)
 	}
-	if eventCount != 2 {
-		t.Fatalf("expected 2 events, got %d", eventCount)
+	if eventCount != 3 {
+		t.Fatalf("expected 3 events, got %d", eventCount)
 	}
 	var minSeq sql.NullInt64
 	var maxSeq sql.NullInt64
@@ -89,5 +96,13 @@ func TestRecorderWritesSessionAndEvents(t *testing.T) {
 	}
 	if artifactCount != 1 {
 		t.Fatalf("expected 1 artifact, got %d", artifactCount)
+	}
+
+	artifacts, err := ReadArtifacts(context.Background(), dbPath, "rendered_manifest")
+	if err != nil {
+		t.Fatalf("ReadArtifacts: %v", err)
+	}
+	if got := LatestArtifactText(artifacts, "rendered_manifest"); got != "kind: ConfigMap\n" {
+		t.Fatalf("LatestArtifactText=%q", got)
 	}
 }

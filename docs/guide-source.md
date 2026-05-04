@@ -4,7 +4,7 @@
 
 # Introduction
 
-**ktl** (Kubernetes Tool) is a single, developer-centric binary designed to bridge the gap between interactive local workflows and headless CI pipelines. It unifies the functionality of multiple fragmented tools (kubectl, helm, stern, docker build) into a coherent, opinionated suite.
+**ktl** (Kubernetes Tool) is a deploy workflow toolkit designed to bridge the gap between interactive local rollouts, reviewable PR artifacts, and headless CI pipelines. It focuses on planning, applying, capturing, and explaining Kubernetes changes with enough evidence for review and incident response.
 
 ## The Problem
 
@@ -23,8 +23,8 @@ This fragmentation leads to context switching, inconsistent environments between
 **ktl** provides a unified interface for the entire lifecycle:
 1.  **Build**: Integrated BuildKit support (no local Docker daemon required).
 2.  **Deploy**: DAG-aware stack orchestration (replaces Helmfile).
-3.  **Debug**: Zero-config multi-pod log tailing and local diagnostics.
-4.  **Analyze**: Heuristic checks for crashing pods.
+3.  **Observe**: Zero-config multi-pod log tailing and rollout-aware status.
+4.  **Capture**: Portable SQLite evidence files that can be inspected after the run.
 
 ---
 
@@ -38,7 +38,7 @@ This fragmentation leads to context switching, inconsistent environments between
 ## Installation
 
 ```bash
-go install github.com/ingresslabs/ktl@latest
+go install github.com/ingresslabs/ktl/cmd/ktl@latest
 ```
 
 ## Quick Start
@@ -49,9 +49,9 @@ go install github.com/ingresslabs/ktl@latest
     ```
     This command will automatically tail all pods in the `default` namespace.
 
-2.  **Analyze a failing pod**:
+2.  **Preview a deploy**:
     ```bash
-    ktl analyze pod/my-failing-pod
+    ktl apply plan --chart ./chart --release my-app -n default --visualize
     ```
 
 ---
@@ -114,32 +114,29 @@ You fix the config, then either re-run the whole script (slow) or manually helm 
     ```
     Or simply re-run the original command; `ktl` sees that services 1-4 are already "Succeeded" and skips them (idempotency).
 
-## Scenario 2: Debugging a CrashLoopBackOff
+## Scenario 2: Reviewing And Debugging A Failed Rollout
 
-A pod is crashing, and you don't know why.
+A release fails and you need to understand what changed, which resources became unhealthy, and what evidence is available for a follow-up review.
 
 **Without ktl**:
-1.  `kubectl get pods` (Status: CrashLoopBackOff)
-2.  `kubectl logs pod-xyz` (Maybe the error is at the end?)
-3.  `kubectl logs pod-xyz --previous` (Maybe it crashed immediately?)
-4.  `kubectl describe pod` (OOMKilled?)
+1.  `helm upgrade --install ...`
+2.  `kubectl get pods` and `kubectl describe` across several resources.
+3.  `kubectl logs` by hand.
+4.  Copy terminal output into an issue after the context has already drifted.
 
 **With ktl**:
 ```bash
-ktl analyze pod-xyz
+ktl apply plan --chart ./chart --release api -n prod --visualize
+ktl apply --chart ./chart --release api -n prod --capture ./apply.sqlite --ui
+tar -czf ktl-evidence.tgz ./apply.sqlite
 ```
-The tool automatically:
-- Checks resource limits vs usage (OOM detection).
-- Scans events for scheduling issues.
-- Grabs logs (current and previous).
-- Correlates stack traces in logs with your *local* source code.
-- Summarizes the likely root cause and practical next checks.
+The workflow keeps the plan artifact, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, and command inputs together as durable evidence.
 
 # Advanced Features
 
-## Pod Diagnostics
+## Capture Evidence
 
-`ktl analyze` runs local checks over pod status, recent events, logs, resource usage, and common failure patterns.
+Command-level `ktl ... --capture` flags record deploy, destroy, build, and log sessions into a portable SQLite file. Store that file as a CI artifact or incident attachment so later diagnostics can explain the run without re-running against the cluster.
 
 ## Security & Governance
 
@@ -174,22 +171,9 @@ Tail logs from multiple pods.
 - `-l`: Label selector.
 - `--tail`: Number of lines.
 
-## ktl analyze
-Diagnose pod failures.
-
-**Usage**: `ktl analyze [POD] [flags]`
-- `--cluster`: Run cluster-wide checks.
-
----
-
 # Troubleshooting
 
 ## Common Issues
-
-### "Metrics server not found"
-If `ktl analyze` complains about missing metrics:
-- Ensure `metrics-server` is running in `kube-system`.
-- Note: Crashing pods do not report metrics. `ktl` handles this gracefully by warning you instead of failing.
 
 ### BuildKit Connection Failed
 - Ensure `buildkitd` is running locally or configured via `KTL_BUILDKIT_HOST`.
@@ -202,6 +186,6 @@ If `ktl analyze` complains about missing metrics:
 We welcome contributions! Please see `AGENTS.md` for our internal architectural guidelines and agent protocols.
 
 ## Principles
-1.  **Single Binary**: No external runtime dependencies if possible.
+1.  **Focused toolkit**: Keep `ktl` focused on the deploy workflow and include companion binaries only when they serve a distinct review job.
 2.  **Developer Experience First**: meaningful error messages, colors, and spinners.
 3.  **Idempotency**: All operations should be safe to retry.

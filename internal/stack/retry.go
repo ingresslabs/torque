@@ -23,6 +23,8 @@ func classifyError(err error) string {
 		return "CONFLICT"
 	case strings.Contains(msg, "timeout") || strings.Contains(msg, "context deadline exceeded"):
 		return "TIMEOUT"
+	case strings.Contains(msg, "verify: not ready"):
+		return "TIMEOUT"
 	case strings.Contains(msg, "connection reset") || strings.Contains(msg, "broken pipe") || strings.Contains(msg, "eof"):
 		return "TRANSPORT"
 	case strings.Contains(msg, "temporarily unavailable"):

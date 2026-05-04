@@ -47,7 +47,7 @@ func TestVerifyShortcut_Chart_ClientOnly(t *testing.T) {
 	cmd.SetOut(stdout)
 	cmd.SetErr(stderr)
 	cmd.SetArgs([]string{
-		"--chart", filepath.Join(repoRoot, "testdata", "charts", "verify-smoke"),
+		"--chart", filepath.Join(repoRoot, "testdata", "charts", "verify-findings"),
 		"--release", "demo",
 		"-n", "default",
 		"--kubeconfig", kcfg,

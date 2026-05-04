@@ -18,12 +18,15 @@ var (
 	//go:embed troubleshooting.md
 	TroubleshootingMD string
 
-	//go:embed helmer.md
-	HelmerMD string
-
 	//go:embed capture.md
 	CaptureMD string
 
 	//go:embed verifier.md
 	VerifierMD string
+
+	//go:embed assets/ktl-showcase.gif
+	KTLShowcaseGIF []byte
+
+	//go:embed assets/ktl-security.gif
+	KTLSecurityGIF []byte
 )

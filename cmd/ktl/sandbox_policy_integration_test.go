@@ -23,9 +23,9 @@ func TestSandboxBlocksUnboundHostPaths(t *testing.T) {
 	}
 	requireCommand(t, "nsjail")
 
-	configPath, err := ensureDefaultSandboxConfig()
-	if err != nil {
-		t.Fatalf("resolve sandbox config: %v", err)
+	configPath := filepath.Join(intTestRepoRoot, "internal", "workflows", "buildsvc", "sandbox", "ktl-default.cfg")
+	if !pathExists(configPath) {
+		t.Fatalf("missing sandbox config: %s", configPath)
 	}
 
 	proofDir := t.TempDir()
@@ -72,7 +72,7 @@ func runSandboxShell(t *testing.T, configPath, script string, extra []string) (s
 	logPath := filepath.Join(t.TempDir(), "sandbox.log")
 	args := []string{"--config", configPath, "--log", logPath, "--cwd", "/", "--quiet"}
 
-	baseBinds := append([]string{"/bin"}, systemDirBinds...)
+	baseBinds := append([]string{"/bin"}, sandboxPolicySystemDirBinds...)
 	for _, dir := range baseBinds {
 		if pathExists(dir) {
 			args = append(args, "--bindmount_ro", fmt.Sprintf("%s:%s", dir, dir))
@@ -93,4 +93,15 @@ func runSandboxShell(t *testing.T, configPath, script string, extra []string) (s
 		}
 	}
 	return buf.String(), err
+}
+
+var sandboxPolicySystemDirBinds = []string{
+	"/usr/bin",
+	"/usr/lib",
+	"/usr/libexec",
+	"/usr/libexec/docker",
+	"/usr/libexec/docker/cli-plugins",
+	"/usr/lib/docker",
+	"/lib",
+	"/lib64",
 }

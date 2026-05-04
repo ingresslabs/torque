@@ -62,12 +62,6 @@ func Catalog() []VarInfo {
 			Description: "Enable profiling modes for ktl itself (e.g. startup writes CPU/heap profiles to the working directory).",
 		},
 		{
-			Category:    "Features",
-			Name:        "KTL_FEATURE_<FLAG>",
-			Dynamic:     true,
-			Description: "Enable an experimental feature flag (repeatable via env). Example: KTL_FEATURE_DEPLOY_PLAN_HTML_V3=1.",
-		},
-		{
 			Category:    "Build",
 			Name:        "KTL_BUILDKIT_HOST",
 			Description: "Override the BuildKit address used by `ktl build`.",

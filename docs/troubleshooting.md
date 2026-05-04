@@ -95,7 +95,7 @@ Why:
 What to run:
 ```bash
 export KTL_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
-ktl build --context . --tag ghcr.io/acme/app:dev --sandbox-logs
+ktl build . --tag ghcr.io/acme/app:dev --sandbox-logs
 ```
 
 Next steps:

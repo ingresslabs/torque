@@ -8,17 +8,16 @@ package featureflags
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 )
 
-func TestResolve(t *testing.T) {
-	flags, err := Resolve([]string{"deploy-plan-html-v3"})
+func TestResolveWithNoRegisteredFlags(t *testing.T) {
+	flags, err := Resolve(nil)
 	if err != nil {
 		t.Fatalf("Resolve returned error: %v", err)
 	}
-	if !flags.Enabled(FeatureDeployPlanHTMLV3) {
-		t.Fatalf("expected feature %s to be enabled", FeatureDeployPlanHTMLV3)
+	if got := flags.EnabledNames(); len(got) != 0 {
+		t.Fatalf("expected no enabled flags, got %v", got)
 	}
 }
 
@@ -31,47 +30,39 @@ func TestResolveUnknown(t *testing.T) {
 
 func TestEnabledFromEnv(t *testing.T) {
 	env := []string{
-		"KTL_FEATURE_DEPLOY_PLAN_HTML_V3=1",
+		"KTL_FEATURE_DEAD_FLAG=1",
 		"SOME_OTHER=value",
 		"KTL_FEATURE_BOGUS=0",
 	}
 	list := EnabledFromEnv(env)
-	flags, err := Resolve(list)
-	if err != nil {
-		t.Fatalf("Resolve returned error: %v", err)
+	if len(list) != 1 || list[0] != "dead-flag" {
+		t.Fatalf("expected one normalized env flag, got %v", list)
 	}
-	if !flags.Enabled(FeatureDeployPlanHTMLV3) {
-		t.Fatalf("expected env to enable %s", FeatureDeployPlanHTMLV3)
+	_, err := Resolve(list)
+	if !errors.Is(err, ErrUnknownFeature) {
+		t.Fatalf("expected stale env flag to be rejected, got %v", err)
 	}
 }
 
 func TestContextHelpers(t *testing.T) {
-	flags, err := Resolve([]string{"deploy-plan-html-v3"})
+	flags, err := Resolve(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := ContextWithFlags(context.Background(), flags)
 	actual := FromContext(ctx)
-	if !actual.Enabled(FeatureDeployPlanHTMLV3) {
-		t.Fatalf("expected flag to survive context round-trip")
-	}
-	if FromContext(context.Background()).Enabled(FeatureDeployPlanHTMLV3) {
-		t.Fatalf("zero context should not report feature enabled")
+	if got := actual.EnabledNames(); len(got) != 0 {
+		t.Fatalf("expected context to preserve empty flag set, got %v", got)
 	}
 }
 
 func TestEnabledFromEnvUsesProcessEnv(t *testing.T) {
-	t.Setenv("KTL_FEATURE_DEPLOY_PLAN_HTML_V3", "true")
+	t.Setenv("KTL_FEATURE_DEAD_FLAG", "true")
 	list := EnabledFromEnv(nil)
 	if len(list) != 1 {
 		t.Fatalf("expected 1 env flag, got %d", len(list))
 	}
-	flags, err := Resolve(list)
-	if err != nil {
-		t.Fatal(err)
+	if list[0] != "dead-flag" {
+		t.Fatalf("expected normalized env flag, got %v", list)
 	}
-	if !flags.Enabled(FeatureDeployPlanHTMLV3) {
-		t.Fatalf("expected process env to enable flag")
-	}
-	os.Unsetenv("KTL_FEATURE_DEPLOY_PLAN_HTML_V3")
 }

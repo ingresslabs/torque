@@ -414,11 +414,16 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 				runErr = err
 				return nil, err
 			} else if err := gate.enforceOrWarn(errOut, rep, "pre", 10); err != nil {
+				if captureRecorder != nil {
+					_ = captureRecorder.RecordArtifact(ctx, "build.policy_pre_report_json", mustMarshalJSON(rep))
+				}
 				if stream != nil {
 					stream.emitPhase("policy-pre", "failed", err.Error())
 				}
 				runErr = err
 				return nil, err
+			} else if captureRecorder != nil {
+				_ = captureRecorder.RecordArtifact(ctx, "build.policy_pre_report_json", mustMarshalJSON(rep))
 			}
 			if stream != nil {
 				stream.emitPhase("policy-pre", "completed", "Pre-build policy passed")
@@ -453,11 +458,16 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 				runErr = err
 				return nil, err
 			} else if err := gate.enforceOrWarn(errOut, rep, "post", 10); err != nil {
+				if captureRecorder != nil {
+					_ = captureRecorder.RecordArtifact(ctx, "build.policy_post_report_json", mustMarshalJSON(rep))
+				}
 				if stream != nil {
 					stream.emitPhase("policy-post", "failed", err.Error())
 				}
 				runErr = err
 				return nil, err
+			} else if captureRecorder != nil {
+				_ = captureRecorder.RecordArtifact(ctx, "build.policy_post_report_json", mustMarshalJSON(rep))
 			}
 			if stream != nil {
 				stream.emitPhase("policy-post", "completed", "Post-build policy passed")
@@ -505,11 +515,16 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 			runErr = err
 			return nil, err
 		} else if err := gate.enforceOrWarn(errOut, rep, "pre", 10); err != nil {
+			if captureRecorder != nil {
+				_ = captureRecorder.RecordArtifact(ctx, "build.policy_pre_report_json", mustMarshalJSON(rep))
+			}
 			if stream != nil {
 				stream.emitPhase("policy-pre", "failed", err.Error())
 			}
 			runErr = err
 			return nil, err
+		} else if captureRecorder != nil {
+			_ = captureRecorder.RecordArtifact(ctx, "build.policy_pre_report_json", mustMarshalJSON(rep))
 		}
 		if stream != nil {
 			stream.emitPhase("policy-pre", "completed", "Pre-build policy passed")
@@ -767,11 +782,16 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 			runErr = err
 			return nil, err
 		} else if err := gate.enforceOrWarn(errOut, rep, "post", 10); err != nil {
+			if captureRecorder != nil {
+				_ = captureRecorder.RecordArtifact(ctx, "build.policy_post_report_json", mustMarshalJSON(rep))
+			}
 			if stream != nil {
 				stream.emitPhase("policy-post", "failed", err.Error())
 			}
 			runErr = err
 			return nil, err
+		} else if captureRecorder != nil {
+			_ = captureRecorder.RecordArtifact(ctx, "build.policy_post_report_json", mustMarshalJSON(rep))
 		}
 		if stream != nil {
 			stream.emitPhase("policy-post", "completed", "Post-build policy passed")

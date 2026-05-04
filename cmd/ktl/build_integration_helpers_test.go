@@ -27,7 +27,7 @@ func buildIntegrationBinary(t *testing.T) string {
 	buildBinaryOnce.Do(func() {
 		path := filepath.Join(os.TempDir(), fmt.Sprintf("ktl.integration.%d", time.Now().UnixNano()))
 		cmd := exec.Command("go", "build", "-o", path, "./cmd/ktl")
-		cmd.Dir = repoRoot
+		cmd.Dir = intTestRepoRoot
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {

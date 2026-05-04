@@ -13,10 +13,9 @@ Artifacts are written into `./dist/` and should not be committed.
 The packages install:
 
 - `ktl`
-- `helmer`
 - `verifier`
-- `verify`
-- `package`
+- `verify` (deprecated compatibility binary; prefer `verifier`)
+- `ktl-package`
 
 ## Customization
 

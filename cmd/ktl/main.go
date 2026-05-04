@@ -218,6 +218,8 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	logsCmd := newLogsCommand(opts, &kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr, &remoteToken, &remoteTLS, &remoteTLSInsecureSkipVerify, &remoteTLSCA, &remoteTLSClientCert, &remoteTLSClientKey, &remoteTLSServerName, &mirrorBusAddr)
 	initCmd := newInitCommand(&kubeconfigPath, &kubeContext, &globalProfile)
 	buildCmd := newBuildCommandWithService(buildService, &globalProfile, &logLevel, &kubeconfigPath, &kubeContext)
+	shipCmd := newShipCommand(buildService, &globalProfile, &logLevel, &kubeconfigPath, &kubeContext, &remoteAgentAddr)
+	explainCmd := newExplainCommand()
 	analyzeCmd := newAnalyzeCommand(&kubeconfigPath, &kubeContext)
 	listCmd := newListCommand(&kubeconfigPath, &kubeContext)
 	lintCmd := newLintCommand(&kubeconfigPath, &kubeContext)
@@ -233,6 +235,8 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	cmd.AddCommand(
 		initCmd,
 		buildCmd,
+		shipCmd,
+		explainCmd,
 		analyzeCmd,
 		revertCmd,
 		applyCmd,

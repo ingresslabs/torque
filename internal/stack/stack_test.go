@@ -77,6 +77,41 @@ tags: [cache]
 	}
 }
 
+func TestCompile_AllowsSameReleaseNameAcrossNamespaces(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "stack.yaml"), `
+apiVersion: ktl.dev/v1
+kind: Stack
+name: adopted
+defaults:
+  cluster: { name: c1 }
+releases:
+  - name: api
+    namespace: dev
+    chart: ./api
+  - name: api
+    namespace: prod
+    chart: ./api
+`)
+	u, err := Discover(root)
+	if err != nil {
+		t.Fatalf("discover: %v", err)
+	}
+	p, err := Compile(u, CompileOptions{})
+	if err != nil {
+		t.Fatalf("compile: %v", err)
+	}
+	if len(p.Nodes) != 2 {
+		t.Fatalf("nodes=%d", len(p.Nodes))
+	}
+	if p.Nodes[0].ID == p.Nodes[1].ID {
+		t.Fatalf("expected unique node IDs, got %q", p.Nodes[0].ID)
+	}
+	if _, err := Select(u, p, nil, Selector{Releases: []string{"api"}}); err == nil {
+		t.Fatalf("expected bare release selection to remain ambiguous")
+	}
+}
+
 func TestSelect_ByTagAndIncludeDeps(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "stack.yaml"), `

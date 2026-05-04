@@ -77,6 +77,16 @@ type writeRequest struct {
 	fn  func(context.Context, *sql.Tx) error
 }
 
+type EventMeta struct {
+	Kind      string
+	Level     string
+	Source    string
+	Namespace string
+	Pod       string
+	Container string
+	Message   string
+}
+
 func Open(path string, meta SessionMeta) (*Recorder, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
@@ -223,6 +233,45 @@ func (r *Recorder) RecordArtifact(ctx context.Context, name, text string) error 
 INSERT INTO ktl_capture_artifacts(session_id, seq, ts, ts_ns, name, text)
 VALUES(?, ?, ?, ?, ?, ?)
 `, r.sessionID, seq, now.Format(time.RFC3339Nano), now.UnixNano(), name, text)
+		return err
+	})
+}
+
+func (r *Recorder) RecordEvent(ctx context.Context, meta EventMeta, payload any) error {
+	if r == nil {
+		return nil
+	}
+	kind := strings.TrimSpace(meta.Kind)
+	if kind == "" {
+		return errors.New("event kind is required")
+	}
+	ts := r.now()
+	seq := r.nextSeq()
+	payloadType, payloadBlob, payloadJSON := encodePayload(mustJSON(payload))
+	return r.enqueue(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := tx.ExecContext(ctx, `
+INSERT INTO ktl_capture_events(
+  session_id, seq, ts, ts_ns, kind,
+  level, source, namespace, pod, container,
+  message, payload_type, payload_blob, payload_json
+)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`,
+			r.sessionID,
+			seq,
+			ts.Format(time.RFC3339Nano),
+			ts.UnixNano(),
+			kind,
+			strings.TrimSpace(meta.Level),
+			strings.TrimSpace(meta.Source),
+			strings.TrimSpace(meta.Namespace),
+			strings.TrimSpace(meta.Pod),
+			strings.TrimSpace(meta.Container),
+			strings.TrimSpace(meta.Message),
+			payloadType,
+			payloadBlob,
+			payloadJSON,
+		)
 		return err
 	})
 }

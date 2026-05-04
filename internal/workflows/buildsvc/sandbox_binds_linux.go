@@ -122,21 +122,6 @@ func dedupeBinds(in []sandboxBind) []sandboxBind {
 	return out
 }
 
-func pathWithin(base, target string) bool {
-	if base == "" || target == "" {
-		return false
-	}
-	rel, err := filepath.Rel(base, target)
-	if err != nil {
-		return false
-	}
-	if rel == "." {
-		return true
-	}
-	prefix := ".." + string(filepath.Separator)
-	return rel != ".." && !strings.HasPrefix(rel, prefix)
-}
-
 func sandboxDisabled() bool {
 	return os.Getenv(sandboxDisableEnvKey) == "1" || os.Getenv(legacySandboxDisableEnv) == "1"
 }

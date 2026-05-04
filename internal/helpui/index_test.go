@@ -65,3 +65,20 @@ func TestBuildIndex_DeduplicatesGlobalFlags(t *testing.T) {
 		t.Fatalf("expected exactly 1 --mirror-bus entry, got %d", count)
 	}
 }
+
+func TestBuildIndex_HasUniqueEntryIDs(t *testing.T) {
+	root := &cobra.Command{Use: "ktl"}
+	root.AddCommand(&cobra.Command{Use: "apply", Short: "Apply chart"})
+
+	index := BuildIndex(root, false)
+	seen := make(map[string]struct{}, len(index.Entries))
+	for _, entry := range index.Entries {
+		if entry.ID == "" {
+			t.Fatalf("entry with empty ID: %+v", entry)
+		}
+		if _, ok := seen[entry.ID]; ok {
+			t.Fatalf("duplicate index entry ID %q", entry.ID)
+		}
+		seen[entry.ID] = struct{}{}
+	}
+}

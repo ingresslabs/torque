@@ -1,0 +1,6 @@
+apiVersion: v2
+name: verify-findings
+description: Intentionally incomplete chart for verify finding tests
+type: application
+version: 0.1.0
+appVersion: "1.0"

@@ -235,7 +235,7 @@ Example (CI-like policy):
 
 ```bash
 export KTL_SANDBOX_CONFIG="$(pwd)/sandbox/linux-ci.cfg"
-ktl build --context . --tag ghcr.io/acme/app:dev
+ktl build . --tag ghcr.io/acme/app:dev
 ```
 
 What matters most in a policy:
