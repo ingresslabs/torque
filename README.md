@@ -23,8 +23,12 @@ review, or inspected later without a running `ktl` service.
   </a>
 </p>
 
+<div align="center">
+
 <details>
-<summary>Fast delivery GIF demo</summary>
+<summary><strong>Fast delivery demo</strong> <code>build -> plan -> apply</code></summary>
+
+<br>
 
 <p align="center">
   <a href="https://ingresslabs.github.io/ktl/">
@@ -40,7 +44,9 @@ review, or inspected later without a running `ktl` service.
 </details>
 
 <details>
-<summary>Security GIF demo</summary>
+<summary><strong>Security demo</strong> <code>verify -> sandbox -> gate</code></summary>
+
+<br>
 
 <p align="center">
   <a href="https://ingresslabs.github.io/ktl/">
@@ -54,6 +60,8 @@ review, or inspected later without a running `ktl` service.
 </p>
 
 </details>
+
+</div>
 
 ## Deliver
 
