@@ -3,7 +3,7 @@
 Agent-first Kubernetes delivery CLI.
 
 `ktl` gives humans and AI agents one reliable loop for Kubernetes delivery:
-build, verify, plan, apply, capture evidence, and explain what happened.
+build, verify, plan, apply, capture evidence, and inspect what happened.
 The evidence layer is file-first: captures, reports, and chart archives are
 self-contained SQLite artifacts that can be copied, stored in CI, attached to a
 review, or inspected later without a running `ktl` service.
@@ -25,22 +25,30 @@ review, or inspected later without a running `ktl` service.
 
 <p align="center">
   <a href="https://ingresslabs.github.io/ktl/">
-    <img src="docs/assets/ktl-showcase.gif" alt="ktl showcase" width="900">
+    <img src="docs/assets/ktl-showcase.gif" alt="ktl fast delivery demo" width="900">
   </a>
 </p>
 
-## Ship
+<p align="center">
+  <strong>Fast demo:</strong> <code>build</code>, <code>apply plan</code>, <code>apply</code>,
+  <code>stack plan</code>, and <code>logs</code> form a fast reviewable delivery loop.
+</p>
+
+## Deliver
 
 ```bash
-ktl ship --chart ./chart --release api -n prod \
-  --build . --tag ghcr.io/acme/api:dev --yes
+ktl build . --tag ghcr.io/acme/api:dev --capture ./build.sqlite
+ktl apply plan --chart ./chart --release api -n prod \
+  --build-capture ./build.sqlite --github-comment --output plan.md
+ktl apply --chart ./chart --release api -n prod --capture ./apply.sqlite --yes
+ktl logs 'api-.*' -n prod --capture ./logs.sqlite --tail 100
 ```
 
-Runs build -> verify -> plan -> apply -> capture -> explain.
+Runs build -> plan -> apply -> capture -> logs.
 
 ## Features
 
-- Golden deploy workflow with one trusted command.
+- Golden deploy workflow with one trusted loop.
 - Self-contained SQLite evidence for builds, deploys, logs, stacks, and chart archives.
 - Reviewable Helm plans, diffs, Markdown, and visual artifacts.
 - Agent automation through `ktl-agent` gRPC workflows.
@@ -48,8 +56,8 @@ Runs build -> verify -> plan -> apply -> capture -> explain.
 
 ## Utilities
 
-- `helmer` is the standalone Helm plan viewer shipped from this repo. It renders reviewable plan previews before a release, including creates/updates/deletes, diff visualizations, compare overlays, and quota/headroom context.
-- `verifier` is the standalone Kubernetes configuration verifier shipped from this repo. It checks Helm charts, rendered manifests, and live namespaces with the same policy engine used by `ktl` verification workflows, producing reports suitable for local review and CI.
+- `helmer` is the standalone Helm plan viewer included in this repo. It renders reviewable plan previews before a release, including creates/updates/deletes, diff visualizations, compare overlays, and quota/headroom context.
+- `verifier` is the standalone Kubernetes configuration verifier included in this repo. It checks Helm charts, rendered manifests, and live namespaces with the same policy engine used by `ktl` verification workflows, producing reports suitable for local review and CI.
 
 ## Install
 

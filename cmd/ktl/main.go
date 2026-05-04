@@ -127,8 +127,8 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 
 	cmd := &cobra.Command{
 		Use:           "ktl <command>",
-		Short:         "High-performance multi-pod Kubernetes log tailer",
-		Long:          "ktl is the Kubernetes Swiss Army Knife.",
+		Short:         "Reviewable Kubernetes deploy workflow CLI",
+		Long:          "ktl plans, verifies, applies, captures, and observes Kubernetes deploy workflows.",
 		Args:          cobra.ArbitraryArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -218,7 +218,6 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	logsCmd := newLogsCommand(opts, &kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr, &remoteToken, &remoteTLS, &remoteTLSInsecureSkipVerify, &remoteTLSCA, &remoteTLSClientCert, &remoteTLSClientKey, &remoteTLSServerName, &mirrorBusAddr)
 	initCmd := newInitCommand(&kubeconfigPath, &kubeContext, &globalProfile)
 	buildCmd := newBuildCommandWithService(buildService, &globalProfile, &logLevel, &kubeconfigPath, &kubeContext)
-	shipCmd := newShipCommand(buildService, &globalProfile, &logLevel, &kubeconfigPath, &kubeContext, &remoteAgentAddr)
 	analyzeCmd := newAnalyzeCommand(&kubeconfigPath, &kubeContext)
 	listCmd := newListCommand(&kubeconfigPath, &kubeContext)
 	lintCmd := newLintCommand(&kubeconfigPath, &kubeContext)
@@ -234,7 +233,6 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	cmd.AddCommand(
 		initCmd,
 		buildCmd,
-		shipCmd,
 		analyzeCmd,
 		revertCmd,
 		applyCmd,
@@ -268,7 +266,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
   # Apply chart changes
 	ktl apply --chart ./chart --release foo --namespace prod`
 	decorateCommandHelp(cmd, "Global Flags")
-	bindViper(cmd, initCmd, logsCmd, buildCmd, shipCmd, listCmd, lintCmd, applyCmd, deleteCmd, stackCmd)
+	bindViper(cmd, initCmd, logsCmd, buildCmd, listCmd, lintCmd, applyCmd, deleteCmd, stackCmd)
 
 	_ = cmd.RegisterFlagCompletionFunc("profile", cobra.FixedCompletions([]string{"dev", "ci", "secure", "remote"}, cobra.ShellCompDirectiveNoFileComp))
 	_ = cmd.RegisterFlagCompletionFunc("log-level", cobra.FixedCompletions([]string{"debug", "info", "warn", "error"}, cobra.ShellCompDirectiveNoFileComp))
@@ -288,7 +286,7 @@ Usage:
   {{.UseLine}}
 
 Subcommands:
-{{- range $i, $n := (list "init" "build" "ship" "analyze" "apply" "delete" "stack" "revert" "list" "lint" "logs" "env" "secrets" "version" "up" "wait") }}
+{{- range $i, $n := (list "init" "build" "apply" "delete" "stack" "revert" "list" "lint" "logs" "env" "secrets" "version") }}
 {{- with (indexCommand $.Commands $n) }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end }}
@@ -324,7 +322,7 @@ func init() {
 			if c == nil {
 				continue
 			}
-			if c.Name() == name {
+			if c.Name() == name && !c.Hidden {
 				return c
 			}
 		}
@@ -624,8 +622,10 @@ func setupProfiling() func() {
 
 func newUpCommand(kubeconfig, kubeContext *string) *cobra.Command {
 	return &cobra.Command{
-		Use:   "up",
-		Short: "Start a development workspace defined in ktl.yaml",
+		Use:        "up",
+		Short:      "Start a development workspace defined in ktl.yaml",
+		Hidden:     true,
+		Deprecated: "use `ktl logs`, `ktl apply --ui`, or `ktl stack status --follow`; this experimental workspace command is no longer part of the focused CLI surface",
 		Long: `Reads a 'ktl.yaml' file in the current directory and starts all defined log streams.
 This allows you to define your development environment as code.
 
@@ -670,8 +670,10 @@ func newWaitCommand(kubeconfig, kubeContext *string) *cobra.Command {
 	var namespace string
 
 	cmd := &cobra.Command{
-		Use:   "wait [POD_NAME_PATTERN]",
-		Short: "Wait for a pod to be ready AND match a log pattern",
+		Use:        "wait [POD_NAME_PATTERN]",
+		Short:      "Wait for a pod to be ready AND match a log pattern",
+		Hidden:     true,
+		Deprecated: "use `ktl apply --wait`, `ktl stack apply` health gates, or `kubectl wait`; this experimental helper is no longer part of the focused CLI surface",
 		Long: `Wait for a pod to satisfy conditions that are harder to check with kubectl wait.
 Useful for CI/CD pipelines where you need to wait for an app to be "business ready" (e.g. "Server started on port 8080").
 

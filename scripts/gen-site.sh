@@ -10,11 +10,17 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${repo_root}"
 
 OUT_DIR="${OUT_DIR:-site}"
-KTL_BIN="${KTL_BIN:-${repo_root}/bin/ktl}"
 INCLUDE_ALL="${INCLUDE_ALL:-0}" # set to 1 to include hidden/internal flags + env vars
+site_bin_dir=""
+if [[ -z "${KTL_BIN:-}" ]]; then
+  site_bin_dir="$(mktemp -d)"
+  KTL_BIN="${site_bin_dir}/ktl"
+fi
 
 mkdir -p "${OUT_DIR}"
 touch "${OUT_DIR}/.nojekyll"
+mkdir -p "${OUT_DIR}/assets"
+cp "${repo_root}/docs/assets/ktl-showcase.gif" "${OUT_DIR}/assets/ktl-showcase.gif"
 
 if [[ ! -x "${KTL_BIN}" ]]; then
   echo ">> building ${KTL_BIN}"
@@ -52,6 +58,9 @@ cleanup() {
     kill "${pid}" >/dev/null 2>&1 || true
     wait "${pid}" >/dev/null 2>&1 || true
   fi
+  if [[ -n "${site_bin_dir}" ]]; then
+    rm -rf "${site_bin_dir}"
+  fi
 }
 trap cleanup EXIT
 
@@ -75,9 +84,38 @@ echo ">> fetching HTML + index.json"
 curl -fsS "${base_url}/" >"${tmp_html}"
 # Prefer /index.json so the fetched HTML works as a static site without an /api/ router.
 curl -fsS "${base_url}/index.json" >"${tmp_json}"
+python3 - "${tmp_html}" "${KTL_SITE_VERSION_LABEL:-ktl docs}" <<'PY'
+import re
+import sys
+from html import escape
+
+path, version_label = sys.argv[1], sys.argv[2]
+with open(path, "r", encoding="utf-8") as fh:
+    html = fh.read()
+html = re.sub(
+    r'(<div class="helpMeta">)(.*?)(</div>)',
+    lambda match: match.group(1) + escape(version_label) + match.group(3),
+    html,
+    count=1,
+)
+with open(path, "w", encoding="utf-8") as fh:
+    fh.write(html)
+PY
+python3 - "${tmp_json}" "${KTL_SITE_GENERATED_AT:-1970-01-01T00:00:00Z}" <<'PY'
+import json
+import sys
+
+path, generated_at = sys.argv[1], sys.argv[2]
+with open(path, "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+data["generatedAt"] = generated_at
+with open(path, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+PY
 
 mv "${tmp_html}" "${OUT_DIR}/index.html"
 mv "${tmp_json}" "${OUT_DIR}/index.json"
 
 echo ">> wrote:"
-ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/index.json" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'
+ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/index.json" "${OUT_DIR}/assets/ktl-showcase.gif" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'

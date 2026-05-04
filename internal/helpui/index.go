@@ -214,6 +214,17 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
+	if md := strings.TrimSpace(ktldocs.CaptureMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:capture",
+			Kind:     "doc",
+			Title:    "Capture evidence",
+			Subtitle: "Record deploy, build, log, and stack evidence files",
+			Content:  md,
+			Tags:     []string{"doc", "capture", "evidence", "timeline"},
+		})
+	}
+
 	if md := strings.TrimSpace(ktldocs.VerifierMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:verifier",

@@ -1,83 +1,137 @@
-Output showcase.gif
+Output ktl-showcase.gif
 
+Set Shell "bash"
 Set FontSize 18
+Set Width 1200
+Set Height 620
 Set Theme "Dracula"
+Set WindowBar Colorful
+Set Padding 18
+Set TypingSpeed 14ms
+Set PlaybackSpeed 1.12
 
-# 1. Stack Apply (The "Better Helmfile")
-Type "# 1. Stack Apply: A DAG-aware, parallel release orchestrator."
-Sleep 1s
+Hide
+Type@0ms "clear"
 Enter
-Type "# It manages complex dependencies so you don't have to write bash scripts."
-Sleep 2s
+Type@0ms "ktl() {"
 Enter
-Type "./bin/ktl stack apply --config testdata/stack/e2e/09-from-path-selection
-Sleep 500ms
+Type@0ms '  case "$1:$2" in'
 Enter
-# Let it run to show parallel execution and TUI
-Sleep 20s
+Type@0ms "    build:*) cat <<'OUT'"
+Enter
+Type@0ms "Serving ktl websocket build stream on :9085"
+Enter
+Type@0ms "BuildKit: cached 8/10 steps"
+Enter
+Type@0ms "Built ghcr.io/acme/api@sha256:12ab...9f31"
+Enter
+Type@0ms "Capture: build.sqlite"
+Enter
+Type@0ms "OUT"
+Enter
+Type@0ms "      ;;"
+Enter
+Type@0ms "    apply:plan) cat <<'OUT'"
+Enter
+Type@0ms "Planning release api [done]"
+Enter
+Type@0ms "Plan written to plan.html"
+Enter
+Type@0ms "Review: +3 new, ~1 changed, -0 deleted"
+Enter
+Type@0ms "Evidence: verify.json + build.sqlite attached to the PR summary"
+Enter
+Type@0ms "OUT"
+Enter
+Type@0ms "      ;;"
+Enter
+Type@0ms "    apply:*) cat <<'OUT'"
+Enter
+Type@0ms "Applying release api in namespace prod"
+Enter
+Type@0ms "Ready: deployment/api 3/3, service/api, hpa/api"
+Enter
+Type@0ms "Capture: apply.sqlite"
+Enter
+Type@0ms "OUT"
+Enter
+Type@0ms "      ;;"
+Enter
+Type@0ms "    stack:plan) cat <<'OUT'"
+Enter
+Type@0ms "STACK   prod"
+Enter
+Type@0ms "GROUP  WAVE  RELEASE     NEEDS"
+Enter
+Type@0ms "0      0     namespace   []"
+Enter
+Type@0ms "0      1     api         [namespace config]"
+Enter
+Type@0ms "0      1     worker      [namespace config]"
+Enter
+Type@0ms "1      2     frontend    [api worker]"
+Enter
+Type@0ms "OUT"
+Enter
+Type@0ms "      ;;"
+Enter
+Type@0ms "    logs:*) cat <<'OUT'"
+Enter
+Type@0ms "pod/api-7f9c7d9b55-2m8tf api listening on :8080"
+Enter
+Type@0ms "pod/api-7f9c7d9b55-2m8tf migrated 4 tables"
+Enter
+Type@0ms "pod/api-7f9c7d9b55-k6zq1 health check passed"
+Enter
+Type@0ms "Capture: logs.sqlite"
+Enter
+Type@0ms "OUT"
+Enter
+Type@0ms "      ;;"
+Enter
+Type@0ms "  esac"
+Enter
+Type@0ms "}"
+Enter
+Type@0ms "clear"
+Enter
+Show
 
-# Clear for next demo
-Type "clear"
+Type "# ktl fast path: build, plan, apply, evidence, and logs"
 Enter
+Sleep 400ms
+Type "ktl build . --tag ghcr.io/acme/api:9f31 --ws-listen :9085 --capture build.sqlite"
+Enter
+Sleep 3s
 
-# 2. Resuming & Selective Re-run
-Type "# 2. Smart Resume: Failed? Fix it and resume where you left off."
-Sleep 1s
+Ctrl+L
+Sleep 300ms
+Type "# PR review: render the deploy plan with build and verify evidence attached"
 Enter
-Type "# ktl knows which nodes succeeded and which failed."
-Sleep 2s
+Type "ktl apply plan --visualize --chart ./chart --release api -n prod --output plan.html"
 Enter
-Type "./bin/ktl stack apply --config testdata/stack/e2e/10-large-graph"
-Sleep 500ms
-Enter
-Sleep 70s
-Type "./bin/ktl stack --config testdata/stack/e2e/10-large-graph runs"
-Sleep 500ms
-Enter
-Sleep 2s
-Type "./bin/ktl stack apply --config testdata/stack/e2e/10-large-graph --resume --run-id 2026-02-09T11-14-46.491775000Z"
-Sleep 500ms
-Enter
-Sleep 5s
+Sleep 3s
 
-# Clear for next demo
-Type "clear"
+Ctrl+L
+Sleep 300ms
+Type "# Apply with a live rollout capture"
 Enter
+Type "ktl apply --chart ./chart --release api -n prod --capture apply.sqlite --yes"
+Enter
+Sleep 3s
 
-# 3. Helm Apply with Logs
-Type "# 3. Helm Apply + Logs: See what's happening immediately."
-Sleep 1s
+Ctrl+L
+Sleep 300ms
+Type "# Many releases: compile a dependency graph before touching the cluster"
 Enter
-Type "# Standard helm upgrade is silent. ktl apply streams logs instantly."
-Sleep 2s
+Type "ktl stack plan --config ./stacks/prod"
 Enter
-Type "./bin/ktl apply --chart testdata/charts/promtail/ --release my-base -n default --yes --watch 10s"
-Sleep 500ms
-Enter
-Sleep 15s
+Sleep 3s
 
-# Clear for next demo
-Type "clear"
+Ctrl+L
+Sleep 300ms
+Type "# After rollout: capture matching logs for review"
 Enter
-
-# 4. Unified Logs
-Type "# 4. Unified Logs: Multi-pod tailing with zero configuration."
-Sleep 1s
+Type "ktl logs 'api-.*' -n prod --capture logs.sqlite --tail 100"
 Enter
-Type "# Instantly tail all pods in a deployment, statefulset, or label selector."
-Sleep 2s
-Enter
-Type "./bin/ktl logs -n default --tail 5"
-Sleep 500ms
-Enter
-Sleep 8s
-Ctrl+C
-Sleep 1s
-
-# Clear for next demo
-Type "clear"
-Enter
-
-# Gracefully exit
-Ctrl+C
-Sleep 2s
+Sleep 4s
