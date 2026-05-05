@@ -422,6 +422,27 @@
         cursor: zoom-in;
       }
 
+      .architecture-diagrams .demo-media {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+      }
+
+      .architecture-diagrams .demo-media::after {
+        content: "";
+        position: absolute;
+        inset: 11px;
+        pointer-events: none;
+        border-radius: 7px;
+        background:
+          linear-gradient(100deg, transparent 0 28%, rgba(255, 255, 255, 0.16) 43%, rgba(126, 218, 238, 0.18) 50%, transparent 66% 100%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.06));
+        mix-blend-mode: screen;
+        opacity: 0.22;
+        transform: translateX(-66%);
+        animation: diagram-scan 8.6s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+      }
+
       .architecture-diagrams .demo img {
         aspect-ratio: 1600 / 620;
         object-fit: contain;
@@ -489,6 +510,20 @@
         }
       }
 
+      @keyframes diagram-scan {
+        0%, 18% {
+          opacity: 0;
+          transform: translateX(-70%);
+        }
+        34%, 64% {
+          opacity: 0.24;
+        }
+        82%, 100% {
+          opacity: 0;
+          transform: translateX(70%);
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;
@@ -498,6 +533,9 @@
           transition: none;
         }
         .demo::after {
+          display: none;
+        }
+        .architecture-diagrams .demo-media::after {
           display: none;
         }
         .demo:hover,
