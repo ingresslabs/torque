@@ -1,0 +1,535 @@
+{
+  "tool": "torque-verify",
+  "engine": {
+    "name": "builtin",
+    "ruleset": "builtin@6796ad0a7958e25e298f4ee1607d2b075086bdae00a7056bfe36d002b23c4cf1"
+  },
+  "mode": "warn",
+  "failOn": "high",
+  "passed": true,
+  "blocked": false,
+  "evaluatedAt": "2026-05-05T00:00:00Z",
+  "inputs": [
+    {
+      "kind": "chart",
+      "chart": "testdata/charts/verify-findings",
+      "release": "showcase",
+      "namespace": "showcase",
+      "renderedSha256": "d2c049c51658608d4f0980dbe59026a7de18cba962c4f4c8f17c4fddf8beb340"
+    }
+  ],
+  "summary": {
+    "total": 14,
+    "bySeverity": {
+      "critical": 1,
+      "high": 4,
+      "info": 2,
+      "low": 3,
+      "medium": 4
+    },
+    "byRule": {
+      "k8s/container_allow_privilege_escalation_disabled": 1,
+      "k8s/container_capabilities_drop_all": 1,
+      "k8s/container_liveness_probe_required": 1,
+      "k8s/container_read_only_root_filesystem": 1,
+      "k8s/container_readiness_probe_required": 1,
+      "k8s/container_run_as_non_root": 1,
+      "k8s/memory_limits_not_defined": 1,
+      "k8s/net_raw_capabilities_not_being_dropped": 1,
+      "k8s/pod_fs_group_recommended": 1,
+      "k8s/pod_or_container_without_security_context": 1,
+      "k8s/pod_run_as_user_non_root_recommended": 1,
+      "k8s/pod_seccomp_profile_runtime_default": 1,
+      "k8s/pss_restricted_profile": 1,
+      "k8s/service_account_token_automount_not_disabled": 1
+    },
+    "byRuleSeverity": {
+      "k8s/container_allow_privilege_escalation_disabled": {
+        "high": 1
+      },
+      "k8s/container_capabilities_drop_all": {
+        "high": 1
+      },
+      "k8s/container_liveness_probe_required": {
+        "low": 1
+      },
+      "k8s/container_read_only_root_filesystem": {
+        "medium": 1
+      },
+      "k8s/container_readiness_probe_required": {
+        "low": 1
+      },
+      "k8s/container_run_as_non_root": {
+        "high": 1
+      },
+      "k8s/memory_limits_not_defined": {
+        "medium": 1
+      },
+      "k8s/net_raw_capabilities_not_being_dropped": {
+        "medium": 1
+      },
+      "k8s/pod_fs_group_recommended": {
+        "info": 1
+      },
+      "k8s/pod_or_container_without_security_context": {
+        "low": 1
+      },
+      "k8s/pod_run_as_user_non_root_recommended": {
+        "info": 1
+      },
+      "k8s/pod_seccomp_profile_runtime_default": {
+        "high": 1
+      },
+      "k8s/pss_restricted_profile": {
+        "critical": 1
+      },
+      "k8s/service_account_token_automount_not_disabled": {
+        "medium": 1
+      }
+    },
+    "passed": true,
+    "blocked": false
+  },
+  "findings": [
+    {
+      "ruleId": "k8s/pss_restricted_profile",
+      "severity": "critical",
+      "category": "Pod Security Standards",
+      "message": "PSS restricted profile failed: ape, drop_all, run_as_non_root, seccomp",
+      "fieldPath": "spec.template.spec",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 19,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "restricted profile requirements met",
+      "observed": "PSS restricted profile failed: ape, drop_all, run_as_non_root, seccomp",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/pss_restricted_profile:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted",
+      "evidence": {
+        "checksFailed": [
+          "ape",
+          "drop_all",
+          "run_as_non_root",
+          "seccomp"
+        ],
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_allow_privilege_escalation_disabled",
+      "severity": "high",
+      "category": "Pod Security Standards",
+      "message": "Containers should set securityContext.allowPrivilegeEscalation=false to reduce the risk of privilege escalation.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.allowPrivilegeEscalation",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.allowPrivilegeEscalation",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "allowPrivilegeEscalation should be false",
+      "observed": "allowPrivilegeEscalation is true",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/container_allow_privilege_escalation_disabled:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.allowPrivilegeEscalation",
+      "helpUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.allowPrivilegeEscalation",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_capabilities_drop_all",
+      "severity": "high",
+      "category": "Pod Security Standards",
+      "message": "Containers should drop all Linux capabilities (securityContext.capabilities.drop includes 'ALL').",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.capabilities.drop",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.capabilities.drop",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "capabilities.drop should include ALL",
+      "observed": "capabilities.drop does not include ALL",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/container_capabilities_drop_all:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.capabilities.drop",
+      "helpUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.capabilities.drop",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_run_as_non_root",
+      "severity": "high",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.runAsNonRoot to true to avoid running workloads as root.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.runAsNonRoot",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.runAsNonRoot",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.runAsNonRoot should be true",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.runAsNonRoot is false",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/container_run_as_non_root:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.runAsNonRoot",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.runAsNonRoot",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_seccomp_profile_runtime_default",
+      "severity": "high",
+      "category": "Pod Security Standards",
+      "message": "Pods and containers should configure seccompProfile.type (prefer RuntimeDefault) to reduce kernel attack surface.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.seccompProfile.type",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "seccompProfile.type should be RuntimeDefault (or Localhost)",
+      "observed": "seccompProfile.type is",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/pod_seccomp_profile_runtime_default:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.seccompProfile.type",
+      "helpUrl": "https://kubernetes.io/docs/tutorials/security/seccomp/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/memory_limits_not_defined",
+      "severity": "medium",
+      "category": "Resource Management",
+      "message": "Memory limits should be defined for each container. This prevents potential resource exhaustion by ensuring that containers consume not more than the designated amount of memory",
+      "fieldPath": "spec.template.spec.containers.0.resources.limits",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.resources.limits.memory should be defined",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.resources.limits.memory is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/memory_limits_not_defined:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.resources.limits",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/net_raw_capabilities_not_being_dropped",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should drop 'ALL' or at least 'NET_RAW' capabilities",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.capabilities.drop should be defined",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.securityContext.capabilities.drop is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/net_raw_capabilities_not_being_dropped:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 19,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_liveness_probe_required",
+      "severity": "low",
+      "category": "Reliability",
+      "message": "Containers should define a livenessProbe to help Kubernetes restart unhealthy workloads.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.livenessProbe",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.livenessProbe should be defined",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.livenessProbe is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/container_liveness_probe_required:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.livenessProbe",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_readiness_probe_required",
+      "severity": "low",
+      "category": "Reliability",
+      "message": "Containers should define a readinessProbe to help Kubernetes route traffic only to ready workloads.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.readinessProbe",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.readinessProbe should be defined",
+      "observed": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.readinessProbe is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/container_readiness_probe_required:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name={{app}}.readinessProbe",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_or_container_without_security_context",
+      "severity": "low",
+      "category": "Insecure Configurations",
+      "message": "A security context defines privilege and access control settings for a Pod or Container",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 20,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name=app",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "spec.template.spec.containers.name=app has a security context",
+      "observed": "spec.template.spec.containers.name=app does not have a security context",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/pod_or_container_without_security_context:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.containers.name=app",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.template.spec.securityContext.fsGroup",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 19,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.securityContext.fsGroup",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_run_as_user_non_root_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting securityContext.runAsUser to a non-zero UID (defense in depth).",
+      "fieldPath": "spec.template.spec.securityContext.runAsUser",
+      "path": "docs/showcase/reports/verifier-report.rendered.yaml",
+      "line": 19,
+      "location": "metadata.name={{verify-findings-showcase}}.spec.template.spec.securityContext.runAsUser",
+      "resourceKey": "cluster/Deployment/verify-findings-showcase",
+      "expected": "runAsUser should be set to a non-zero UID",
+      "observed": "runAsUser is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "verify-findings-showcase"
+      },
+      "fingerprint": "k8s/pod_run_as_user_non_root_recommended:cluster/Deployment/verify-findings-showcase:metadata.name={{verify-findings-showcase}}.spec.template.spec.securityContext.runAsUser",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "nginx:stable",
+            "name": "app"
+          }
+        ],
+        "fieldPath": "spec.template.spec.securityContext.runAsUser",
+        "kind": "Deployment",
+        "name": "verify-findings-showcase",
+        "templateSource": "verify-findings/templates/deployment.yaml"
+      }
+    }
+  ]
+}

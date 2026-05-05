@@ -138,6 +138,13 @@ install -m 0644 .github/readme/torque-architecture-stack-scheduler.png "${OUT_DI
 install -m 0644 .github/readme/torque-architecture-secret-path.png "${OUT_DIR}/assets/architecture/torque-architecture-secret-path.png"
 install -m 0644 .github/readme/torque-architecture-safety-matrix.png "${OUT_DIR}/assets/architecture/torque-architecture-safety-matrix.png"
 install -m 0644 .github/readme/torque-architecture-package-boundaries.png "${OUT_DIR}/assets/architecture/torque-architecture-package-boundaries.png"
+mkdir -p "${OUT_DIR}/showcase/reports"
+install -m 0644 docs/showcase/reports/helmer-plan.html "${OUT_DIR}/showcase/reports/helmer-plan.html"
+install -m 0644 docs/showcase/reports/torque-apply-plan.html "${OUT_DIR}/showcase/reports/torque-apply-plan.html"
+install -m 0644 docs/showcase/reports/torque-apply-plan.md "${OUT_DIR}/showcase/reports/torque-apply-plan.md"
+install -m 0644 docs/showcase/reports/verifier-report.html "${OUT_DIR}/showcase/reports/verifier-report.html"
+install -m 0644 docs/showcase/reports/verifier-report.json "${OUT_DIR}/showcase/reports/verifier-report.json"
+install -m 0644 docs/showcase/reports/verifier-report.rendered.yaml "${OUT_DIR}/showcase/reports/verifier-report.rendered.yaml"
 
 echo ">> wrote:"
 ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/docs.html" "${OUT_DIR}/index.json" "${OUT_DIR}/install.sh" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'
