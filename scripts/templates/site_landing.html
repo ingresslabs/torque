@@ -303,20 +303,14 @@
       .demo-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: clamp(36px, 5vw, 72px);
+        gap: clamp(56px, 7vw, 112px);
       }
 
       .architecture-diagrams {
+        justify-self: center;
+        width: min(1440px, calc(100vw - 48px));
+        max-width: none;
         margin-top: clamp(64px, 9vw, 116px);
-      }
-
-      .section-heading {
-        color: var(--accent);
-        font: 0.78rem/1 var(--font-mono);
-        font-weight: 760;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
-        padding: 0 2px;
       }
 
       .demo {
@@ -419,6 +413,61 @@
         background: #101014;
       }
 
+      .architecture-diagrams .demo-media,
+      .architecture-diagrams img {
+        cursor: zoom-in;
+      }
+
+      .architecture-diagrams .demo img {
+        aspect-ratio: 1600 / 620;
+        object-fit: contain;
+      }
+
+      .diagram-modal {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100svh;
+        max-height: 100svh;
+        margin: 0;
+        padding: clamp(14px, 3vw, 34px);
+        border: 0;
+        background: rgba(5, 5, 5, 0.94);
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .diagram-modal::backdrop {
+        background: rgba(0, 0, 0, 0.76);
+        backdrop-filter: blur(12px);
+      }
+
+      .diagram-modal-frame {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      .diagram-modal img {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border: 1px solid rgba(237, 241, 245, 0.20);
+        border-radius: 8px;
+        background: #101014;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.54);
+      }
+
+      .diagram-modal-close {
+        position: fixed;
+        top: clamp(12px, 2vw, 24px);
+        right: clamp(12px, 2vw, 24px);
+        z-index: 2;
+      }
+
       @keyframes demo-rise {
         from {
           opacity: 0;
@@ -473,6 +522,10 @@
       }
 
       @media (max-width: 700px) {
+        .architecture-diagrams {
+          width: min(100%, calc(100vw - 28px));
+        }
+
         .demo:nth-child(odd),
         .demo:nth-child(even) {
           --demo-offset-x: 0;
@@ -694,7 +747,6 @@
           </div>
 
           <div class="demos architecture-diagrams" aria-label="Architecture diagrams">
-            <div class="section-heading">Architecture diagrams</div>
             <div class="demo-grid">
               <details class="demo" open>
                 <summary>End-to-end delivery loop</summary>
@@ -737,6 +789,17 @@
       </footer>
     </div>
 
+    <dialog class="diagram-modal" id="diagram-modal" aria-label="Expanded architecture diagram">
+      <button class="diagram-modal-close" type="button" data-diagram-close aria-label="Close expanded diagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6 6 18"></path>
+        </svg>
+      </button>
+      <div class="diagram-modal-frame">
+        <img id="diagram-modal-img" alt="" />
+      </div>
+    </dialog>
+
     <script>
       document.querySelectorAll("[data-install-choice]").forEach(function(link) {
         link.addEventListener("click", function(event) {
@@ -772,6 +835,67 @@
           }
         });
       });
+
+      var diagramModal = document.getElementById("diagram-modal");
+      var diagramModalImg = document.getElementById("diagram-modal-img");
+      var diagramClose = document.querySelector("[data-diagram-close]");
+
+      function closeDiagram() {
+        if (!diagramModal) return;
+        if (typeof diagramModal.close === "function") {
+          diagramModal.close();
+        } else {
+          diagramModal.removeAttribute("open");
+        }
+        if (diagramModalImg) {
+          diagramModalImg.removeAttribute("src");
+          diagramModalImg.alt = "";
+        }
+      }
+
+      function openDiagram(img) {
+        if (!diagramModal || !diagramModalImg || !img) return;
+        diagramModalImg.src = img.currentSrc || img.src;
+        diagramModalImg.alt = img.alt || "";
+        if (typeof diagramModal.showModal === "function") {
+          diagramModal.showModal();
+        } else {
+          diagramModal.setAttribute("open", "");
+        }
+      }
+
+      document.querySelectorAll(".architecture-diagrams img").forEach(function(img) {
+        img.tabIndex = 0;
+        img.addEventListener("dblclick", function(event) {
+          event.preventDefault();
+          openDiagram(img);
+        });
+        img.addEventListener("keydown", function(event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            openDiagram(img);
+          }
+        });
+      });
+
+      if (diagramClose) {
+        diagramClose.addEventListener("click", closeDiagram);
+      }
+      if (diagramModal) {
+        diagramModal.addEventListener("click", function(event) {
+          if (event.target === diagramModal) {
+            closeDiagram();
+          }
+        });
+        diagramModal.addEventListener("cancel", function() {
+          if (diagramModalImg) {
+            window.setTimeout(function() {
+              diagramModalImg.removeAttribute("src");
+              diagramModalImg.alt = "";
+            }, 0);
+          }
+        });
+      }
     </script>
   </body>
 </html>
