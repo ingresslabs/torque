@@ -34,15 +34,6 @@ jobs:
         with:
           go-version: '1.25.9'
           cache: true
-      - name: Cache Go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Install staticcheck
         run: |
           set -euo pipefail
@@ -98,15 +89,6 @@ jobs:
         with:
           go-version: '1.25.9'
           cache: true
-      - name: Cache Go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Unit tests
         run: |
@@ -133,15 +115,6 @@ jobs:
         with:
           go-version: '1.25.9'
           cache: true
-      - name: Cache Go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Race tests (selected)
         run: ./scripts/testpoint.sh --ci --no-fmt --no-lint --no-unit --no-smoke --race-selected
 
@@ -158,15 +131,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: true
-      - name: Cache Go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: go test (matrix)
         run: ./scripts/testpoint.sh --ci --matrix-safe
 
