@@ -236,6 +236,17 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
+	if md := strings.TrimSpace(torquedocs.DemosMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:demos",
+			Kind:     "doc",
+			Title:    "Demos",
+			Subtitle: "Build, release, verifier, and comparison demos",
+			Content:  md,
+			Tags:     []string{"doc", "demos", "examples", "build", "release", "verifier", "helmfile"},
+		})
+	}
+
 	if md := strings.TrimSpace(torquedocs.TroubleshootingMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:troubleshooting",

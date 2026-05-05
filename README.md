@@ -15,28 +15,6 @@ apply, capture evidence, and inspect what happened. Captures, verifier reports,
 and chart archives are portable SQLite artifacts for CI, review, and later
 debugging without a running service.
 
-## Demos
-
-<details open>
-<summary>Build, plan, apply, and logs</summary>
-<p align="center"><kbd><img src=".github/readme/torque-showcase.gif" alt="torque build, plan, apply, and logs workflow" width="820"></kbd></p>
-</details>
-
-<details open>
-<summary>Security and evidence gates</summary>
-<p align="center"><kbd><img src=".github/readme/torque-security.gif" alt="torque security and evidence workflow" width="820"></kbd></p>
-</details>
-
-<details open>
-<summary>Verifier report</summary>
-<p align="center"><kbd><img src=".github/readme/verifier-demo.gif" alt="verifier report demo" width="820"></kbd></p>
-</details>
-
-<details open>
-<summary>torque compared with split tooling</summary>
-<p align="center"><kbd><img src=".github/readme/torque-compare.gif" alt="torque compared with helmfile and separate Kubernetes tooling" width="820"></kbd></p>
-</details>
-
 ## Quick Start
 
 ```bash

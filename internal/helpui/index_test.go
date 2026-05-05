@@ -1,6 +1,7 @@
 package helpui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -81,4 +82,23 @@ func TestBuildIndex_HasUniqueEntryIDs(t *testing.T) {
 		}
 		seen[entry.ID] = struct{}{}
 	}
+}
+
+func TestBuildIndex_IncludesDemosDoc(t *testing.T) {
+	root := &cobra.Command{Use: "torque"}
+
+	index := BuildIndex(root, false)
+	for _, entry := range index.Entries {
+		if entry.ID != "doc:demos" {
+			continue
+		}
+		if entry.Title != "Demos" {
+			t.Fatalf("unexpected demos title %q", entry.Title)
+		}
+		if !strings.Contains(entry.Content, "torque compared with split tooling") {
+			t.Fatalf("expected demos content to include comparison demo")
+		}
+		return
+	}
+	t.Fatalf("expected demos doc in help index")
 }

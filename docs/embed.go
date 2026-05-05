@@ -15,6 +15,9 @@ var (
 	//go:embed recipes.md
 	RecipesMD string
 
+	//go:embed demos.md
+	DemosMD string
+
 	//go:embed troubleshooting.md
 	TroubleshootingMD string
 
