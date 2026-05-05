@@ -1,0 +1,22 @@
+---
+# Source: verify-findings/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verify-findings-showcase
+  labels:
+    app: verify-findings
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: verify-findings
+  template:
+    metadata:
+      labels:
+        app: verify-findings
+    spec:
+      containers:
+        - name: app
+          image: "nginx:stable"
+          imagePullPolicy: IfNotPresent

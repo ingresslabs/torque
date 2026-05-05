@@ -47,6 +47,20 @@ torque apply --chart ./chart --release api -n prod --capture ./apply.sqlite --ye
 torque logs 'api-.*' -n prod --capture ./logs.sqlite --tail 100
 ```
 
+## Showcase Reports
+
+Generated from the intentionally incomplete `testdata/charts/verify-findings`
+chart so the artifacts show policy findings, plan risk, offline live-state
+fallback, and review-ready outputs without touching a real cluster.
+
+| Report | What it shows |
+| --- | --- |
+| [torque apply plan Markdown](docs/showcase/reports/torque-apply-plan.md) | PR-comment summary with risk, creates, quota warnings, and attached verifier findings. |
+| [torque apply plan HTML](docs/showcase/reports/torque-apply-plan.html) | Interactive plan graph, manifest viewer, policy findings, and offline fallback evidence. |
+| [helmer plan HTML](docs/showcase/reports/helmer-plan.html) | Standalone Helm plan visualization without the full torque workflow wrapper. |
+| [verifier report JSON](docs/showcase/reports/verifier-report.json) | Machine-readable policy report with 14 findings across critical/high/medium/low/info. |
+| [verifier report HTML](docs/showcase/reports/verifier-report.html) | Browser-friendly verifier report for attaching to PRs, CI artifacts, and release notes. |
+
 ## What It Covers
 
 - Docker and BuildKit workflows with optional sandboxed execution through `nsjail`.
