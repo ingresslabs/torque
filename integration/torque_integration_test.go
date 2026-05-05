@@ -287,7 +287,7 @@ func TestTorqueSince(t *testing.T) {
 func TestTorqueFollowStreams(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, torqueBin, "logs", testPodName, "--namespace", testNamespace, "--tail=1", "--follow=true", "-c", "alpha", "--no-prefix", "--timestamps=false")
+	cmd := exec.CommandContext(ctx, torqueBin, torqueArgs("logs", testPodName, "--namespace", testNamespace, "--tail=1", "--follow=true", "-c", "alpha", "--no-prefix", "--timestamps=false")...)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = os.Stderr
@@ -338,7 +338,7 @@ func TestTorqueEventsFollow(t *testing.T) {
 	reason := "TorqueFollow"
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, torqueBin, "logs", testPodName, "--namespace", testNamespace, "--events", "--events-only", "--follow")
+	cmd := exec.CommandContext(ctx, torqueBin, torqueArgs("logs", testPodName, "--namespace", testNamespace, "--events", "--events-only", "--follow")...)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = os.Stderr
@@ -432,15 +432,19 @@ func runTorque(t *testing.T, timeout time.Duration, args ...string) string {
 func execTorque(timeout time.Duration, args ...string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if strings.TrimSpace(testKubeconfig) != "" {
-		args = append([]string{"--kubeconfig", testKubeconfig}, args...)
-	}
-	cmd := exec.CommandContext(ctx, torqueBin, args...)
+	cmd := exec.CommandContext(ctx, torqueBin, torqueArgs(args...)...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	return stdout.String(), stderr.String(), err
+}
+
+func torqueArgs(args ...string) []string {
+	if strings.TrimSpace(testKubeconfig) != "" {
+		args = append([]string{"--kubeconfig", testKubeconfig}, args...)
+	}
+	return args
 }
 
 func runKubectl(t *testing.T, args ...string) string {

@@ -32,35 +32,35 @@ run_ok_fixture() {
   fi
   echo ">> plan (${root})"
   if [[ ${#extra_args[@]} -gt 0 ]]; then
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack plan --root "${root}" --output table "${extra_args[@]}"
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack plan --config "${root}" --output table "${extra_args[@]}"
   else
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack plan --root "${root}" --output table
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack plan --config "${root}" --output table
   fi
   echo ">> graph (${root})"
   if [[ ${#extra_args[@]} -gt 0 ]]; then
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack graph --root "${root}" --format dot "${extra_args[@]}" >/dev/null
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack graph --config "${root}" --format dot "${extra_args[@]}" >/dev/null
   else
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack graph --root "${root}" --format dot >/dev/null
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack graph --config "${root}" --format dot >/dev/null
   fi
   echo ">> apply (${root})"
   if [[ ${#extra_args[@]} -gt 0 ]]; then
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack apply --root "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2 "${extra_args[@]}"
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack apply --config "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2 "${extra_args[@]}"
   else
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack apply --root "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack apply --config "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2
   fi
   echo ">> status table (${root})"
-  ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack status --root "${root}" --format table --tail 5 >/dev/null
+  ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack status --config "${root}" --format table --tail 5 >/dev/null
   echo ">> resume rerun-failed (${root})"
   if [[ ${#extra_args[@]} -gt 0 ]]; then
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack rerun-failed --root "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2 "${extra_args[@]}"
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack rerun-failed --config "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2 "${extra_args[@]}"
   else
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack rerun-failed --root "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack rerun-failed --config "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2
   fi
   echo ">> delete (${root})"
   if [[ ${#extra_args[@]} -gt 0 ]]; then
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack delete --root "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2 "${extra_args[@]}"
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack delete --config "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2 "${extra_args[@]}"
   else
-    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack delete --root "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2
+    ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack delete --config "${root}" --concurrency 4 --progressive-concurrency --yes --retry 2
   fi
 }
 
@@ -68,7 +68,7 @@ run_fail_plan_fixture() {
   local root="$1"
   local name="$2"
   echo ">> plan expect-fail (${name})"
-  if ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack plan --root "${root}" --output table >/dev/null 2>&1; then
+  if ./bin/torque --kubeconfig "${KUBECONFIG_PATH}" stack plan --config "${root}" --output table >/dev/null 2>&1; then
     echo "expected plan failure but succeeded: ${name}" >&2
     exit 1
   fi

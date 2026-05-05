@@ -207,6 +207,7 @@ func New(client kubernetes.Interface, opts *config.Options, logger logr.Logger, 
 	}
 	switch opts.ColorMode {
 	case "always":
+		_ = os.Unsetenv("NO_COLOR")
 		color.NoColor = false
 	case "never":
 		color.NoColor = true

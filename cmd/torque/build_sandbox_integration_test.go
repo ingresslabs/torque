@@ -8,7 +8,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -44,7 +43,7 @@ CMD ["cat", "/proof.txt"]
 
 	tag := fmt.Sprintf("torque.local/sandbox:%d", time.Now().UnixNano())
 	cmd := exec.Command(torqueBin, "build", contextDir, "--tag", tag, "--no-cache")
-	var buf bytes.Buffer
+	var buf lockedBuffer
 	cmd.Stdout = io.MultiWriter(&buf, os.Stdout)
 	cmd.Stderr = io.MultiWriter(&buf, os.Stderr)
 	cmd.Env = append(os.Environ(), "TORQUE_SANDBOX_DISABLE=0")
@@ -53,7 +52,7 @@ CMD ["cat", "/proof.txt"]
 		t.Fatalf("torque build failed: %v\n%s", err, buf.String())
 	}
 	output := buf.String()
-	if !strings.Contains(output, "Running torque build inside the default sandbox") {
+	if !strings.Contains(output, "Running torque build inside the sandbox") {
 		t.Fatalf("expected sandbox banner in output:\n%s", output)
 	}
 	if !strings.Contains(output, "Built "+tag) {

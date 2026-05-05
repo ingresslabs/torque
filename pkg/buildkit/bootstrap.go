@@ -19,6 +19,8 @@ const dockerFallbackBuilderName = "torque-buildkit"
 
 var dockerLookPath = exec.LookPath
 var dockerBuildxRunner = runDockerBuildxImpl
+var dockerContainerRunning = dockerContainerRunningImpl
+var dockerContainerStarter = dockerContainerStartImpl
 var dockerVersionRunner = runDockerVersionImpl
 var dockerContextLister = listDockerContextsImpl
 
@@ -86,11 +88,32 @@ func ensureDockerBackedBuilder(ctx context.Context, logWriter io.Writer, dockerC
 
 	builder := dockerFallbackBuilderName
 	if logWriter != nil {
-		fmt.Fprintf(logWriter, "BuildKit endpoint unavailable; provisioning Docker Buildx builder %s...\n", builder)
+		fmt.Fprintf(logWriter, "BuildKit endpoint unavailable; checking Docker Buildx builder %s...\n", builder)
 	}
-	if err := dockerBuildxRunner(ctx, logWriter, selectedCtx, "inspect", builder); err != nil {
-		if err := dockerBuildxRunner(ctx, logWriter, selectedCtx, "create", "--name", builder, "--driver", "docker-container"); err != nil {
-			dockerFallback.err = err
+	containerName := fmt.Sprintf("buildx_buildkit_%s0", builder)
+	if err := dockerBuildxRunner(ctx, nil, selectedCtx, "inspect", builder); err != nil {
+		found, running, inspectErr := dockerContainerRunning(ctx, selectedCtx, containerName)
+		if inspectErr == nil && found {
+			if !running {
+				if startErr := dockerContainerStarter(ctx, logWriter, selectedCtx, containerName); startErr != nil {
+					dockerFallback.err = startErr
+					return "", selectedCtx, dockerFallback.err
+				}
+			}
+			dockerFallback.addr = fmt.Sprintf("docker-container://%s", containerName)
+			if logWriter != nil {
+				fmt.Fprintf(logWriter, "Using Docker Buildx builder container %s\n", containerName)
+			}
+			return dockerFallback.addr, selectedCtx, dockerFallback.err
+		}
+		if inspectErr != nil && logWriter != nil {
+			fmt.Fprintf(logWriter, "warning: could not inspect Docker Buildx container %s: %v\n", containerName, inspectErr)
+		}
+		if logWriter != nil {
+			fmt.Fprintf(logWriter, "Provisioning Docker Buildx builder %s...\n", builder)
+		}
+		if createErr := dockerBuildxRunner(ctx, logWriter, selectedCtx, "create", "--name", builder, "--driver", "docker-container"); createErr != nil {
+			dockerFallback.err = createErr
 			return "", selectedCtx, dockerFallback.err
 		}
 	}
@@ -103,7 +126,6 @@ func ensureDockerBackedBuilder(ctx context.Context, logWriter io.Writer, dockerC
 		fmt.Fprintf(logWriter, "Using Docker Buildx builder %s\n", builder)
 	}
 
-	containerName := fmt.Sprintf("buildx_buildkit_%s0", builder)
 	dockerFallback.addr = fmt.Sprintf("docker-container://%s", containerName)
 	return dockerFallback.addr, selectedCtx, dockerFallback.err
 }
@@ -138,6 +160,44 @@ func runDockerVersionImpl(ctx context.Context, dockerContext string) error {
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
 	return cmd.Run()
+}
+
+func dockerContainerRunningImpl(ctx context.Context, dockerContext, containerName string) (found bool, running bool, err error) {
+	args := []string{}
+	if dockerContext != "" {
+		args = append(args, "--context", dockerContext)
+	}
+	args = append(args, "inspect", "-f", "{{.State.Running}}", containerName)
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	if err := cmd.Run(); err != nil {
+		if strings.Contains(buf.String(), "No such object") || strings.Contains(buf.String(), "No such container") {
+			return false, false, nil
+		}
+		return false, false, fmt.Errorf("docker inspect %s: %w", containerName, err)
+	}
+	return true, strings.TrimSpace(buf.String()) == "true", nil
+}
+
+func dockerContainerStartImpl(ctx context.Context, logWriter io.Writer, dockerContext, containerName string) error {
+	args := []string{}
+	if dockerContext != "" {
+		args = append(args, "--context", dockerContext)
+	}
+	args = append(args, "start", containerName)
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	if err := cmd.Run(); err != nil {
+		if logWriter != nil && buf.Len() > 0 {
+			_, _ = logWriter.Write(buf.Bytes())
+		}
+		return fmt.Errorf("docker start %s: %w", containerName, err)
+	}
+	return nil
 }
 
 func listDockerContextsImpl(ctx context.Context) ([]string, error) {

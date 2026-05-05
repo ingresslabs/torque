@@ -74,9 +74,12 @@ func newLogsRootCommand() *cobra.Command {
 		case "-h", "--help":
 			return pflag.ErrHelp
 		}
-		if noColor || os.Getenv("NO_COLOR") != "" {
+		if noColor {
+			opts.ColorMode = "never"
 			color.NoColor = true
 			_ = os.Setenv("NO_COLOR", "1")
+		} else if os.Getenv("NO_COLOR") != "" {
+			color.NoColor = true
 		}
 		flags, err := featureflags.Resolve(featureFlagValues, featureflags.EnabledFromEnv(nil))
 		if err != nil {

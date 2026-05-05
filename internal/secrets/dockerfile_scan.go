@@ -25,13 +25,16 @@ func ScanDockerfileForSecretsWithRules(path string, rules CompiledRules) ([]Find
 		lineno++
 		raw := s.Text()
 		line := strings.TrimSpace(raw)
-		if line == "" || strings.HasPrefix(line, "#") {
+		if line == "" {
 			continue
 		}
 		loc := path + ":" + itoa(lineno)
 
 		// Always scan the full line for high-signal patterns (private keys, JWTs, tokens).
 		findings = append(findings, MatchTextWithRules(line, rules, SourceDockerfile, loc)...)
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
 
 		kw, rest, ok := strings.Cut(line, " ")
 		if !ok {

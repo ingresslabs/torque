@@ -56,6 +56,7 @@ func TestEnsureDockerBackedBuilder_CachesResult(t *testing.T) {
 	dockerFallback.mu.Lock()
 	dockerFallback.resolved = false
 	dockerFallback.addr = ""
+	dockerFallback.context = ""
 	dockerFallback.err = nil
 	dockerFallback.mu.Unlock()
 
@@ -65,6 +66,12 @@ func TestEnsureDockerBackedBuilder_CachesResult(t *testing.T) {
 
 	origRunner := dockerBuildxRunner
 	t.Cleanup(func() { dockerBuildxRunner = origRunner })
+
+	origContainerRunning := dockerContainerRunning
+	t.Cleanup(func() { dockerContainerRunning = origContainerRunning })
+	dockerContainerRunning = func(_ context.Context, _ string, _ string) (bool, bool, error) {
+		return false, false, nil
+	}
 
 	origVersionRunner := dockerVersionRunner
 	t.Cleanup(func() { dockerVersionRunner = origVersionRunner })
@@ -94,15 +101,16 @@ func TestEnsureDockerBackedBuilder_CachesResult(t *testing.T) {
 	if want := 3; len(calls) != want {
 		t.Fatalf("docker buildx calls = %d, want %d (%v)", len(calls), want, calls)
 	}
-	if got := buf.String(); strings.Count(got, "provisioning Docker Buildx builder") != 1 || strings.Count(got, "Using Docker Buildx builder") != 1 {
+	if got := buf.String(); strings.Count(got, "checking Docker Buildx builder") != 1 || strings.Count(got, "Provisioning Docker Buildx builder") != 1 || strings.Count(got, "Using Docker Buildx builder") != 1 {
 		t.Fatalf("unexpected log output:\n%s", got)
 	}
 }
 
-func TestEnsureDockerBackedBuilder_PicksWorkingDockerContext(t *testing.T) {
+func TestEnsureDockerBackedBuilder_ReusesExistingContainerWithoutBuildxInstance(t *testing.T) {
 	dockerFallback.mu.Lock()
 	dockerFallback.resolved = false
 	dockerFallback.addr = ""
+	dockerFallback.context = ""
 	dockerFallback.err = nil
 	dockerFallback.mu.Unlock()
 
@@ -112,6 +120,76 @@ func TestEnsureDockerBackedBuilder_PicksWorkingDockerContext(t *testing.T) {
 
 	origBuildxRunner := dockerBuildxRunner
 	t.Cleanup(func() { dockerBuildxRunner = origBuildxRunner })
+
+	origContainerRunning := dockerContainerRunning
+	t.Cleanup(func() { dockerContainerRunning = origContainerRunning })
+
+	origContainerStarter := dockerContainerStarter
+	t.Cleanup(func() { dockerContainerStarter = origContainerStarter })
+
+	origVersionRunner := dockerVersionRunner
+	t.Cleanup(func() { dockerVersionRunner = origVersionRunner })
+	dockerVersionRunner = func(_ context.Context, _ string) error { return nil }
+
+	var buildxCalls []string
+	dockerBuildxRunner = func(_ context.Context, _ io.Writer, _ string, args ...string) error {
+		buildxCalls = append(buildxCalls, strings.Join(args, " "))
+		if len(args) == 2 && args[0] == "inspect" && args[1] == dockerFallbackBuilderName {
+			return errors.New("missing builder metadata")
+		}
+		return nil
+	}
+	dockerContainerRunning = func(_ context.Context, _ string, name string) (bool, bool, error) {
+		want := "buildx_buildkit_" + dockerFallbackBuilderName + "0"
+		if name != want {
+			t.Fatalf("container name = %q, want %q", name, want)
+		}
+		return true, true, nil
+	}
+	dockerContainerStarter = func(_ context.Context, _ io.Writer, _ string, name string) error {
+		t.Fatalf("did not expect docker start for running container %s", name)
+		return nil
+	}
+
+	var buf bytes.Buffer
+	addr, _, err := ensureDockerBackedBuilder(context.Background(), &buf, "")
+	if err != nil {
+		t.Fatalf("ensureDockerBackedBuilder() err = %v", err)
+	}
+	if want := "docker-container://buildx_buildkit_" + dockerFallbackBuilderName + "0"; addr != want {
+		t.Fatalf("addr = %q, want %q", addr, want)
+	}
+	if len(buildxCalls) != 1 {
+		t.Fatalf("buildx calls = %v, want only metadata inspect", buildxCalls)
+	}
+	if got := buf.String(); !strings.Contains(got, "Using Docker Buildx builder container") {
+		t.Fatalf("expected container reuse log, got:\n%s", got)
+	}
+	if got := buf.String(); strings.Contains(got, "Provisioning Docker Buildx builder") {
+		t.Fatalf("did not expect provisioning log for container reuse:\n%s", got)
+	}
+}
+
+func TestEnsureDockerBackedBuilder_PicksWorkingDockerContext(t *testing.T) {
+	dockerFallback.mu.Lock()
+	dockerFallback.resolved = false
+	dockerFallback.addr = ""
+	dockerFallback.context = ""
+	dockerFallback.err = nil
+	dockerFallback.mu.Unlock()
+
+	origLookPath := dockerLookPath
+	t.Cleanup(func() { dockerLookPath = origLookPath })
+	dockerLookPath = func(_ string) (string, error) { return "/usr/bin/docker", nil }
+
+	origBuildxRunner := dockerBuildxRunner
+	t.Cleanup(func() { dockerBuildxRunner = origBuildxRunner })
+
+	origContainerRunning := dockerContainerRunning
+	t.Cleanup(func() { dockerContainerRunning = origContainerRunning })
+	dockerContainerRunning = func(_ context.Context, _ string, _ string) (bool, bool, error) {
+		return false, false, nil
+	}
 
 	origVersionRunner := dockerVersionRunner
 	t.Cleanup(func() { dockerVersionRunner = origVersionRunner })

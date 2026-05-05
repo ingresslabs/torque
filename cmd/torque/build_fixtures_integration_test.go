@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -85,7 +86,7 @@ func runBuildFixture(t *testing.T, contextDir string, extraArgs, extraEnv []stri
 	args = append(args, extraArgs...)
 
 	cmd := exec.Command(torqueBin, args...)
-	var buf bytes.Buffer
+	var buf lockedBuffer
 	cmd.Stdout = io.MultiWriter(os.Stdout, &buf)
 	cmd.Stderr = io.MultiWriter(os.Stderr, &buf)
 	env := append(os.Environ(), extraEnv...)
@@ -104,6 +105,29 @@ func runBuildFixture(t *testing.T, contextDir string, extraArgs, extraEnv []stri
 	if !bytes.Contains(output, []byte("Built "+tag)) {
 		t.Fatalf("expected successful build output for %s:\n%s", tag, buf.String())
 	}
+}
+
+type lockedBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *lockedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *lockedBuffer) Bytes() []byte {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return append([]byte(nil), b.buf.Bytes()...)
+}
+
+func (b *lockedBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
 }
 
 func containsComposeMode(args []string) bool {

@@ -12,8 +12,10 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
+	"github.com/go-logr/logr"
 	"github.com/ingresslabs/torque/internal/config"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestBuildCustomPaletteSupportsMultiAttribute(t *testing.T) {
@@ -95,6 +97,28 @@ func TestApplyColorsHandlesOverlappingNames(t *testing.T) {
 	}
 	if !strings.Contains(colored, containerColor.Sprint(containerTag)) {
 		t.Fatalf("container tag was not colored as expected: %q", colored)
+	}
+}
+
+func TestColorAlwaysOverridesNoColorEnv(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	prev := color.NoColor
+	color.NoColor = true
+	t.Cleanup(func() {
+		color.NoColor = prev
+	})
+
+	opts := config.NewOptions()
+	opts.ColorMode = "always"
+	tailer, err := New(fake.NewSimpleClientset(), opts, logr.Discard())
+	if err != nil {
+		t.Fatalf("New returned error: %v", err)
+	}
+
+	payload := "[15:14:29] torque-logger [alpha] alpha 1"
+	colored := tailer.applyColors("[15:14:29]", "torque-logger", "[alpha]", payload)
+	if !strings.Contains(colored, "\x1b[") {
+		t.Fatalf("--color=always should emit ANSI even when NO_COLOR is set: %q", colored)
 	}
 }
 

@@ -209,6 +209,41 @@ func absolutePaths(files []string) ([]string, error) {
 	return paths, nil
 }
 
+func remapSandboxPaths(paths []string, hostContextDir, guestContextDir string) []string {
+	if len(paths) == 0 {
+		return nil
+	}
+	out := make([]string, len(paths))
+	for i, path := range paths {
+		out[i] = remapSandboxPath(path, hostContextDir, guestContextDir)
+	}
+	return out
+}
+
+func remapSandboxPath(path, hostContextDir, guestContextDir string) string {
+	path = strings.TrimSpace(path)
+	if path == "" || !filepath.IsAbs(path) {
+		return path
+	}
+	hostContextDir = strings.TrimSpace(hostContextDir)
+	guestContextDir = strings.TrimSpace(guestContextDir)
+	if hostContextDir == "" || guestContextDir == "" {
+		return path
+	}
+	hostContextAbs, err := filepath.Abs(hostContextDir)
+	if err != nil {
+		return path
+	}
+	rel, err := filepath.Rel(hostContextAbs, path)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return path
+	}
+	if rel == "." {
+		return guestContextDir
+	}
+	return filepath.Join(guestContextDir, rel)
+}
+
 func findComposeFiles(contextDir string) ([]string, error) {
 	files := make([]string, 0, len(composeDefaultFilenames))
 	for _, candidate := range composeDefaultFilenames {

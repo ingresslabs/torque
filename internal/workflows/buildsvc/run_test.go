@@ -178,6 +178,26 @@ func TestSelectBuildModeDockerfileRejectsFileContext(t *testing.T) {
 	}
 }
 
+func TestRemapSandboxPathMapsFilesUnderContext(t *testing.T) {
+	hostContext := filepath.Join(string(filepath.Separator), "host", "repo", "testdata", "build", "compose")
+	composePath := filepath.Join(hostContext, "docker-compose.apps.yml")
+
+	got := remapSandboxPath(composePath, hostContext, "/workspace")
+	want := filepath.Join("/workspace", "docker-compose.apps.yml")
+	if got != want {
+		t.Fatalf("remapped compose path = %q, want %q", got, want)
+	}
+}
+
+func TestRemapSandboxPathLeavesExternalAbsolutePath(t *testing.T) {
+	hostContext := filepath.Join(string(filepath.Separator), "host", "repo", "ctx")
+	external := filepath.Join(string(filepath.Separator), "host", "repo", "shared", "docker-compose.yml")
+
+	if got := remapSandboxPath(external, hostContext, "/workspace"); got != external {
+		t.Fatalf("external path should not be remapped: got %q want %q", got, external)
+	}
+}
+
 type captureRunner struct {
 	last buildkit.DockerfileBuildOptions
 }

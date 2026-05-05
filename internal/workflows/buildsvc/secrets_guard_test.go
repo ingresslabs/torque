@@ -37,6 +37,25 @@ func TestSecretsGuardPreflight_DockerfileFixtures(t *testing.T) {
 		}
 	})
 
+	t.Run("positive default dockerfile path", func(t *testing.T) {
+		var out bytes.Buffer
+		opts := Options{
+			ContextDir: testdataPath("build", "dockerfiles", "secrets-positive"),
+			Dockerfile: "Dockerfile",
+			BuildMode:  string(ModeDockerfile),
+		}
+		rep, err := guard.preflight(&out, opts)
+		if err != nil {
+			t.Fatalf("preflight returned error in warn mode: %v", err)
+		}
+		if rep == nil || len(rep.Findings) == 0 {
+			t.Fatalf("expected findings, got none")
+		}
+		if !containsFindingRule(rep.Findings, "arg_value_github_token") {
+			t.Fatalf("expected arg_value_github_token finding, got: %#v", rep.Findings)
+		}
+	})
+
 	t.Run("negative", func(t *testing.T) {
 		var out bytes.Buffer
 		opts := Options{

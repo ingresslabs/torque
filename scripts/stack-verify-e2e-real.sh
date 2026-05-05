@@ -133,14 +133,14 @@ rewrite_fixture_yaml "${work}"
 root="${work}/01-deploy-not-ready"
 
 echo ">> plan (${root})"
-./bin/torque "${torque_args[@]}" stack plan --root "${root}" --output table >/dev/null
+./bin/torque "${torque_args[@]}" stack plan --config "${root}" --output table >/dev/null
 
 echo ">> apply expect verify failure (${root})"
-must_fail "verify should fail" ./bin/torque "${torque_args[@]}" stack apply --root "${root}" --yes --retry 1
+must_fail "verify should fail" ./bin/torque "${torque_args[@]}" stack apply --config "${root}" --yes --retry 1
 
 echo ">> status shows verify failed (${root})"
 status_raw_out="${root}/.status.raw.jsonl"
-./bin/torque "${torque_args[@]}" stack status --root "${root}" --format raw --tail 200 >"${status_raw_out}"
+./bin/torque "${torque_args[@]}" stack status --config "${root}" --format raw --tail 200 >"${status_raw_out}"
 file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"
 file_matches '"status"[[:space:]]*:[[:space:]]*"failed"' "${status_raw_out}"
 
@@ -155,9 +155,9 @@ data=data.replace('failOnWarnings: true','failOnWarnings: false')
 open(path,"w",encoding="utf-8").write(data)
 PY
 
-./bin/torque "${torque_args[@]}" stack apply --root "${root}" --yes --retry 5 >/dev/null
+./bin/torque "${torque_args[@]}" stack apply --config "${root}" --yes --retry 5 >/dev/null
 
 echo ">> delete cleanup (${root})"
-./bin/torque "${torque_args[@]}" stack delete --root "${root}" --yes --retry 2 >/dev/null
+./bin/torque "${torque_args[@]}" stack delete --config "${root}" --yes --retry 2 >/dev/null
 
 echo "All stack verify e2e checks passed"

@@ -173,9 +173,12 @@ func (s *service) Run(ctx context.Context, opts Options) (res *Result, runErr er
 		contextDir = "."
 	}
 	if sandboxActive() {
+		hostContextDir := contextDir
 		if envContext := strings.TrimSpace(sandboxContextFromEnv()); envContext != "" {
 			contextDir = envContext
 			opts.ContextDir = envContext
+			opts.Dockerfile = remapSandboxPath(opts.Dockerfile, hostContextDir, envContext)
+			opts.ComposeFiles = remapSandboxPaths(opts.ComposeFiles, hostContextDir, envContext)
 		}
 		if envCache := strings.TrimSpace(sandboxCacheFromEnv()); envCache != "" {
 			opts.CacheDir = envCache

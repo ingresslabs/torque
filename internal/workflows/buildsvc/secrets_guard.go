@@ -161,7 +161,10 @@ func (g *secretsGuard) scanDockerfile(opts Options) ([]secrets.Finding, error) {
 	}
 	dockerfile := strings.TrimSpace(opts.Dockerfile)
 	if dockerfile == "" {
-		dockerfile = filepath.Join(contextDir, "Dockerfile")
+		dockerfile = "Dockerfile"
+	}
+	if !filepath.IsAbs(dockerfile) {
+		dockerfile = filepath.Join(contextDir, dockerfile)
 	}
 	if _, err := os.Stat(dockerfile); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
