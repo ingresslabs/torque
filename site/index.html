@@ -286,21 +286,23 @@
 
       .demos {
         display: grid;
-        gap: 16px;
-        margin-top: 14px;
+        gap: 28px;
+        margin-top: 30px;
         max-width: 1080px;
-        perspective: 1400px;
+        perspective: 1800px;
       }
 
       .demo-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: 14px;
+        gap: clamp(36px, 5vw, 72px);
       }
 
       .demo {
+        --demo-offset-x: 0;
+        --demo-tilt: 0deg;
         position: relative;
-        scroll-margin-top: 32px;
+        scroll-margin-top: 48px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background:
@@ -312,8 +314,19 @@
         overflow: hidden;
         transform: translateY(0) scale(1);
         transform-origin: center top;
-        transition: transform 0.42s ease, border-color 0.42s ease, box-shadow 0.42s ease;
-        animation: demo-rise 0.72s ease both;
+        transform-style: preserve-3d;
+        transition: transform 0.58s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.42s ease, box-shadow 0.42s ease;
+        animation: demo-rise 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      .demo:nth-child(odd) {
+        --demo-offset-x: -32px;
+        --demo-tilt: -1.8deg;
+      }
+
+      .demo:nth-child(even) {
+        --demo-offset-x: 32px;
+        --demo-tilt: 1.8deg;
       }
 
       .demo:nth-child(2) { animation-delay: 0.08s; }
@@ -343,8 +356,8 @@
         border-color: rgba(237, 241, 245, 0.28);
         box-shadow:
           inset 0 1px 0 rgba(255, 255, 255, 0.10),
-          0 30px 72px rgba(0, 0, 0, 0.36);
-        transform: translateY(-4px) scale(1.012);
+          0 40px 88px rgba(0, 0, 0, 0.42);
+        transform: translateY(-10px) scale(1.018) rotateX(1.8deg);
       }
 
       .demo:hover::after,
@@ -388,13 +401,13 @@
       @keyframes demo-rise {
         from {
           opacity: 0;
-          transform: translateY(24px) scale(0.982);
-          filter: saturate(0.78);
+          transform: translate3d(var(--demo-offset-x), 92px, -80px) rotateX(10deg) rotateZ(var(--demo-tilt)) scale(0.925);
+          filter: blur(7px) saturate(0.58) contrast(0.86);
         }
         to {
           opacity: 1;
-          transform: translateY(0) scale(1);
-          filter: saturate(1);
+          transform: translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg) scale(1);
+          filter: blur(0) saturate(1) contrast(1);
         }
       }
 
@@ -419,10 +432,10 @@
         .demo {
           animation-name: demo-rise;
           animation-duration: auto;
-          animation-timing-function: linear;
+          animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
           animation-fill-mode: both;
           animation-timeline: view();
-          animation-range: entry 0% cover 34%;
+          animation-range: entry 0% cover 48%;
         }
         .demo:nth-child(2),
         .demo:nth-child(3),
