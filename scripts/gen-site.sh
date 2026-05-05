@@ -85,7 +85,7 @@ echo ">> fetching HTML + index.json"
 curl -fsS "${base_url}/" >"${tmp_docs_html}"
 # Prefer /index.json so the fetched HTML works as a static site without an /api/ router.
 curl -fsS "${base_url}/index.json" >"${tmp_json}"
-python3 - "${tmp_docs_html}" "${TORQUE_SITE_VERSION_LABEL:-torque docs}" <<'PY'
+python3 - "${tmp_docs_html}" "${TORQUE_SITE_VERSION_LABEL:-}" <<'PY'
 import re
 import sys
 from html import escape
@@ -123,6 +123,7 @@ install -m 0644 docs/assets/logo/torque-logo-icon-256.png "${OUT_DIR}/assets/tor
 mkdir -p "${OUT_DIR}/assets/demos"
 install -m 0644 .github/readme/torque-showcase.gif "${OUT_DIR}/assets/demos/torque-showcase.gif"
 install -m 0644 .github/readme/torque-security.gif "${OUT_DIR}/assets/demos/torque-security.gif"
+install -m 0644 .github/readme/torque-dag.gif "${OUT_DIR}/assets/demos/torque-dag.gif"
 
 echo ">> wrote:"
 ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/docs.html" "${OUT_DIR}/index.json" "${OUT_DIR}/install.sh" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'

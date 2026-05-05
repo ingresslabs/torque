@@ -83,23 +83,23 @@
         align-items: center;
         justify-content: space-between;
         gap: 28px;
-        padding: 28px 0 44px;
+        padding: 28px 0 36px;
       }
 
       .brand {
         display: inline-flex;
         align-items: center;
-        gap: 15px;
+        gap: 18px;
         color: var(--text);
         font-weight: 760;
-        font-size: 1.42rem;
+        font-size: 1.5rem;
         line-height: 1;
       }
 
       .brand img {
-        width: 62px;
-        height: 62px;
-        border-radius: 16px;
+        width: 82px;
+        height: 82px;
+        border-radius: 18px;
         box-shadow:
           0 18px 46px rgba(0, 0, 0, 0.36),
           0 0 0 1px rgba(237, 241, 245, 0.14);
@@ -113,6 +113,12 @@
         font: 0.78rem/1 var(--font-mono);
         letter-spacing: 0.08em;
         text-transform: uppercase;
+        padding: 13px 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background:
+          linear-gradient(180deg, rgba(237, 241, 245, 0.08), rgba(184, 189, 196, 0.02)),
+          rgba(10, 10, 12, 0.70);
       }
 
       nav a {
@@ -130,29 +136,20 @@
         gap: 26px;
       }
 
-      .hero::before {
-        content: "";
-        position: absolute;
-        top: -52px;
-        right: 0;
-        left: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(237, 241, 245, 0.55), transparent);
-        pointer-events: none;
-      }
-
       .eyebrow {
-        width: fit-content;
+        justify-self: center;
+        width: min(100%, 760px);
         color: var(--accent);
-        font: 0.78rem/1 var(--font-mono);
+        font: clamp(0.94rem, 1.7vw, 1.32rem)/1 var(--font-mono);
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.1em;
+        text-align: center;
         text-transform: uppercase;
-        padding: 9px 12px;
+        padding: 16px 18px;
         border: 1px solid rgba(237, 241, 245, 0.18);
         border-radius: var(--radius);
         background:
-          linear-gradient(180deg, rgba(237, 241, 245, 0.10), rgba(184, 189, 196, 0.035)),
+          linear-gradient(180deg, rgba(237, 241, 245, 0.13), rgba(184, 189, 196, 0.035)),
           rgba(10, 10, 12, 0.78);
         box-shadow:
           0 18px 44px rgba(0, 0, 0, 0.22),
@@ -192,58 +189,37 @@
         overflow: hidden;
       }
 
-      .install-head {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: center;
-        padding: 15px 16px;
-        border-bottom: 1px solid var(--line);
-        color: var(--accent);
-        font: 0.74rem/1 var(--font-mono);
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-
-      .material {
-        display: inline-flex;
-        gap: 7px;
-        align-items: center;
-        color: var(--muted);
-        text-transform: none;
-        letter-spacing: 0;
-        font-family: var(--font);
-        font-weight: 600;
-      }
-
-      .material::before {
-        content: "";
-        width: 42px;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(237, 241, 245, 0.58), transparent);
-      }
-
-      .cmd-row {
+      .install-row {
         display: grid;
-        grid-template-columns: 100px minmax(0, 1fr) 44px;
+        grid-template-columns: auto minmax(0, 1fr) 44px;
         align-items: center;
-        gap: 16px;
-        min-height: 68px;
+        gap: 18px;
+        min-height: 72px;
         padding: 12px 14px 12px 16px;
         overflow: hidden;
       }
 
-      .cmd-row + .cmd-row {
-        border-top: 1px solid var(--line);
+      .install-links {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        white-space: nowrap;
       }
 
-      .label {
+      .install-link {
         color: var(--muted-strong);
         font: 0.76rem/1 var(--font-mono);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
+        border-bottom: 1px solid rgba(184, 189, 196, 0.28);
+        padding-bottom: 3px;
+        transition: border-color 0.22s ease, color 0.22s ease;
+      }
+
+      .install-link[aria-current="true"] {
+        color: var(--accent);
+        border-bottom-color: rgba(237, 241, 245, 0.78);
       }
 
       code {
@@ -303,17 +279,9 @@
         max-width: 1080px;
       }
 
-      .section-label {
-        color: var(--accent);
-        font: 0.78rem/1 var(--font-mono);
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
       .demo-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 14px;
       }
 
@@ -363,12 +331,42 @@
 
       footer {
         display: flex;
+        align-items: flex-end;
         justify-content: space-between;
-        gap: 24px;
-        padding: 30px 0 38px;
+        gap: 30px;
+        margin-top: 10px;
+        padding: 24px 24px;
         color: var(--muted);
-        border-top: 1px solid var(--line);
-        font-size: 0.92rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background:
+          linear-gradient(180deg, rgba(237, 241, 245, 0.09), rgba(184, 189, 196, 0.025)),
+          rgba(10, 10, 12, 0.82);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          0 22px 58px rgba(0, 0, 0, 0.26);
+        font-size: 0.82rem;
+      }
+
+      footer span:first-child {
+        color: transparent;
+        background: linear-gradient(180deg, #ffffff, #aeb4bb 64%, #f7f9fb);
+        -webkit-background-clip: text;
+        background-clip: text;
+        font-size: clamp(1.38rem, 2.9vw, 3rem);
+        font-weight: 840;
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      footer span:last-child {
+        max-width: 360px;
+        color: #f3f5f7;
+        font: 0.72rem/1.45 var(--font-mono);
+        font-weight: 760;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        text-align: right;
       }
 
       @media (max-width: 720px) {
@@ -381,30 +379,38 @@
           align-items: flex-start;
           flex-direction: column;
         }
+        footer span:last-child {
+          text-align: left;
+        }
         .brand img {
-          width: 54px;
-          height: 54px;
+          width: 64px;
+          height: 64px;
         }
         nav { gap: 14px; flex-wrap: wrap; }
         h1 {
           font-size: clamp(3.05rem, 16vw, 5.2rem);
         }
-        .install-head {
-          align-items: flex-start;
-          flex-direction: column;
+        .eyebrow {
+          font-size: 0.88rem;
+          line-height: 1.25;
+          padding: 13px 14px;
         }
-        .cmd-row {
+        .install-row {
           grid-template-columns: 1fr auto;
+          align-items: center;
           gap: 8px 12px;
+          overflow: visible;
         }
-        .label {
+        .install-links {
           grid-column: 1 / -1;
+          gap: 14px;
         }
         code {
           font-size: 0.86rem;
-        }
-        .demo-grid {
-          grid-template-columns: 1fr;
+          line-height: 1.45;
+          overflow-x: visible;
+          white-space: normal;
+          overflow-wrap: anywhere;
         }
       }
     </style>
@@ -428,31 +434,25 @@
           <div class="eyebrow">Build, verify, plan, apply</div>
           <h1 id="title">Agent-first Kubernetes delivery CLI.</h1>
           <p class="lede">
-            torque is a file-first loop for Kubernetes delivery: build, verify,
-            plan, apply, capture evidence, and inspect what happened. Captures,
-            verifier reports, and chart archives are portable SQLite artifacts
-            for CI, review, and later debugging without a running service.
+            torque is CI in a box for Kubernetes delivery: a file-first loop to
+            build, verify, plan, apply, capture evidence, and inspect what
+            happened. Captures, verifier reports, and chart archives are
+            portable SQLite artifacts for CI, review, and later debugging
+            without a running service.
           </p>
 
           <div class="install" aria-label="Install commands">
-            <div class="install-head">
-              <span>Install</span>
-              <span class="material">release binary or source build</span>
-            </div>
-            <div class="cmd-row">
-              <div class="label">Binary</div>
-              <code id="binary-cmd">curl -fsSL https://ingresslabs.github.io/torque/install.sh | sh</code>
-              <button type="button" data-copy="binary-cmd" aria-label="Copy binary install command">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
-                  <rect x="9" y="9" width="10" height="10" rx="2"></rect>
-                  <path d="M5 15V7a2 2 0 0 1 2-2h8"></path>
-                </svg>
-              </button>
-            </div>
-            <div class="cmd-row">
-              <div class="label">Source</div>
-              <code id="source-cmd">go install github.com/ingresslabs/torque/cmd/torque@latest</code>
-              <button type="button" data-copy="source-cmd" aria-label="Copy source install command">
+            <div class="install-row">
+              <div class="install-links" aria-label="Install method">
+                <a class="install-link" href="#binary" data-install-choice="binary" aria-current="true">Binary</a>
+                <a class="install-link" href="#source" data-install-choice="source">Source</a>
+              </div>
+              <code
+                id="install-cmd"
+                data-binary="curl -fsSL https://ingresslabs.github.io/torque/install.sh | sh"
+                data-source="go install github.com/ingresslabs/torque/cmd/torque@latest"
+              >curl -fsSL https://ingresslabs.github.io/torque/install.sh | sh</code>
+              <button type="button" data-copy="install-cmd" aria-label="Copy install command">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
                   <rect x="9" y="9" width="10" height="10" rx="2"></rect>
                   <path d="M5 15V7a2 2 0 0 1 2-2h8"></path>
@@ -462,7 +462,6 @@
           </div>
 
           <div class="demos" aria-label="Demos">
-            <div class="section-label">Demos</div>
             <div class="demo-grid">
               <details class="demo" open>
                 <summary>Build, plan, apply, logs</summary>
@@ -476,18 +475,39 @@
                   <img src="./assets/demos/torque-security.gif" alt="torque security and evidence workflow" loading="lazy" />
                 </div>
               </details>
+              <details class="demo" open>
+                <summary>Complex DAG stack orchestration</summary>
+                <div class="demo-media">
+                  <img src="./assets/demos/torque-dag.gif" alt="torque complex DAG stack orchestration workflow" loading="lazy" />
+                </div>
+              </details>
             </div>
           </div>
         </section>
       </main>
 
       <footer>
-        <span>Agent-first Kubernetes delivery.</span>
-        <span>Build logs, release plans, and audit trails as files.</span>
+        <span>Receipts for every deploy.</span>
+        <span>Builds / plans / rollouts / logs, sealed into one SQLite trail.</span>
       </footer>
     </div>
 
     <script>
+      document.querySelectorAll("[data-install-choice]").forEach(function(link) {
+        link.addEventListener("click", function(event) {
+          event.preventDefault();
+          var command = document.getElementById("install-cmd");
+          if (!command) return;
+          var choice = link.dataset.installChoice;
+          var value = command.dataset[choice];
+          if (!value) return;
+          command.textContent = value;
+          document.querySelectorAll("[data-install-choice]").forEach(function(item) {
+            item.setAttribute("aria-current", item === link ? "true" : "false");
+          });
+        });
+      });
+
       document.querySelectorAll("[data-copy]").forEach(function(button) {
         button.addEventListener("click", async function() {
           var target = document.getElementById(button.dataset.copy);

@@ -241,9 +241,9 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 			ID:       "doc:demos",
 			Kind:     "doc",
 			Title:    "Demos",
-			Subtitle: "Build, release, verifier, and comparison demos",
+			Subtitle: "Build, release, and evidence-gate demos",
 			Content:  md,
-			Tags:     []string{"doc", "demos", "examples", "build", "release", "verifier", "helmfile"},
+			Tags:     []string{"doc", "demos", "examples", "build", "release", "verifier", "evidence"},
 		})
 	}
 
