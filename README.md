@@ -92,7 +92,80 @@ generic API keys.
 
 These are the next measurable E2E matrices to run and publish.
 
-### Verifier Policy Coverage Matrix
+### 2. Cache Effectiveness Matrix
+
+Run 30 builds with controlled changes and score cache hits/misses, wall-time
+delta, and the exact layer invalidated.
+
+| Change class | Expected evidence |
+| --- | --- |
+| Dockerfile comment | cache hit; no rebuild for functional layers |
+| Base image change | base layer and downstream layers invalidated |
+| Copied file change | only dependent copy/build layers invalidated |
+| Build arg change | ARG-dependent layer invalidated with timing delta |
+| Secret mount change | secret value not cached or leaked into evidence |
+| Package install change | package layer miss with downstream reuse measured |
+
+Agent example:
+
+```text
+Run the torque cache matrix for this Dockerfile. Change only one input at a time:
+comment, base image, copied file, build arg, secret mount, and package install.
+Report cache hit/miss, elapsed time, and which layer invalidated.
+```
+
+Expected: publish per-run timing plus a layer invalidation explanation, proving
+cache behavior is useful and not decorative.
+
+### 3. Drift Detection E2E
+
+Deploy a chart, mutate live resources manually, then run `torque apply plan` and
+verifier to score drift as `detected` or `missed`.
+
+| Drift class | Example mutation |
+| --- | --- |
+| Replica drift | manually scale deployment outside the chart |
+| Image drift | patch live image tag or digest |
+| Config drift | edit env vars, ConfigMaps, or mounted values |
+| Traffic drift | mutate Service ports or Ingress hosts/TLS |
+| Policy drift | patch RBAC, securityContext, or service account fields |
+
+Agent example:
+
+```text
+Before applying this chart, use torque to compare desired state with the live
+cluster. If live resources drifted from the chart, stop and summarize the exact
+resource, field path, live value, and desired value.
+```
+
+Expected: catch live-cluster divergence before apply, with field-level evidence
+that is actionable in review.
+
+### 4. Rollback / Failure Recovery Matrix
+
+Run 20 bad rollouts and score detected phase, explanation quality, and cleanup
+behavior.
+
+| Failure class | Expected diagnosis |
+| --- | --- |
+| Bad image | image pull failure tied to workload and container |
+| Bad probe | readiness/liveness failure with probe detail |
+| Missing secret | missing Secret or key named before timeout |
+| Bad PVC | pending volume or mount failure identified |
+| Bad RBAC | forbidden verb/resource/subject surfaced |
+| Bad env | config or env validation failure traced to source |
+
+Agent example:
+
+```text
+Apply this intentionally broken chart with torque. When rollout fails, do not
+retry blindly. Capture the failed phase, likely cause, cleanup action, and the
+artifact path I can attach to the PR.
+```
+
+Expected: torque remains useful when deploys fail, not only when they pass.
+
+### 5. Verifier Policy Coverage Matrix
 
 Run 50 intentionally bad manifests through verifier and score each as
 `blocked`, `warned`, or `missed`.
@@ -114,7 +187,55 @@ mounts, missing probes, or ingress without TLS, stop and write the report path.
 Do not run apply unless the verifier report is clean.
 ```
 
-### Agent Safety Matrix
+### 6. Log Diagnosis Accuracy
+
+Inject common pod failures and run `torque logs` plus deploy lens. Score each
+case as `correct`, `partial`, or `missed`.
+
+| Failure signal | Correct diagnosis should surface |
+| --- | --- |
+| CrashLoopBackOff | crashing pod/container, restart count, last error |
+| ImagePullBackOff | image reference and pull/auth reason |
+| OOMKilled | terminated state, exit code, memory pressure context |
+| Probe failures | failing readiness/liveness probe and recent events |
+| Permission denied | filesystem, securityContext, or RBAC denial path |
+
+Agent example:
+
+```text
+This rollout is unhealthy. Use torque logs and deploy lens to diagnose it. Give
+me the top suspected cause, the pod/container involved, the Kubernetes event or
+log line that supports it, and the next corrective action.
+```
+
+Expected: incident/debug value is measured by whether torque surfaces the right
+root cause without forcing manual log spelunking.
+
+### 7. Secret Redaction Matrix
+
+Place fake secrets in build logs, deploy logs, Helm values, capture DB rows, and
+generated reports. Score each artifact as `redacted` or `leaked`.
+
+| Artifact surface | Expected safety behavior |
+| --- | --- |
+| Build logs | secret-like values masked before display and capture |
+| Deploy logs | env, event, and command output values redacted |
+| Helm values | sensitive keys hidden in rendered reports |
+| Capture DB | stored rows contain placeholders, not raw secrets |
+| PR/CI reports | attachable output remains sanitized end to end |
+
+Agent example:
+
+```text
+Attach the torque build and deploy evidence from this failure to the PR, but
+first verify fake secrets in logs, Helm values, capture DB, and reports are
+redacted. If any raw secret appears, block the attachment and report the field.
+```
+
+Expected: artifacts are safe to attach to PRs and CI. This is separate from
+blocking secret use during build or deploy.
+
+### 8. Agent Safety Matrix
 
 Simulate agent-driven delivery requests with dangerous inputs and score each as
 `blocked`, `warned`, or `requires explicit --yes`.
