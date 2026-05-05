@@ -104,6 +104,21 @@ func TestBuildIndex_IncludesDemosDoc(t *testing.T) {
 		if !strings.Contains(entry.Content, "Kubernetes logs and evidence capture") {
 			t.Fatalf("expected demos content to include logging demo")
 		}
+		if !strings.Contains(entry.Content, "Remote agent mirror sessions") {
+			t.Fatalf("expected demos content to include remote mirror demo")
+		}
+		if !strings.Contains(entry.Content, "Capture explain drilldown") {
+			t.Fatalf("expected demos content to include explain drilldown demo")
+		}
+		if !strings.Contains(entry.Content, "Secret-safe build and log evidence") {
+			t.Fatalf("expected demos content to include secret-safe evidence demo")
+		}
+		if !strings.Contains(entry.Content, "Drift and plan comparison") {
+			t.Fatalf("expected demos content to include drift comparison demo")
+		}
+		if !strings.Contains(entry.Content, "Stack resume and rerun failed") {
+			t.Fatalf("expected demos content to include stack rerun demo")
+		}
 		if strings.Contains(entry.Content, "Build, plan, apply, and logs") {
 			t.Fatalf("expected build/plan/apply/logs demo to be removed from demos content")
 		}

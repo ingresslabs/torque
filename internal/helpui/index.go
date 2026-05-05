@@ -241,9 +241,9 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 			ID:       "doc:demos",
 			Kind:     "doc",
 			Title:    "Demos",
-			Subtitle: "DAG, sandbox, Helmer, verifier, and report demos",
+			Subtitle: "DAG, sandbox, logs, remotes, captures, drift, and resume demos",
 			Content:  md,
-			Tags:     []string{"doc", "demos", "examples", "dag", "stack", "sandbox", "helmer", "verifier", "report"},
+			Tags:     []string{"doc", "demos", "examples", "dag", "stack", "sandbox", "helmer", "verifier", "report", "logs", "remote", "capture", "drift", "resume"},
 		})
 	}
 

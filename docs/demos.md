@@ -93,3 +93,88 @@ same stream over WebSocket for live review, and stores the session as portable
 SQLite evidence for later explanation.
 
 </details>
+
+<details open>
+<summary>Remote agent mirror sessions</summary>
+
+```bash
+export TORQUE_REMOTE_TOKEN="$(openssl rand -hex 24)"
+torque-agent -listen :7443 -http-listen :8081 \
+  -token "$TORQUE_REMOTE_TOKEN" -mirror-store ~/.torque/agent/mirror.sqlite
+torque --remote-agent 127.0.0.1:7443 --remote-token "$TORQUE_REMOTE_TOKEN" \
+  logs 'checkout-.*' -n prod-payments
+curl -H "authorization: Bearer $TORQUE_REMOTE_TOKEN" \
+  "http://127.0.0.1:8081/api/v1/mirror/sessions?limit=20"
+```
+
+Runs log streaming through `torque-agent`, stores replayable MirrorService
+frames in SQLite, and exposes the same sessions over the HTTP/SSE gateway for
+browser tools or reviewers.
+
+</details>
+
+<details open>
+<summary>Capture explain drilldown</summary>
+
+```bash
+torque apply --chart ./chart --release checkout -n prod-payments \
+  --capture ./apply.sqlite --yes
+torque logs deploy/checkout -n prod-payments \
+  --events --capture ./apply.sqlite --tail 100
+torque explain ./apply.sqlite --session <session-id> \
+  --format markdown --max-hints 12
+```
+
+Turns a captured deploy/log session into a compact cause summary with resource
+hints, failure signals, captured artifacts, and next commands.
+
+</details>
+
+<details open>
+<summary>Secret-safe build and log evidence</summary>
+
+```bash
+export NPM_TOKEN="<token from CI secret store>"
+torque build . --secret NPM_TOKEN \
+  --secrets block --secrets-report ./secrets.json --capture ./build.sqlite
+torque apply plan --chart ./chart --release checkout -n prod-payments \
+  --secret-provider vault --output plan.md
+torque logs 'checkout-.*' -n prod-payments --capture ./logs.sqlite --tail 100
+```
+
+Keeps build secrets on BuildKit secret mounts, blocks secret-like build inputs
+before publishing, records machine-readable guardrail results, and captures logs
+as evidence without embedding secret values.
+
+</details>
+
+<details open>
+<summary>Drift and plan comparison</summary>
+
+```bash
+torque apply plan --chart ./chart --release checkout -n prod-payments \
+  --baseline ./plan.json
+torque apply plan --chart ./chart --release checkout -n prod-payments \
+  --compare-to ./plan.json --github-comment --output plan.md
+verifier verify.yaml --compare-to ./verify-baseline.json
+```
+
+Writes a known-good plan baseline, compares the next render against it, and
+surfaces new resources, risky diffs, and verifier regressions in review output.
+
+</details>
+
+<details open>
+<summary>Stack resume and rerun failed</summary>
+
+```bash
+torque stack apply --config ./stacks/prod --yes --capture ./stack.sqlite
+torque stack status --config ./stacks/prod --follow
+torque stack rerun-failed --config ./stacks/prod --yes --retry 2
+torque stack apply --config ./stacks/prod --resume --yes
+```
+
+Loads the frozen stack run state, skips releases that already succeeded, and
+reschedules only failed nodes after the underlying issue is fixed.
+
+</details>
