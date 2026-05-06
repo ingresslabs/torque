@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
   <title id="title">torque ship subcommand demo</title>
-  <desc id="desc">Calm terminal-style demo showing torque ship build, verify, plan, apply, and explain steps with evidence artifacts.</desc>
+  <desc id="desc">Calm terminal-style demo showing torque ship building a Docker image, verifying and planning it, deploying to Kubernetes, and writing evidence artifacts.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#11151c"/>
@@ -27,6 +27,7 @@
     <style>
       .mono { font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Code", ui-monospace, monospace; }
       .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+      .tech { font-family: "DIN Alternate", "Avenir Next Condensed", "Rajdhani", "Orbitron", "Eurostile", "Bank Gothic", "Exo 2", "Arial Narrow", "Segoe UI", Arial, sans-serif; font-stretch: condensed; }
       .muted { fill: #a7aeb8; }
       .bright { fill: #f8fafc; }
       .accent { fill: #7edaee; }
@@ -34,19 +35,77 @@
       .flow-rail { stroke: #7edaee; stroke-opacity: 0.2; stroke-width: 4; stroke-linecap: round; }
       .flow-dash {
         stroke: #edf1f5;
-        stroke-opacity: 0.72;
+        stroke-opacity: 0.76;
         stroke-width: 3.2;
         stroke-linecap: round;
-        stroke-dasharray: 24 56;
-        animation: flowDash 6.4s linear infinite;
+        stroke-dasharray: 8 92;
+        animation: flowDash 7.8s cubic-bezier(0.34, 0, 0.18, 1) infinite;
         filter: url(#softGlow);
       }
-      .flow-node { fill: #7edaee; opacity: 0.68; filter: url(#softGlow); }
+      .flow-node {
+        fill: #7edaee;
+        opacity: 0.36;
+        filter: url(#softGlow);
+        animation: nodeGlow 7.8s ease-in-out infinite;
+      }
+      .stage-ring {
+        fill: none;
+        stroke: #62f38d;
+        stroke-width: 1.8;
+        stroke-opacity: 0;
+        filter: url(#softGlow);
+        animation: stageRing 7.8s ease-in-out infinite;
+      }
+      .stage-fill {
+        fill: #2bff76;
+        opacity: 0;
+        animation: stageFill 7.8s ease-in-out infinite;
+      }
+      .stage-ok { animation: stageOk 7.8s ease-in-out infinite; }
+      .log-step {
+        opacity: 0.62;
+        animation: logStep 7.8s ease-in-out infinite;
+      }
+      .delay-build { animation-delay: 0s; }
+      .delay-verify { animation-delay: 1.1s; }
+      .delay-plan { animation-delay: 2.2s; }
+      .delay-apply { animation-delay: 3.3s; }
+      .delay-explain { animation-delay: 4.4s; }
+      .delay-evidence { animation-delay: 5.5s; }
       @keyframes flowDash {
-        to { stroke-dashoffset: -160; }
+        0% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        7% { stroke-opacity: 0.76; }
+        82% { stroke-dashoffset: -100; stroke-opacity: 0.76; }
+        100% { stroke-dashoffset: -100; stroke-opacity: 0; }
+      }
+      @keyframes stageRing {
+        0%, 18%, 100% { stroke-opacity: 0; }
+        4%, 12% { stroke-opacity: 0.9; }
+      }
+      @keyframes stageFill {
+        0%, 18%, 100% { opacity: 0; }
+        4%, 12% { opacity: 0.16; }
+      }
+      @keyframes stageOk {
+        0%, 18%, 100% { fill: #f8fafc; opacity: 0.92; }
+        4%, 12% { fill: #62f38d; opacity: 1; }
+      }
+      @keyframes logStep {
+        0%, 18%, 100% { opacity: 0.62; }
+        4%, 12% { opacity: 1; }
+      }
+      @keyframes nodeGlow {
+        0%, 18%, 100% { opacity: 0.36; }
+        4%, 12% { opacity: 1; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .flow-dash { animation: none; }
+        .flow-dash,
+        .flow-node,
+        .stage-fill,
+        .stage-ring,
+        .stage-ok,
+        .log-step { animation: none; }
+        .log-step { opacity: 1; }
       }
     </style>
   </defs>
@@ -66,74 +125,96 @@
     <text x="48" y="104" class="mono bright" font-size="18">--build . --tag ghcr.io/acme/api:dev --yes</text>
 
     <g transform="translate(28 142)">
-      <text x="0" y="0" class="mono accent" font-size="16">ship: build</text>
-      <text x="150" y="0" class="mono muted" font-size="16">image + build.sqlite</text>
-      <text x="0" y="30" class="mono accent" font-size="16">ship: verify</text>
-      <text x="150" y="30" class="mono muted" font-size="16">verify.json accepted</text>
+      <g class="log-step delay-build">
+        <text x="0" y="0" class="mono accent" font-size="16">ship: build</text>
+        <text x="150" y="0" class="mono muted" font-size="16">docker image + build.sqlite</text>
+      </g>
+      <g class="log-step delay-verify">
+        <text x="0" y="30" class="mono accent" font-size="16">ship: verify</text>
+        <text x="150" y="30" class="mono muted" font-size="16">verify.json accepted</text>
+      </g>
     </g>
     <g transform="translate(600 142)">
-      <text x="0" y="0" class="mono accent" font-size="16">ship: plan</text>
-      <text x="138" y="0" class="mono muted" font-size="16">plan.json ready</text>
-      <text x="0" y="30" class="mono accent" font-size="16">ship: apply</text>
-      <text x="138" y="30" class="mono muted" font-size="16">apply.sqlite captured</text>
-      <text x="0" y="60" class="mono accent" font-size="16">ship: explain</text>
-      <text x="138" y="60" class="mono muted" font-size="16">summary written</text>
+      <g class="log-step delay-plan">
+        <text x="0" y="0" class="mono accent" font-size="16">ship: plan</text>
+        <text x="138" y="0" class="mono muted" font-size="16">plan.json ready</text>
+      </g>
+      <g class="log-step delay-apply">
+        <text x="0" y="30" class="mono accent" font-size="16">ship: apply</text>
+        <text x="138" y="30" class="mono muted" font-size="16">deploy to k8s</text>
+      </g>
+      <g class="log-step delay-explain">
+        <text x="0" y="60" class="mono accent" font-size="16">ship: explain</text>
+        <text x="138" y="60" class="mono muted" font-size="16">summary written</text>
+      </g>
     </g>
   </g>
 
   <g transform="translate(66 344)">
     <g transform="translate(0 0)">
       <rect width="156" height="148" rx="14" class="panel"/>
-      <text x="78" y="36" text-anchor="middle" class="mono accent" font-size="15">BUILD</text>
-      <text x="78" y="72" text-anchor="middle" class="sans bright" font-size="26" font-weight="760">OK</text>
-      <text x="78" y="106" text-anchor="middle" class="mono muted" font-size="13">build.sqlite</text>
-      <text x="78" y="128" text-anchor="middle" class="mono muted" font-size="13">image</text>
+      <rect width="156" height="148" rx="14" class="stage-fill delay-build"/>
+      <text x="78" y="36" text-anchor="middle" class="tech accent" font-size="15" font-weight="700">BUILD</text>
+      <text x="78" y="72" text-anchor="middle" class="tech bright stage-ok delay-build" font-size="27" font-weight="800">OK</text>
+      <text x="78" y="106" text-anchor="middle" class="tech muted" font-size="13">docker image</text>
+      <text x="78" y="128" text-anchor="middle" class="tech muted" font-size="13">build.sqlite</text>
+      <rect width="156" height="148" rx="14" class="stage-ring delay-build"/>
     </g>
     <g transform="translate(180 0)">
       <rect width="156" height="148" rx="14" class="panel"/>
-      <text x="78" y="36" text-anchor="middle" class="mono accent" font-size="15">VERIFY</text>
-      <text x="78" y="72" text-anchor="middle" class="sans bright" font-size="26" font-weight="760">OK</text>
-      <text x="78" y="106" text-anchor="middle" class="mono muted" font-size="13">verify.json</text>
-      <text x="78" y="128" text-anchor="middle" class="mono muted" font-size="13">gate</text>
+      <rect width="156" height="148" rx="14" class="stage-fill delay-verify"/>
+      <text x="78" y="36" text-anchor="middle" class="tech accent" font-size="15" font-weight="700">VERIFY</text>
+      <text x="78" y="72" text-anchor="middle" class="tech bright stage-ok delay-verify" font-size="27" font-weight="800">OK</text>
+      <text x="78" y="106" text-anchor="middle" class="tech muted" font-size="13">verify.json</text>
+      <text x="78" y="128" text-anchor="middle" class="tech muted" font-size="13">gate</text>
+      <rect width="156" height="148" rx="14" class="stage-ring delay-verify"/>
     </g>
     <g transform="translate(360 0)">
       <rect width="156" height="148" rx="14" class="panel"/>
-      <text x="78" y="36" text-anchor="middle" class="mono accent" font-size="15">PLAN</text>
-      <text x="78" y="72" text-anchor="middle" class="sans bright" font-size="26" font-weight="760">OK</text>
-      <text x="78" y="106" text-anchor="middle" class="mono muted" font-size="13">plan.json</text>
-      <text x="78" y="128" text-anchor="middle" class="mono muted" font-size="13">review</text>
+      <rect width="156" height="148" rx="14" class="stage-fill delay-plan"/>
+      <text x="78" y="36" text-anchor="middle" class="tech accent" font-size="15" font-weight="700">PLAN</text>
+      <text x="78" y="72" text-anchor="middle" class="tech bright stage-ok delay-plan" font-size="27" font-weight="800">OK</text>
+      <text x="78" y="106" text-anchor="middle" class="tech muted" font-size="13">plan.json</text>
+      <text x="78" y="128" text-anchor="middle" class="tech muted" font-size="13">review</text>
+      <rect width="156" height="148" rx="14" class="stage-ring delay-plan"/>
     </g>
     <g transform="translate(540 0)">
       <rect width="156" height="148" rx="14" class="panel"/>
-      <text x="78" y="36" text-anchor="middle" class="mono accent" font-size="15">APPLY</text>
-      <text x="78" y="72" text-anchor="middle" class="sans bright" font-size="26" font-weight="760">OK</text>
-      <text x="78" y="106" text-anchor="middle" class="mono muted" font-size="13">apply.sqlite</text>
-      <text x="78" y="128" text-anchor="middle" class="mono muted" font-size="13">rollout</text>
+      <rect width="156" height="148" rx="14" class="stage-fill delay-apply"/>
+      <text x="78" y="36" text-anchor="middle" class="tech accent" font-size="15" font-weight="700">APPLY</text>
+      <text x="78" y="72" text-anchor="middle" class="tech bright stage-ok delay-apply" font-size="27" font-weight="800">OK</text>
+      <text x="78" y="106" text-anchor="middle" class="tech muted" font-size="13">deploy to k8s</text>
+      <text x="78" y="128" text-anchor="middle" class="tech muted" font-size="13">apply.sqlite</text>
+      <rect width="156" height="148" rx="14" class="stage-ring delay-apply"/>
     </g>
     <g transform="translate(720 0)">
       <rect width="156" height="148" rx="14" class="panel"/>
-      <text x="78" y="36" text-anchor="middle" class="mono accent" font-size="15">EXPLAIN</text>
-      <text x="78" y="72" text-anchor="middle" class="sans bright" font-size="26" font-weight="760">OK</text>
-      <text x="78" y="106" text-anchor="middle" class="mono muted" font-size="13">ship.md</text>
-      <text x="78" y="128" text-anchor="middle" class="mono muted" font-size="13">ship.json</text>
+      <rect width="156" height="148" rx="14" class="stage-fill delay-explain"/>
+      <text x="78" y="36" text-anchor="middle" class="tech accent" font-size="15" font-weight="700">EXPLAIN</text>
+      <text x="78" y="72" text-anchor="middle" class="tech bright stage-ok delay-explain" font-size="27" font-weight="800">OK</text>
+      <text x="78" y="106" text-anchor="middle" class="tech muted" font-size="13">ship.md</text>
+      <text x="78" y="128" text-anchor="middle" class="tech muted" font-size="13">ship.json</text>
+      <rect width="156" height="148" rx="14" class="stage-ring delay-explain"/>
     </g>
     <g transform="translate(900 0)">
       <rect width="168" height="148" rx="14" fill="#111820" stroke="#7edaee" stroke-opacity="0.34"/>
-      <text x="24" y="36" class="mono accent" font-size="15">EVIDENCE</text>
-      <text x="24" y="70" class="mono bright" font-size="14">dist/torque-ship</text>
-      <text x="24" y="102" class="mono muted" font-size="13">captures</text>
-      <text x="24" y="124" class="mono muted" font-size="13">reports + plan</text>
+      <rect width="168" height="148" rx="14" class="stage-fill delay-evidence"/>
+      <text x="24" y="36" class="tech accent" font-size="15" font-weight="700">EVIDENCE</text>
+      <text x="24" y="70" class="tech bright stage-ok delay-evidence" font-size="14">dist/torque-ship</text>
+      <text x="24" y="102" class="tech muted" font-size="13">captures</text>
+      <text x="24" y="124" class="tech muted" font-size="13">reports + plan</text>
+      <rect width="168" height="148" rx="14" class="stage-ring delay-evidence"/>
     </g>
 
     <path class="flow-rail" d="M78 166H984" fill="none"/>
-    <path class="flow-dash" d="M78 166H984" fill="none"/>
-    <circle class="flow-node" cx="78" cy="166" r="4.4"/>
-    <circle class="flow-node" cx="258" cy="166" r="4.4"/>
-    <circle class="flow-node" cx="438" cy="166" r="4.4"/>
-    <circle class="flow-node" cx="618" cy="166" r="4.4"/>
-    <circle class="flow-node" cx="798" cy="166" r="4.4"/>
-    <circle class="flow-node" cx="984" cy="166" r="4.4"/>
+    <path class="flow-dash" d="M78 166H984" pathLength="100" fill="none"/>
+    <circle class="flow-node delay-build" cx="78" cy="166" r="4.4"/>
+    <circle class="flow-node delay-verify" cx="258" cy="166" r="4.4"/>
+    <circle class="flow-node delay-plan" cx="438" cy="166" r="4.4"/>
+    <circle class="flow-node delay-apply" cx="618" cy="166" r="4.4"/>
+    <circle class="flow-node delay-explain" cx="798" cy="166" r="4.4"/>
+    <circle class="flow-node delay-evidence" cx="984" cy="166" r="4.4"/>
   </g>
 
-  <text x="66" y="570" class="mono muted" font-size="14">single command: build -> verify -> plan -> apply -> explain -> evidence</text>
+  <text x="66" y="570" class="mono muted log-step delay-evidence" font-size="14">single command: build Docker image => verify => plan => deploy to k8s => explain => evidence</text>
 </svg>
