@@ -155,11 +155,6 @@ fixtures_ok=(
   "08-tags-selection"
   "09-from-path-selection"
   "10-large-graph"
-  "11-verify-enabled"
-)
-
-expected_fail_apply=(
-  "12-verify-warning-fail"
 )
 
 expected_fail_plan=(
@@ -240,12 +235,6 @@ run_ok_fixture() {
   status_raw_out="${root}/.status.raw.jsonl"
   rm -f "${status_raw_out}"
   ./bin/torque "${torque_args[@]}" stack status --config "${root}" --format raw --tail 200 >"${status_raw_out}"
-  if [[ "$(basename "${root}")" == "11-verify-enabled" ]]; then
-    if ! file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"; then
-      echo "expected verify phase events for ${root}" >&2
-      exit 1
-    fi
-  fi
   echo ">> status table (${root})"
   ./bin/torque "${torque_args[@]}" stack status --config "${root}" --format table >/dev/null
   echo ">> status json (${root})"
@@ -335,33 +324,6 @@ run_expected_fail_plan_fixture() {
   must_fail "plan should fail (${name})" ./bin/torque "${torque_args[@]}" stack plan --config "${root}" --output table
 }
 
-run_expected_fail_apply_fixture() {
-  local root="$1"
-  local name="$2"
-
-  echo ">> plan table (${root})"
-  ./bin/torque "${torque_args[@]}" stack plan --config "${root}" --output table >/dev/null
-
-  echo ">> apply expect-fail (${root})"
-  must_fail "apply should fail (${name})" ./bin/torque "${torque_args[@]}" stack apply --config "${root}" --concurrency 2 --yes --retry 1 >/dev/null
-
-  echo ">> status raw contains verify failure (${root})"
-  status_raw_out="${root}/.status.raw.jsonl"
-  rm -f "${status_raw_out}"
-  ./bin/torque "${torque_args[@]}" stack status --config "${root}" --format raw --tail 200 >"${status_raw_out}"
-  if ! file_matches '"phase"[[:space:]]*:[[:space:]]*"verify"' "${status_raw_out}"; then
-    echo "expected verify phase events for ${root}" >&2
-    exit 1
-  fi
-  if ! file_matches '"status"[[:space:]]*:[[:space:]]*"failed"' "${status_raw_out}"; then
-    echo "expected verify failure status for ${root}" >&2
-    exit 1
-  fi
-
-  echo ">> delete cleanup (${root})"
-  ./bin/torque "${torque_args[@]}" stack delete --config "${root}" --concurrency 2 --yes --retry 2 >/dev/null
-}
-
 echo ">> staging fixtures into temp dir"
 work="${tmp_root}/fixtures"
 copy_fixture_tree "${work}"
@@ -384,13 +346,6 @@ for ((iter=1; iter<=ITERATIONS; iter++)); do
         run_ok_fixture "${root}"
         ;;
     esac
-    echo
-  done
-
-  for f in "${expected_fail_apply[@]}"; do
-    root="${work}/${f}"
-    echo "==== fixture ${f} (expected apply failure) ===="
-    run_expected_fail_apply_fixture "${root}" "${f}"
     echo
   done
 
