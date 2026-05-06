@@ -18,6 +18,7 @@ LDFLAGS ?= -s -w \
 	-X github.com/ingresslabs/torque/internal/version.GitTreeState=$(GIT_TREE_STATE) \
 	-X github.com/ingresslabs/torque/internal/version.BuildDate=$(BUILD_DATE)
 RELEASE_PLATFORMS ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
+CROSS_PLATFORMS ?= $(RELEASE_PLATFORMS) windows/amd64
 RELEASE_TOOLS ?= $(BINARY) verifier verify
 RELEASE_TOOL_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(foreach tool,$(RELEASE_TOOLS),$(DIST_DIR)/$(tool)-$(subst /,-,$(platform))))
 GH ?= gh
@@ -48,20 +49,26 @@ PACKAGECLI_BINARY ?= torque-package
 PACKAGECLI_PKG ?= ./cmd/package
 RELEASE_PACKAGECLI_ARTIFACTS := $(foreach platform,$(RELEASE_PLATFORMS),$(DIST_DIR)/$(PACKAGECLI_BINARY)-$(subst /,-,$(platform)))
 RELEASE_ARTIFACTS := $(RELEASE_TOOL_ARTIFACTS) $(RELEASE_PACKAGECLI_ARTIFACTS)
-LOGS_BINARY ?= logs
+LOGS_BINARY ?= torque-logs
 LOGS_PKG ?= ./cmd/torque
 LOGS_BUILD_MODE ?= logs-only
 LOGS_LDFLAGS ?= $(LDFLAGS) -X github.com/ingresslabs/torque/cmd/torque.buildMode=$(LOGS_BUILD_MODE)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build build-% build-verifier build-verify build-packagecli build-logs build-all install install-verifier install-verify install-packagecli install-all release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog test test-short test-integration fmt lint tidy verify preflight docs docs-no-gifs site site-check proto proto-lint clean loc print-% test-ci smoke-package-verify verify-charts-e2e testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
+.PHONY: help print-%
+.PHONY: build build-% build-cross build-verifier build-verify build-packagecli build-logs build-all
+.PHONY: install install-verifier install-verify install-packagecli install-all
+.PHONY: release dist-checksums dist-checksums-all gh-release gh-release-all tag-release push-release changelog package
+.PHONY: test test-short test-integration test-ci smoke-package-verify verify-charts-e2e
+.PHONY: testpoint testpoint-ci testpoint-unit testpoint-integration testpoint-charts-e2e testpoint-e2e-real testpoint-all
+.PHONY: fmt lint tidy verify preflight docs docs-no-gifs site site-check proto proto-lint clean loc
 PACKAGE_IMAGE ?= torque-packager
 PACKAGE_PLATFORMS ?= linux/amd64
 
 help: ## Show this help menu
 	@echo "Available targets:"
-	@LC_ALL=C grep -hE '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | sort | \
+	@LC_ALL=C grep -hE '^[a-zA-Z0-9_.%-]+:.*##' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS=":.*## "} {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
 build: ## Build torque for the current platform into ./bin/torque
@@ -89,19 +96,12 @@ build-logs: ## Build logs-only torque CLI for the current platform into ./bin/to
 	@mkdir -p $(BIN_DIR)
 	GOOS=$(HOST_GOOS) GOARCH=$(HOST_GOARCH) $(GO) build $(GOFLAGS) -ldflags '$(LOGS_LDFLAGS)' -o $(BIN_DIR)/$(LOGS_BINARY) $(LOGS_PKG)
 
-build-cross: ## Build binaries for all supported platforms (linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64)
-	@echo ">> building cross-platform binaries into $(BIN_DIR)"
-	@mkdir -p $(BIN_DIR)
-	@# Linux amd64
-	GOOS=linux GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY)-linux-amd64 $(PKG)
-	@# Linux arm64
-	GOOS=linux GOARCH=arm64 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY)-linux-arm64 $(PKG)
-	@# Darwin amd64
-	GOOS=darwin GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY)-darwin-amd64 $(PKG)
-	@# Darwin arm64
-	GOOS=darwin GOARCH=arm64 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY)-darwin-arm64 $(PKG)
-	@# Windows amd64
-	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY)-windows-amd64.exe $(PKG)
+build-cross: ## Build torque for configured cross platforms into ./bin
+	@echo ">> building cross-platform binaries for: $(CROSS_PLATFORMS)"
+	@set -e; for platform in $(CROSS_PLATFORMS); do \
+		os=$${platform%/*}; arch=$${platform#*/}; \
+		$(MAKE) build-$$os-$$arch; \
+	done
 	@echo ">> cross-platform build complete"
 
 build-%: ## Build torque for <os>-<arch> into ./bin/torque-<os>-<arch>[.exe]
@@ -146,7 +146,7 @@ install-all: ## Install torque and standalone toolkit binaries
 release: ## Cross-build release artifacts into ./dist
 	@echo ">> building release artifacts for: $(RELEASE_PLATFORMS)"
 	@mkdir -p $(DIST_DIR)
-	@for platform in $(RELEASE_PLATFORMS); do \
+	@set -e; for platform in $(RELEASE_PLATFORMS); do \
 		os=$${platform%/*}; arch=$${platform#*/}; \
 		for tool in $(RELEASE_TOOLS); do \
 			out="$(DIST_DIR)/$$tool-$$os-$$arch"; \
@@ -332,8 +332,8 @@ test-ci: ## Run fmt, lint, test, and package/verify smoke (CI parity)
 	$(MAKE) test
 	$(MAKE) smoke-package-verify
 
-verify-charts-e2e: ## Run verify across all charts in testdata/charts (requires verify binary)
-	VERIFY_BIN="$(BIN_DIR)/verify" ./integration/verify_charts_e2e.sh
+verify-charts-e2e: ## Run verify against allowlisted charts in testdata/charts
+	./integration/verify_charts_e2e.sh
 
 testpoint: ## Single entrypoint for fmt/lint/tests (scripts/testpoint.sh)
 	./scripts/testpoint.sh
@@ -381,7 +381,7 @@ preflight: verify ## Alias for verify (fmt + lint + unit tests)
 
 package: ## Build .deb/.rpm packages into ./dist (Docker-based)
 	@mkdir -p "$(DIST_DIR)"
-	@for platform in $(PACKAGE_PLATFORMS); do \
+	@set -e; for platform in $(PACKAGE_PLATFORMS); do \
 		os=$${platform%/*}; arch=$${platform#*/}; \
 		image="$(PACKAGE_IMAGE)-$$arch"; \
 		echo ">> building packaging image $$image ($$platform)"; \
@@ -398,8 +398,7 @@ package: ## Build .deb/.rpm packages into ./dist (Docker-based)
 			"$$image"; \
 	done
 
-docs: ## (No-op) Docs build pipeline is not checked in
-	@echo ">> docs: no docs build pipeline is checked into this repo"
+docs: site docs-no-gifs ## Generate static docs/site output and validate docs surfaces
 
 docs-no-gifs: ## Ensure docs and generated site output do not contain GIFs
 	@./scripts/check-docs-no-gifs.sh
@@ -430,7 +429,7 @@ clean: ## Remove build artifacts (bin/ and dist/)
 # ----- METRICS -----
 loc: ## Count Go lines of code (excluding vendor/ and bin/)
 	@echo ">> Counting Go LOC (excluding vendor/ and bin/)"
-	@find . -type f -name '*.go' ! -path "./vendor/*" ! -path "./$(BIN_DIR)/*" -exec cat {} + | wc -l
+	@find . -type f -name '*.go' ! -path '*/vendor/*' ! -path "./$(BIN_DIR)/*" -exec cat {} + | wc -l
 
 print-%: ## Print the value of any Makefile variable
 	@printf '%s=%s\n' '$*' '$($*)'
