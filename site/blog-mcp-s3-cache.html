@@ -297,13 +297,13 @@
 
       .terminal-shot {
         display: grid;
-        gap: 8px;
-        padding: clamp(14px, 1.8vw, 20px);
+        gap: 6px;
+        padding: clamp(10px, 1.3vw, 15px);
         border: 1px solid rgba(237, 241, 245, 0.22);
         border-radius: 8px;
         background: rgba(0, 0, 0, 0.82);
         color: #f7f9fb;
-        font: clamp(0.68rem, 1vw, 0.84rem)/1.45 var(--font-mono);
+        font: clamp(0.64rem, 0.9vw, 0.76rem)/1.38 var(--font-mono);
         overflow: visible;
       }
 
@@ -568,7 +568,7 @@
             </div>
           </figure>
 
-          <p>Two of the nicer human-facing features are the verifier report and Helmer plan report. The verifier report turns policy findings, risk levels, skipped checks, and release blockers into a reviewable page instead of raw JSON. The Helmer report does the same for rendered Kubernetes resources: reviewers can inspect the plan, jump to a specific deployment, and compare what an agent proposes before anything touches the cluster.</p>
+          <p>Two of the nicer human-facing features are the <a href="https://ingresslabs.github.io/torque/showcase/reports/verifier-report.html">verifier report</a> and <a href="https://ingresslabs.github.io/torque/showcase/reports/helmer-plan.html#resource=showcase:deployment:verify-findings-showcase">Helmer plan report</a>. The verifier report turns policy findings, risk levels, skipped checks, and release blockers into a reviewable page instead of raw JSON. The Helmer report does the same for rendered Kubernetes resources: reviewers can inspect the plan, jump to a specific deployment, and compare what an agent proposes before anything touches the cluster.</p>
 
           <p>The broader project is built around the same idea. Torque can build containers, package charts, verify policy, plan Kubernetes changes, apply or delete stacks, follow logs, explain captured runs, and preserve evidence as files that move with the incident or release. The new agent surface does not replace those capabilities. It makes them callable by an agent without hiding what happened.</p>
 
