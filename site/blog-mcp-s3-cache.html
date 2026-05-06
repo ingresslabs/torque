@@ -6,7 +6,7 @@
     <title>One Torque Talking To Another | torque</title>
     <meta
       name="description"
-      content="Medium-style Torque engineering note covering the MCP remote gRPC bridge, systemd daemon install path, stack command tools, and S3 BuildKit cache advisor workflow."
+      content="Medium-style Torque engineering note covering the MCP remote gRPC bridge, systemd daemon install path, and S3 BuildKit cache advisor workflow."
     />
     <style>
       :root {
@@ -187,70 +187,18 @@
         background: rgba(237, 241, 245, 0.055);
       }
 
-      .showcases {
-        display: grid;
-        gap: clamp(42px, 6vw, 76px);
-      }
-
-      .section-heading {
+      .inline-demo {
         display: grid;
         gap: 10px;
-        max-width: 760px;
+        margin: clamp(8px, 2vw, 18px) 0 clamp(18px, 4vw, 34px);
       }
 
-      .section-heading h2 {
-        margin: 0;
-        color: #ffffff;
-        font-size: clamp(2rem, 4.2vw, 4.1rem);
-        line-height: 0.98;
-        font-weight: 820;
-      }
-
-      .section-heading p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 1rem;
-      }
-
-      .demo-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: clamp(42px, 6vw, 72px);
-      }
-
-      .demo {
-        position: relative;
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        background:
-          linear-gradient(180deg, rgba(16, 16, 20, 0.96), rgba(10, 10, 12, 0.90)),
-          var(--surface);
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          0 18px 48px rgba(0, 0, 0, 0.28);
-        overflow: hidden;
-      }
-
-      .demo summary {
-        cursor: pointer;
-        list-style: none;
-        padding: 14px 15px;
-        color: var(--accent);
-        font: 0.74rem/1 var(--font-mono);
-        font-weight: 700;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
-        border-bottom: 1px solid var(--line);
-        background:
-          linear-gradient(180deg, rgba(237, 241, 245, 0.08), rgba(184, 189, 196, 0.02));
-      }
-
-      .demo summary::-webkit-details-marker {
-        display: none;
-      }
-
-      .demo-media {
-        padding: 11px;
+      .inline-demo .svg-wire,
+      .inline-demo .svg-ring,
+      .inline-demo .svg-node.pulse,
+      .inline-demo .cache-block.hot,
+      .inline-demo .platform-glyph.hot {
+        animation: none;
       }
 
       .showcase-panel {
@@ -407,7 +355,6 @@
       }
 
       .showcase-kicker,
-      .showcase-status,
       .showcase-label {
         color: var(--muted-strong);
         font: 0.72rem/1 var(--font-mono);
@@ -422,14 +369,6 @@
         font-size: clamp(1.35rem, 2.7vw, 2.25rem);
         line-height: 1.05;
         font-weight: 820;
-      }
-
-      .showcase-status {
-        flex: 0 0 auto;
-        padding: 9px 11px;
-        border: 1px solid rgba(237, 241, 245, 0.18);
-        border-radius: 8px;
-        background: rgba(16, 16, 20, 0.72);
       }
 
       .showcase-flow {
@@ -485,6 +424,20 @@
         border-top: 2px solid rgba(237, 241, 245, 0.82);
         border-right: 2px solid rgba(237, 241, 245, 0.82);
         transform: translateY(-50%) rotate(45deg);
+      }
+
+      .showcase-flow.cache-flow {
+        grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr) 42px minmax(0, 1fr);
+      }
+
+      .platform-glyph {
+        fill: rgba(237, 241, 245, 0.08);
+        stroke: rgba(237, 241, 245, 0.25);
+        stroke-width: 1.8;
+      }
+
+      .platform-glyph.hot {
+        animation: cache-glow 3.2s ease-in-out infinite;
       }
 
       .terminal-shot {
@@ -586,6 +539,7 @@
         }
         .showcase-flow,
         .showcase-flow.with-links,
+        .showcase-flow.cache-flow,
         .metric-strip {
           grid-template-columns: minmax(0, 1fr);
         }
@@ -639,9 +593,6 @@
         .showcase-head {
           display: grid;
         }
-        .showcase-status {
-          justify-self: start;
-        }
         footer {
           grid-template-columns: minmax(0, 1fr);
           align-items: flex-start;
@@ -657,7 +608,8 @@
         .svg-wire,
         .svg-ring,
         .svg-node.pulse,
-        .cache-block.hot {
+        .cache-block.hot,
+        .platform-glyph.hot {
           animation: none;
         }
         .svg-packet {
@@ -687,217 +639,127 @@
 
       <main>
         <section class="article-hero" aria-labelledby="title">
-          <div class="eyebrow">MCP bridge / S3 cache</div>
+          <div class="eyebrow">Agentic delivery</div>
           <h1 id="title">One Torque Talking To Another</h1>
           <p class="dek">
-            A practical pattern for giving agents typed delivery tools without
-            turning them into privileged shells.
+            A practical pattern for giving agents real delivery powers without
+            turning them into a privileged shell.
           </p>
         </section>
 
         <article class="article-body" aria-label="Article">
-          <p>Torque exists because not every delivery loop belongs in a hosted CI control plane. Some teams ship from air-gapped networks, regulated enclaves, factory floors, field clusters, sovereign clouds, or short-lived labs where runners cannot phone home and artifacts must stay local. Others need a portable CI-in-a-box workflow for disaster recovery, customer reproductions, edge upgrades, or build-and-deploy evidence that can move with a case file. In those places, the hard problem is not starting a pipeline; it is keeping the pipeline inspectable, replayable, and narrow enough to trust. Torque treats the workstation, VM, or isolated build host as the delivery cell: build, verify, plan, apply, capture, and explain all stay explicit. That gives agent-driven CI/CD a safer substrate: agents can request work through typed tools while operators keep the execution boundary, evidence, and approvals under control.</p>
+          <p>Torque exists because not every delivery loop belongs in a hosted CI control plane. Some teams work in air-gapped networks, regulated environments, edge sites, customer labs, or recovery drills where runners cannot phone home and artifacts must stay close. In those places, the useful shape is CI in a box: build, verify, plan, apply, capture, and explain from one workstation, VM, or isolated build host.</p>
 
-          <p>Agent infrastructure is most useful when it can do real work without becoming a privileged shell with better autocomplete. That was the design line for Torque's MCP server. The server exposes build, ship, verify, stack, logs, capture, and session tools through structured MCP calls, while the actual heavy work still runs through Torque's existing CLI and gRPC agent boundary.</p>
+          <p>Modern DevOps tools should be easy for an agent to drive and still comfortable for a human to inspect. The operator should not have to click every button by hand, but the agent should not get an open shell either. Torque sits in the middle: it gives agents named actions for building images, shipping releases, checking charts, reading logs, replaying sessions, warming caches, and reviewing evidence. Every action has inputs, outputs, and a trail another person or process can read later.</p>
 
-          <p>The interesting part is the bridge. One Torque process can run as an MCP server for an agent host, receive a request such as "build this image and ship the stack", and forward that operation to another Torque endpoint over gRPC. The agent sees typed tools like <code>torque.build.run</code>, <code>torque.ship.run</code>, and <code>torque.stack.apply</code>. The remote side sees the same production services it already trusts: <code>BuildService.RunBuild</code>, <code>DeployService.Apply</code>, <code>StackService.Apply</code>, <code>MirrorService.Subscribe</code>, and the rest of the agent API.</p>
+          <p>The bridge is the key idea. A Mac-based agent can call <code>torque-mcp</code> as a local tool server, while a Linux host does the real build and deploy work through <code>torque-agent</code>. The model asks for a task in a small, typed format. Torque forwards it to the remote service, redacts sensitive output, and returns evidence instead of a wall of terminal noise.</p>
 
-          <p>That separation matters. MCP is the agent contract. gRPC is the execution contract. The MCP server does not reinvent deploy logic, stream parsing, stack ordering, or remote session storage. It translates requests, enforces policy, redacts secrets, and returns evidence the model can inspect. Mutating calls require server-side write enablement and request-level confirmation, so a model cannot accidentally turn a read-only review into a cluster write. Remote tokens travel through environment variables instead of command arguments, and session output is scrubbed before it is returned to the caller.</p>
+          <figure class="inline-demo">
+            <div class="showcase-panel" role="img" aria-label="A symbolic MCP bridge connects a macOS agent host to Linux MCP and gRPC agent services.">
+              <svg class="showcase-svg" viewBox="0 0 1200 620" aria-hidden="true" focusable="false">
+                <path class="svg-track" d="M168 372 C330 166 540 166 600 310 C660 166 870 166 1032 372" />
+                <path id="bridge-macos-linux" class="svg-wire" d="M168 372 C330 166 540 166 600 310 C660 166 870 166 1032 372" />
+                <path id="bridge-linux-macos" class="svg-wire slow" d="M1032 430 C862 524 710 490 600 382 C490 490 338 524 168 430" />
+                <rect class="platform-glyph hot" x="112" y="314" width="144" height="94" rx="14" />
+                <path class="platform-glyph" d="M92 424 H276 L252 458 H116 Z" />
+                <rect class="platform-glyph hot" x="928" y="306" width="154" height="132" rx="18" />
+                <path class="platform-glyph" d="M948 342 H1062 M948 374 H1062 M948 406 H1016" />
+                <circle class="svg-node pulse" cx="600" cy="310" r="58" />
+                <path class="svg-ring" d="M536 310 C536 252 664 252 664 310 C664 368 536 368 536 310 Z" />
+              </svg>
+              <div class="showcase-head">
+                <div>
+                  <div class="showcase-kicker">MCP remote bridge</div>
+                  <h3 class="showcase-title">macOS agent, Linux execution.</h3>
+                </div>
+              </div>
+              <div class="showcase-flow with-links">
+                <div class="flow-node">
+                  <strong>macOS agent</strong>
+                  <span>tools/call</span>
+                </div>
+                <div class="flow-link" aria-hidden="true"></div>
+                <div class="flow-node">
+                  <strong>torque-mcp</strong>
+                  <span>confirm + redact</span>
+                </div>
+                <div class="flow-link" aria-hidden="true"></div>
+                <div class="flow-node">
+                  <strong>Linux MCP agent</strong>
+                  <span>loopback HTTP</span>
+                </div>
+                <div class="flow-link" aria-hidden="true"></div>
+                <div class="flow-node">
+                  <strong>torque-agent</strong>
+                  <span>gRPC services</span>
+                </div>
+              </div>
+              <div class="terminal-shot" aria-hidden="true">
+                <span>{ "tool": "torque.ship.run", "safety": { "confirm": true } }</span>
+                <span>bridge: MCP request -> remote gRPC operation</span>
+                <span>session: mirror evidence returned, token redacted</span>
+              </div>
+            </div>
+          </figure>
 
-          <p>That is also the answer to "how do you make a secure MCP server?" Keep MCP boring and narrow. Prefer stdio for local agent hosts. If HTTP is needed, bind it to loopback, require bearer auth, validate browser origins, cap request sizes, and put any public access behind a real TLS proxy. Do not let MCP become a generic shell or a direct Kubernetes tunnel. It should be a typed contract with small tools, bounded inputs, redacted outputs, and clear write gates.</p>
+          <p>The safety model is deliberately plain. Local agent calls use stdio or authenticated loopback HTTP. Remote work uses a dedicated agent service, scoped credentials, and durable session storage. Write actions stay off until they are enabled, and mutating requests still need confirmation. Tokens live in environment files instead of command arguments, secrets are scrubbed from responses, and every build or deploy leaves a capture, report, summary, or replayable session behind.</p>
 
-          <p>The remote side should be harder than the MCP side. A production <code>torque-agent</code> runs behind TLS and client certificate verification, keeps the bearer token as a second factor, uses a scoped kubeconfig and Kubernetes RBAC, writes MirrorService sessions to durable storage, and puts retention limits on that evidence. MCP write tools still need server enablement plus per-request confirmation, and every mutating action has to leave a capture, plan digest, verifier report, ship summary, stack run ID, or mirror replay behind.</p>
+          <p>The same posture is now installable as a Linux daemon path. <code>install.sh --mode systemd-daemon</code> installs <code>torque</code>, <code>torque-agent</code>, and <code>torque-mcp</code>, writes <code>/etc/torque/agent.env</code>, and starts systemd services for the remote agent and local MCP server. The agent runs in durable mode, stores session frames under <code>/var/lib/torque/agent/mirror.sqlite</code>, and turns sandboxing on for remote builds. That makes the agent suitable for long-running build hosts instead of one-off terminals.</p>
 
-          <p>The target posture is simple: MCP over stdio or authenticated loopback HTTP, remote gRPC over mTLS, writes disabled unless explicitly enabled, secrets never crossing MCP, and every action replayable from evidence.</p>
+          <p>The cache workflow follows the same agent-first design. Instead of making a model read BuildKit logs and guess what happened, Torque gives it three clear tools: inspect the cache setup, plan which layers are affected by changed files, and warm the remote cache when a human or policy allows it. The agent can prepare the build path, but the project keeps cache writes bounded and reviewable.</p>
 
-          <p>That posture is now installable as a Linux service instead of a hand-written runbook. <code>install.sh --mode systemd-daemon</code> installs <code>torque</code>, <code>torque-agent</code>, and <code>torque-mcp</code>, writes <code>/etc/torque/agent.env</code> with separate gRPC and MCP bearer tokens, and starts <code>torque-agent.service</code> plus <code>torque-mcp.service</code>. The agent runs in durable mode, persists MirrorService frames under <code>/var/lib/torque/agent/mirror.sqlite</code>, and requires sandbox execution for remote builds. The MCP service listens on <code>127.0.0.1:7331</code>, requires bearer auth, and bridges to the local gRPC agent at <code>127.0.0.1:7443</code>.</p>
+          <figure class="inline-demo">
+            <div class="showcase-panel" role="img" aria-label="Bytes flow between a client developer, a Linux agent, and an S3 cloud cache.">
+              <svg class="showcase-svg" viewBox="0 0 1200 620" aria-hidden="true" focusable="false">
+                <path class="svg-track" d="M170 392 C286 282 414 282 530 392" />
+                <path class="svg-track" d="M530 392 C672 212 878 212 1030 392" />
+                <path class="svg-track" d="M1030 444 C858 546 678 530 530 444 C382 530 210 546 170 444" />
+                <path id="client-agent-bytes" class="svg-wire" d="M170 392 C286 282 414 282 530 392" />
+                <path id="agent-s3-bytes" class="svg-wire" d="M530 392 C672 212 878 212 1030 392" />
+                <path id="s3-return-bytes" class="svg-wire slow" d="M1030 444 C858 546 678 530 530 444 C382 530 210 546 170 444" />
+                <rect class="platform-glyph hot" x="104" y="338" width="142" height="90" rx="14" />
+                <path class="platform-glyph" d="M88 444 H262 L240 474 H110 Z" />
+                <rect class="cache-block hot" x="450" y="328" width="168" height="126" rx="16" />
+                <path class="platform-glyph" d="M484 362 H584 M484 394 H584 M484 426 H548" />
+                <path class="platform-glyph hot" d="M934 394 C914 354 946 318 994 330 C1016 288 1084 302 1094 348 C1138 354 1154 420 1110 444 H952 C914 444 902 410 934 394 Z" />
+                <circle class="svg-node pulse" cx="530" cy="392" r="42" />
+                <path class="svg-ring" d="M900 388 C900 326 1138 326 1138 388 C1138 450 900 450 900 388 Z" />
+              </svg>
+              <div class="showcase-head">
+                <div>
+                  <div class="showcase-kicker">S3 BuildKit cache advisor</div>
+                  <h3 class="showcase-title">Bytes move, logs stay boring.</h3>
+                </div>
+              </div>
+              <div class="showcase-flow cache-flow">
+                <div class="flow-node">
+                  <strong>Client developer</strong>
+                  <span>changed paths</span>
+                </div>
+                <div class="flow-link" aria-hidden="true"></div>
+                <div class="flow-node">
+                  <strong>Linux agent</strong>
+                  <span>BuildService.RunBuild</span>
+                </div>
+                <div class="flow-link" aria-hidden="true"></div>
+                <div class="flow-node">
+                  <strong>S3 cloud</strong>
+                  <span>cache import/export</span>
+                </div>
+              </div>
+              <div class="metric-strip" aria-hidden="true">
+                <div class="metric"><strong>3</strong><span>MCP tools</span></div>
+                <div class="metric"><strong>15</strong><span>warm runs</span></div>
+                <div class="metric"><strong>30</strong><span>S3 imports</span></div>
+                <div class="metric"><strong>30</strong><span>S3 exports</span></div>
+              </div>
+            </div>
+          </figure>
 
-          <p>The service path was smoke-tested in two systemd environments: Ubuntu 24.04 and a nested Fedora 42 Cloud microVM. In both cases the installer wrote the units, restarted already-running services during upgrade, kept bearer tokens out of process arguments, created the durable mirror database, returned <code>401</code> for unauthenticated MCP calls, accepted authenticated <code>tools/list</code>, and served <code>torque.info</code> through the MCP-to-gRPC bridge. <code>systemd-analyze verify</code> accepted both unit files.</p>
+          <p>The broader project is built around the same idea. Torque can build containers, package charts, verify policy, plan Kubernetes changes, apply or delete stacks, follow logs, explain captured runs, and preserve evidence as files that move with the incident or release. The new agent surface does not replace those capabilities. It makes them callable by an agent without hiding what happened.</p>
 
-          <p>The cache path follows the same rule. Instead of asking an agent to read BuildKit logs and guess whether a layer was reused, Torque exposes <code>torque.cache.inspect</code>, <code>torque.cache.plan</code>, and <code>torque.cache.warm</code>. Inspect returns normalized <code>cacheFrom</code> and <code>cacheTo</code> entries, the S3 cache manifest name, warnings, and cache-intel evidence when a local cache directory is available. Plan accepts changed paths and classifies them as Dockerfile, dependency-layer, source-layer, deploy-input, or CI-input changes. Warm is the only mutating step: it requires <code>--enable-write</code> and <code>safety.confirm=true</code>, then calls remote <code>BuildService.RunBuild</code> with push, load, and signing disabled while cache exports stay enabled.</p>
-
-          <p>To make this more than a happy-path demo, the repo now includes a scenario catalog with sixteen complex DAG and build cases. They cover fanout image builds, diamond compose promotion, large layered stack runs, sealed review before apply, multi-namespace delete thresholds, secret-provider builds, git-range affected releases, canary diagnosis, failed-node resume, policy-blocked builds, cross-cluster read-only plans, HTTP MCP origin checks, mirror replay, microVM smoke tests, verifier fan-in, and rollback delete after failed ship. Each scenario records the topology, build mode, MCP calls, remote gRPC services, safety expectations, and validation signals.</p>
-
-          <p>The catalog is intentionally executable in spirit. A regression test checks that the file stays between ten and twenty scenarios, that every topology is a valid acyclic graph, that edge endpoints exist, and that required surfaces such as <code>torque.cache.plan</code>, <code>torque.cache.warm</code>, <code>torque.ship.run</code>, <code>torque.stack.delete</code>, remote StackService, MirrorService, write confirmation, and remote token redaction remain represented. This keeps the scenarios useful for future agent evaluations instead of letting them drift into stale documentation.</p>
-
-          <p>The end-to-end tests exercise the bridge directly. A fake remote Torque agent receives MCP-triggered gRPC calls for build, apply, delete, verify, logs, and stack operations. Another test proves the build-to-ship flow: MCP calls <code>torque.build.run</code>, then launches <code>torque ship</code> with a remote agent target, while ensuring the remote token never appears in argv, the MCP response, or the session tail. On a Linux lab host, the remote gRPC and MCP suites were run 100 times, and a static <code>torque-mcp</code> binary was booted inside QEMU microVMs 100 times to verify initialize, tool listing, info, ship, and stack tool advertisement.</p>
-
-          <p>The result is a practical pattern for agents: expose a small, typed, auditable MCP surface, keep execution behind hardened Torque services, and make every build or deploy leave evidence that another process can review. Agents get useful power, operators keep control, and remote delivery stays inspectable from first plan to final stack status.</p>
+          <p>That is the direction modern DevOps tooling needs to move. Humans should design policy, approve risky actions, and debug the hard cases. Agents should handle the repeatable path: gather context, propose a plan, run bounded tools, warm caches, collect logs, and return evidence. Torque gives that loop a narrow interface and a durable paper trail, so automation can move faster without turning delivery into a black box.</p>
         </article>
-
-        <section class="showcases" aria-labelledby="showcase-title">
-          <div class="section-heading">
-            <div class="eyebrow">Demos</div>
-            <h2 id="showcase-title">Remote agent and cache paths.</h2>
-            <p>Three visual panels cover the MCP bridge, stack command tools, and S3-backed BuildKit cache advisor path.</p>
-          </div>
-
-          <div class="demo-grid">
-            <details class="demo" open>
-              <summary>MCP remote bridge showcase</summary>
-              <div class="demo-media">
-                <div class="showcase-panel" role="img" aria-label="MCP caller sends a typed build and ship request through torque-mcp to a remote torque-agent over gRPC and receives mirror evidence.">
-                  <svg class="showcase-svg" viewBox="0 0 1200 620" aria-hidden="true" focusable="false">
-                    <path class="svg-track" d="M122 326 C265 228 391 228 526 326 S800 424 950 326" />
-                    <path id="bridge-call-path" class="svg-wire" d="M122 326 C265 228 391 228 526 326 S800 424 950 326" />
-                    <path id="bridge-replay-path" class="svg-wire slow" d="M950 404 C795 494 604 486 455 405 S235 271 122 404" />
-                    <circle class="svg-node pulse" cx="122" cy="326" r="38" />
-                    <circle class="svg-node pulse" cx="526" cy="326" r="45" />
-                    <circle class="svg-node pulse" cx="950" cy="326" r="42" />
-                    <circle class="svg-ghost" cx="1060" cy="404" r="60" />
-                    <circle class="svg-ring" cx="1060" cy="404" r="78" />
-                    <circle class="svg-packet" r="8">
-                      <animateMotion dur="3.6s" repeatCount="indefinite" rotate="auto">
-                        <mpath href="#bridge-call-path" />
-                      </animateMotion>
-                    </circle>
-                    <circle class="svg-packet" r="6">
-                      <animateMotion dur="5.4s" begin="1.1s" repeatCount="indefinite" rotate="auto">
-                        <mpath href="#bridge-replay-path" />
-                      </animateMotion>
-                    </circle>
-                  </svg>
-                  <div class="showcase-head">
-                    <div>
-                      <div class="showcase-kicker">MCP / gRPC</div>
-                      <h3 class="showcase-title">One Torque drives another.</h3>
-                    </div>
-                    <div class="showcase-status">write gated</div>
-                  </div>
-                  <div class="showcase-flow with-links">
-                    <div class="flow-node">
-                      <strong>Agent</strong>
-                      <span>tools/call</span>
-                    </div>
-                    <div class="flow-link" aria-hidden="true"></div>
-                    <div class="flow-node">
-                      <strong>torque-mcp</strong>
-                      <span>confirm + redact</span>
-                    </div>
-                    <div class="flow-link" aria-hidden="true"></div>
-                    <div class="flow-node">
-                      <strong>torque-agent</strong>
-                      <span>Build / Deploy / Stack</span>
-                    </div>
-                    <div class="flow-link" aria-hidden="true"></div>
-                    <div class="flow-node">
-                      <strong>Mirror</strong>
-                      <span>session replay</span>
-                    </div>
-                  </div>
-                  <div class="terminal-shot" aria-hidden="true">
-                    <span>{ "tool": "torque.ship.run", "safety": { "confirm": true } }</span>
-                    <span>remote: BuildService.RunBuild -> DeployService.Apply</span>
-                    <span>session: token redacted, events replayable</span>
-                  </div>
-                </div>
-              </div>
-            </details>
-
-            <details class="demo" open>
-              <summary>MCP stack command center</summary>
-              <div class="demo-media">
-                <div class="showcase-panel" role="img" aria-label="MCP stack tools plan, apply, delete, and status against a remote torque-agent StackService with DAG ordering.">
-                  <svg class="showcase-svg" viewBox="0 0 1200 620" aria-hidden="true" focusable="false">
-                    <path class="svg-track" d="M190 414 L360 308 L530 414 L700 308 L870 414 L1010 348" />
-                    <path class="svg-track" d="M360 308 L530 308 L700 414 L870 308" />
-                    <path id="stack-dag-a" class="svg-wire" d="M190 414 L360 308 L530 414 L700 308 L870 414 L1010 348" />
-                    <path id="stack-dag-b" class="svg-wire slow" d="M360 308 L530 308 L700 414 L870 308" />
-                    <circle class="svg-node pulse" cx="190" cy="414" r="34" />
-                    <circle class="svg-node pulse" cx="360" cy="308" r="34" />
-                    <circle class="svg-node pulse" cx="530" cy="414" r="34" />
-                    <circle class="svg-node pulse" cx="700" cy="308" r="34" />
-                    <circle class="svg-node pulse" cx="870" cy="414" r="34" />
-                    <circle class="svg-node pulse" cx="1010" cy="348" r="42" />
-                    <circle class="svg-packet" r="7">
-                      <animateMotion dur="4.2s" repeatCount="indefinite" rotate="auto">
-                        <mpath href="#stack-dag-a" />
-                      </animateMotion>
-                    </circle>
-                    <circle class="svg-packet" r="5">
-                      <animateMotion dur="5.2s" begin="0.8s" repeatCount="indefinite" rotate="auto">
-                        <mpath href="#stack-dag-b" />
-                      </animateMotion>
-                    </circle>
-                  </svg>
-                  <div class="showcase-head">
-                    <div>
-                      <div class="showcase-kicker">StackService</div>
-                      <h3 class="showcase-title">Remote DAG runs stay structured.</h3>
-                    </div>
-                    <div class="showcase-status">plan -> apply -> status</div>
-                  </div>
-                  <div class="showcase-flow">
-                    <div class="flow-node">
-                      <strong>plan</strong>
-                      <span>select releases</span>
-                    </div>
-                    <div class="flow-node">
-                      <strong>apply</strong>
-                      <span>DAG order</span>
-                    </div>
-                    <div class="flow-node">
-                      <strong>delete</strong>
-                      <span>reverse graph</span>
-                    </div>
-                    <div class="flow-node">
-                      <strong>status</strong>
-                      <span>run totals</span>
-                    </div>
-                  </div>
-                  <div class="metric-strip" aria-hidden="true">
-                    <div class="metric"><strong>16</strong><span>DAG scenarios</span></div>
-                    <div class="metric"><strong>100x</strong><span>remote tests</span></div>
-                    <div class="metric"><strong>100x</strong><span>microVM boot</span></div>
-                    <div class="metric"><strong>0</strong><span>token leaks</span></div>
-                  </div>
-                </div>
-              </div>
-            </details>
-
-            <details class="demo" open>
-              <summary>S3 BuildKit cache advisor</summary>
-              <div class="demo-media">
-                <div class="showcase-panel" role="img" aria-label="Torque cache advisor tools inspect, plan, and warm BuildKit S3 cache import and export with daemon-level AWS credentials.">
-                  <svg class="showcase-svg" viewBox="0 0 1200 620" aria-hidden="true" focusable="false">
-                    <path class="svg-track" d="M188 390 C288 232 455 232 555 390 S835 548 1012 390 S752 232 555 390 S288 548 188 390" />
-                    <path id="cache-loop" class="svg-wire" d="M188 390 C288 232 455 232 555 390 S835 548 1012 390 S752 232 555 390 S288 548 188 390" />
-                    <rect class="cache-block hot" x="165" y="344" width="150" height="92" rx="12" />
-                    <rect class="cache-block hot" x="500" y="344" width="150" height="92" rx="12" />
-                    <rect class="cache-block hot" x="850" y="344" width="150" height="92" rx="12" />
-                    <ellipse class="svg-ghost" cx="1012" cy="390" rx="92" ry="34" />
-                    <path class="svg-ring" d="M920 390 C920 348 1104 348 1104 390 C1104 432 920 432 920 390 Z" />
-                    <path class="svg-ring slow" d="M188 390 C188 348 372 348 372 390 C372 432 188 432 188 390 Z" />
-                    <circle class="svg-packet" r="8">
-                      <animateMotion dur="4.6s" repeatCount="indefinite" rotate="auto">
-                        <mpath href="#cache-loop" />
-                      </animateMotion>
-                    </circle>
-                  </svg>
-                  <div class="showcase-head">
-                    <div>
-                      <div class="showcase-kicker">MCP cache advisor</div>
-                      <h3 class="showcase-title">Warm cache without log scraping.</h3>
-                    </div>
-                    <div class="showcase-status">30/30 passed</div>
-                  </div>
-                  <div class="terminal-shot" aria-hidden="true">
-                    <span>tools/call torque.cache.inspect -> normalized cacheTo</span>
-                    <span>tools/call torque.cache.plan changedPaths=["go.mod"]</span>
-                    <span>tools/call torque.cache.warm safety.confirm=true</span>
-                    <span>remote: BuildService.RunBuild writes S3 cache exports</span>
-                  </div>
-                  <div class="metric-strip" aria-hidden="true">
-                    <div class="metric"><strong>3</strong><span>MCP tools</span></div>
-                    <div class="metric"><strong>15</strong><span>warm runs</span></div>
-                    <div class="metric"><strong>30</strong><span>S3 imports</span></div>
-                    <div class="metric"><strong>30</strong><span>S3 exports</span></div>
-                  </div>
-                </div>
-              </div>
-            </details>
-          </div>
-        </section>
       </main>
 
       <footer>

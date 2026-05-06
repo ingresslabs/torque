@@ -484,6 +484,30 @@
         transition: transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
 
+      .demo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .demo-actions a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 10px 12px;
+        border: 1px solid rgba(237, 241, 245, 0.22);
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(237, 241, 245, 0.12), rgba(184, 189, 196, 0.035)),
+          rgba(16, 16, 20, 0.76);
+        color: var(--accent);
+        font: 0.72rem/1 var(--font-mono);
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
       .architecture-diagrams .demo-media,
       .architecture-diagrams img {
         cursor: zoom-in;
@@ -974,12 +998,18 @@
                 <summary>Helmer archives and verifier gates</summary>
                 <div class="demo-media">
                   <img src="./assets/demos/torque-helmer-verifier.gif" alt="torque Helmer archive and verifier gate workflow" loading="lazy" />
+                  <div class="demo-actions">
+                    <a href="https://ingresslabs.github.io/torque/showcase/reports/verifier-report.html">Open verifier report</a>
+                  </div>
                 </div>
               </details>
               <details class="demo" open>
                 <summary>Helmer HTML plan reports</summary>
                 <div class="demo-media">
                   <img src="./assets/demos/torque-plan-report.gif" alt="torque Helmer HTML plan report workflow" loading="lazy" />
+                  <div class="demo-actions">
+                    <a href="https://ingresslabs.github.io/torque/showcase/reports/helmer-plan.html#resource=showcase:deployment:verify-findings-showcase">Open Helmer plan</a>
+                  </div>
                 </div>
               </details>
               <details class="demo" open>
@@ -1029,9 +1059,8 @@
             <div>
               <p>
                 The MCP and S3 cache showcase moved into a dedicated blog entry:
-                the full Medium-style writeup, remote gRPC bridge diagrams,
-                stack command center, and S3 BuildKit cache advisor demo boxes live
-                together for agents and operators to review.
+                a shorter field note on agent-driven delivery, the symbolic
+                remote bridge, and the S3 BuildKit cache advisor path.
               </p>
               <a href="./blog-mcp-s3-cache.html">Read the showcase</a>
             </div>
