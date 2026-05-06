@@ -568,6 +568,8 @@
             </div>
           </figure>
 
+          <p>Two of the nicer human-facing features are the verifier report and Helmer plan report. The verifier report turns policy findings, risk levels, skipped checks, and release blockers into a reviewable page instead of raw JSON. The Helmer report does the same for rendered Kubernetes resources: reviewers can inspect the plan, jump to a specific deployment, and compare what an agent proposes before anything touches the cluster.</p>
+
           <p>The broader project is built around the same idea. Torque can build containers, package charts, verify policy, plan Kubernetes changes, apply or delete stacks, follow logs, explain captured runs, and preserve evidence as files that move with the incident or release. The new agent surface does not replace those capabilities. It makes them callable by an agent without hiding what happened.</p>
 
           <p>That is the direction modern DevOps tooling needs to move. Humans should design policy, approve risky actions, and debug the hard cases. Agents should handle the repeatable path: gather context, propose a plan, run bounded tools, warm caches, collect logs, and return evidence. Torque gives that loop a narrow interface and a durable paper trail, so automation can move faster without turning delivery into a black box.</p>
