@@ -145,12 +145,8 @@ func TestBuildIndex_IncludesArchitectureDiagramsDoc(t *testing.T) {
 			t.Fatalf("unexpected architecture diagrams title %q", entry.Title)
 		}
 		for _, want := range []string{
-			"End-to-end delivery loop",
-			"Evidence model",
-			"Stack DAG scheduler",
 			"Secret-safe delivery path",
 			"Verifier and agent safety matrix",
-			"Package boundaries",
 		} {
 			if !strings.Contains(entry.Content, want) {
 				t.Fatalf("expected architecture diagrams content to include %q", want)

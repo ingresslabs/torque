@@ -252,9 +252,9 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 			ID:       "doc:architecture-diagrams",
 			Kind:     "doc",
 			Title:    "Architecture Diagrams",
-			Subtitle: "Delivery loop, evidence model, DAG scheduler, secrets, and package boundaries",
+			Subtitle: "Secret-safe delivery path and verifier/agent safety matrix",
 			Content:  md,
-			Tags:     []string{"doc", "architecture", "diagrams", "delivery", "evidence", "stack", "secrets", "packages"},
+			Tags:     []string{"doc", "architecture", "diagrams", "secrets", "verifier", "agent", "safety"},
 		})
 	}
 

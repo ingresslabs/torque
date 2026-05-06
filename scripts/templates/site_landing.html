@@ -312,6 +312,10 @@
         margin-top: clamp(64px, 9vw, 116px);
       }
 
+      .architecture-diagrams .demo-grid {
+        gap: clamp(40px, 6vw, 84px);
+      }
+
       .demo {
         --demo-offset-x: 0;
         --demo-tilt: 0deg;
@@ -384,6 +388,7 @@
       }
 
       .demo summary {
+        position: relative;
         cursor: pointer;
         list-style: none;
         padding: 14px 15px;
@@ -422,10 +427,73 @@
         cursor: zoom-in;
       }
 
+      .architecture-diagrams .demo {
+        --diagram-rotate-x: 0deg;
+        --diagram-rotate-y: 0deg;
+        --diagram-focus-x: 50%;
+        --diagram-focus-y: 50%;
+      }
+
+      .architecture-diagrams .demo::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background:
+          linear-gradient(90deg, rgba(126, 218, 238, 0.00), rgba(126, 218, 238, 0.16), rgba(126, 218, 238, 0.00)),
+          linear-gradient(180deg, rgba(237, 241, 245, 0.12), transparent 18%, transparent 82%, rgba(237, 241, 245, 0.08));
+        opacity: 0;
+        transform: translateX(-34%);
+        transition: opacity 0.28s ease, transform 0.5s ease;
+      }
+
+      .architecture-diagrams .demo:hover::before,
+      .architecture-diagrams .demo:focus-within::before {
+        opacity: 0.26;
+        transform: translateX(34%);
+      }
+
+      .architecture-diagrams .demo summary::after {
+        content: "";
+        position: absolute;
+        left: 15px;
+        right: 15px;
+        bottom: -1px;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(126, 218, 238, 0), rgba(126, 218, 238, 0.76), rgba(237, 241, 245, 0));
+        transform: scaleX(0.24);
+        transform-origin: left;
+        opacity: 0.54;
+        animation: diagram-status 4.8s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+      }
+
       .architecture-diagrams .demo-media {
         position: relative;
         isolation: isolate;
         overflow: hidden;
+      }
+
+      .architecture-diagrams .demo-media::before {
+        content: "";
+        position: absolute;
+        inset: 11px;
+        pointer-events: none;
+        z-index: 2;
+        border-radius: 7px;
+        background:
+          linear-gradient(90deg, rgba(126, 218, 238, 0.00) 0 49.75%, rgba(126, 218, 238, 0.32) 49.75% 50.25%, rgba(126, 218, 238, 0.00) 50.25% 100%),
+          linear-gradient(180deg, rgba(237, 241, 245, 0.00) 0 49.75%, rgba(237, 241, 245, 0.22) 49.75% 50.25%, rgba(237, 241, 245, 0.00) 50.25% 100%);
+        opacity: 0;
+        transform: scaleX(0.72);
+        transition: opacity 0.24s ease, transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .architecture-diagrams .demo:hover .demo-media::before,
+      .architecture-diagrams .demo:focus-within .demo-media::before,
+      .architecture-diagrams .demo.is-pressed .demo-media::before {
+        opacity: 0.42;
+        transform: scaleX(1);
       }
 
       .architecture-diagrams .demo-media::after {
@@ -433,6 +501,7 @@
         position: absolute;
         inset: 11px;
         pointer-events: none;
+        z-index: 3;
         border-radius: 7px;
         background:
           linear-gradient(100deg, transparent 0 28%, rgba(255, 255, 255, 0.16) 43%, rgba(126, 218, 238, 0.18) 50%, transparent 66% 100%),
@@ -446,6 +515,28 @@
       .architecture-diagrams .demo img {
         aspect-ratio: 1600 / 620;
         object-fit: contain;
+        filter: saturate(1) contrast(1);
+        transform: perspective(1200px) rotateX(var(--diagram-rotate-x)) rotateY(var(--diagram-rotate-y)) scale(1);
+        transition: transform 0.18s ease-out, filter 0.34s ease, border-color 0.34s ease, box-shadow 0.34s ease;
+        will-change: transform;
+      }
+
+      .architecture-diagrams .demo:hover img,
+      .architecture-diagrams .demo:focus-within img {
+        border-color: rgba(126, 218, 238, 0.32);
+        filter: saturate(1.08) contrast(1.06);
+        box-shadow:
+          0 0 0 1px rgba(126, 218, 238, 0.08),
+          0 18px 48px rgba(0, 0, 0, 0.28);
+      }
+
+      .architecture-diagrams img:focus-visible {
+        outline: 2px solid rgba(237, 241, 245, 0.86);
+        outline-offset: 4px;
+      }
+
+      .architecture-diagrams .demo.is-pressed {
+        animation: architecture-press 0.36s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
 
       .diagram-modal {
@@ -490,6 +581,14 @@
         box-shadow: 0 28px 90px rgba(0, 0, 0, 0.54);
       }
 
+      .diagram-modal[open] .diagram-modal-frame {
+        animation: modal-frame-in 0.22s ease-out both;
+      }
+
+      .diagram-modal[open] img {
+        animation: modal-diagram-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
       .diagram-modal-close {
         position: fixed;
         top: clamp(12px, 2vw, 24px);
@@ -524,6 +623,41 @@
         }
       }
 
+      @keyframes diagram-status {
+        0%, 100% {
+          opacity: 0.32;
+          transform: scaleX(0.18) translateX(0);
+        }
+        45%, 58% {
+          opacity: 0.78;
+          transform: scaleX(0.72) translateX(18%);
+        }
+      }
+
+      @keyframes architecture-press {
+        0% { scale: 1.035; }
+        42% { scale: 0.992; }
+        100% { scale: 1.035; }
+      }
+
+      @keyframes modal-frame-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes modal-diagram-in {
+        from {
+          opacity: 0;
+          transform: translateY(18px) scale(0.982);
+          filter: blur(3px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;
@@ -537,6 +671,18 @@
         }
         .architecture-diagrams .demo-media::after {
           display: none;
+        }
+        .architecture-diagrams .demo-media::before,
+        .architecture-diagrams .demo::before,
+        .architecture-diagrams .demo summary::after {
+          display: none;
+        }
+        .architecture-diagrams .demo img,
+        .diagram-modal[open] .diagram-modal-frame,
+        .diagram-modal[open] img {
+          animation: none;
+          transition: none;
+          transform: none;
         }
         .demo:hover,
         .demo:focus-within {
@@ -805,24 +951,6 @@
           <div class="demos architecture-diagrams" aria-label="Architecture diagrams">
             <div class="demo-grid">
               <details class="demo" open>
-                <summary>End-to-end delivery loop</summary>
-                <div class="demo-media">
-                  <img src="./assets/architecture/torque-architecture-delivery-loop.png" alt="torque end-to-end delivery loop architecture diagram" loading="lazy" />
-                </div>
-              </details>
-              <details class="demo" open>
-                <summary>Evidence model</summary>
-                <div class="demo-media">
-                  <img src="./assets/architecture/torque-architecture-evidence-model.png" alt="torque portable evidence model architecture diagram" loading="lazy" />
-                </div>
-              </details>
-              <details class="demo" open>
-                <summary>Stack DAG scheduler</summary>
-                <div class="demo-media">
-                  <img src="./assets/architecture/torque-architecture-stack-scheduler.png" alt="torque stack DAG scheduler architecture diagram" loading="lazy" />
-                </div>
-              </details>
-              <details class="demo" open>
                 <summary>Secret-safe delivery path</summary>
                 <div class="demo-media">
                   <img src="./assets/architecture/torque-architecture-secret-path.png" alt="torque secret-safe delivery path architecture diagram" loading="lazy" />
@@ -832,12 +960,6 @@
                 <summary>Verifier and agent safety matrix</summary>
                 <div class="demo-media">
                   <img src="./assets/architecture/torque-architecture-safety-matrix.png" alt="torque verifier policy coverage and agent safety matrix architecture diagram" loading="lazy" />
-                </div>
-              </details>
-              <details class="demo" open>
-                <summary>Package boundaries</summary>
-                <div class="demo-media">
-                  <img src="./assets/architecture/torque-architecture-package-boundaries.png" alt="torque package boundaries architecture diagram" loading="lazy" />
                 </div>
               </details>
             </div>
@@ -901,6 +1023,8 @@
       var diagramModal = document.getElementById("diagram-modal");
       var diagramModalImg = document.getElementById("diagram-modal-img");
       var diagramClose = document.querySelector("[data-diagram-close]");
+      var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var diagramOpenedAt = 0;
 
       function closeDiagram() {
         if (!diagramModal) return;
@@ -917,6 +1041,7 @@
 
       function openDiagram(img) {
         if (!diagramModal || !diagramModalImg || !img) return;
+        diagramOpenedAt = Date.now();
         diagramModalImg.src = img.currentSrc || img.src;
         diagramModalImg.alt = img.alt || "";
         if (typeof diagramModal.showModal === "function") {
@@ -926,15 +1051,52 @@
         }
       }
 
+      function pulseDiagram(img) {
+        var card = img && img.closest ? img.closest(".demo") : null;
+        if (!card || reduceMotion) return;
+        card.classList.remove("is-pressed");
+        void card.offsetWidth;
+        card.classList.add("is-pressed");
+        window.setTimeout(function() {
+          card.classList.remove("is-pressed");
+        }, 380);
+      }
+
+      document.querySelectorAll(".architecture-diagrams .demo").forEach(function(card) {
+        if (reduceMotion) return;
+        card.addEventListener("pointermove", function(event) {
+          if (event.pointerType === "touch") return;
+          var rect = card.getBoundingClientRect();
+          var x = (event.clientX - rect.left) / rect.width;
+          var y = (event.clientY - rect.top) / rect.height;
+          var rotateY = (x - 0.5) * 4.8;
+          var rotateX = (0.5 - y) * 3.2;
+          card.style.setProperty("--diagram-rotate-x", rotateX.toFixed(2) + "deg");
+          card.style.setProperty("--diagram-rotate-y", rotateY.toFixed(2) + "deg");
+          card.style.setProperty("--diagram-focus-x", (x * 100).toFixed(1) + "%");
+          card.style.setProperty("--diagram-focus-y", (y * 100).toFixed(1) + "%");
+        });
+        card.addEventListener("pointerleave", function() {
+          card.style.setProperty("--diagram-rotate-x", "0deg");
+          card.style.setProperty("--diagram-rotate-y", "0deg");
+          card.style.setProperty("--diagram-focus-x", "50%");
+          card.style.setProperty("--diagram-focus-y", "50%");
+        });
+      });
+
       document.querySelectorAll(".architecture-diagrams img").forEach(function(img) {
         img.tabIndex = 0;
-        img.addEventListener("dblclick", function(event) {
+        img.addEventListener("pointerdown", function() {
+          pulseDiagram(img);
+        });
+        img.addEventListener("click", function(event) {
           event.preventDefault();
           openDiagram(img);
         });
         img.addEventListener("keydown", function(event) {
-          if (event.key === "Enter") {
+          if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
+            pulseDiagram(img);
             openDiagram(img);
           }
         });
@@ -945,6 +1107,7 @@
       }
       if (diagramModal) {
         diagramModal.addEventListener("click", function(event) {
+          if (Date.now() - diagramOpenedAt < 180) return;
           if (event.target === diagramModal) {
             closeDiagram();
           }
