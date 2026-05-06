@@ -111,7 +111,7 @@ def rewrite(path: str) -> None:
         # Normalize the fixtures to the kubeconfig/namespace passed to this script.
         # The fixtures use a compact inline YAML mapping in defaults, so do a simple
         # line-level replacement that's stable for these testdata files.
-        line = line.replace("kubeconfig: ~/.kube/archimedes.yaml", f"kubeconfig: {kubeconfig}")
+        line = line.replace("kubeconfig: ~/.kube/config", f"kubeconfig: {kubeconfig}")
         line = line.replace("namespace: torque-stack-e2e", f"namespace: {namespace}")
         out.append(line)
 

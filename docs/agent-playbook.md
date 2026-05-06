@@ -63,7 +63,7 @@ git diff --exit-code
 
 - Unit tests: `make test` (or `go test ./...`).
 - CI parity: `make test-ci` (fmt + lint + tests + package/verify smoke).
-- Live-cluster integration suite (requires `kubectl` + kubeconfig): `TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...` (example kubeconfig: `$HOME/.kube/archimedes.yaml`).
+- Live-cluster integration suite (requires `kubectl` + kubeconfig): `TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...`.
 
 ## Guardrails
 

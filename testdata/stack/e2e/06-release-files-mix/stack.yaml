@@ -2,7 +2,7 @@ apiVersion: torque.dev/v1
 kind: Stack
 name: e2e-06-release-files-mix
 defaults:
-  cluster: { name: archimedes, kubeconfig: ~/.kube/archimedes.yaml }
+  cluster: { name: test-cluster, kubeconfig: ~/.kube/config }
   namespace: torque-stack-e2e
 releases:
   - name: e2e06-inline

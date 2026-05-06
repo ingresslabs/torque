@@ -8,7 +8,7 @@ Thanks for helping improve torque. This document highlights the minimum testing 
 | --- | --- | --- |
 | Any Go code change | `make fmt`, `make lint`, `make test` | `make fmt` enforces gofmt; `make lint` runs `go vet` (and `staticcheck` when available); `make test` is equivalent to `go test ./...`. Run them locally before pushing. |
 | CLI / Cobra wiring | `go test ./cmd/...` in addition to the default matrix | Focuses on fast command-scope tests when you only altered CLI wiring. |
-| Integration features (logs, capture, report, etc.) | `TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...` | Requires access to a Kubernetes cluster plus `kubectl`. Example kubeconfig: `$HOME/.kube/archimedes.yaml`. The harness builds `bin/torque.test`, applies the `testdata/torque-logger.yaml` fixture, and exercises real kubectl/torque flows. Expect ~1 minute runtime. |
+| Integration features (logs, capture, report, etc.) | `TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...` | Requires access to a Kubernetes cluster plus `kubectl`. The harness builds `bin/torque.test`, applies the `testdata/torque-logger.yaml` fixture, and exercises real kubectl/torque flows. Expect ~1 minute runtime. |
 | Docs only (Markdown, design notes) | No tests required | Call out “docs only” in the PR body; still run `make fmt` if you touched Go code. |
 
 ### Running Unit Tests
@@ -24,10 +24,10 @@ Use `GO_TEST_FLAGS` when you need verbose output, e.g. `GO_TEST_FLAGS=-run TestT
 
 ### Running Integration Tests
 
-1. Ensure you have a kubeconfig for a test cluster (example: `~/.kube/config` or `~/.kube/archimedes.yaml`).
+1. Ensure you have a kubeconfig for a test cluster, for example `~/.kube/config`.
 2. Run:
    ```bash
-   TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/... # e.g. $HOME/.kube/archimedes.yaml
+   TORQUE_TEST_KUBECONFIG=$HOME/.kube/config go test ./integration/...
    ```
 3. The harness will:
    - Build `bin/torque.test`.

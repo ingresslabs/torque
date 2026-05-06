@@ -4,8 +4,8 @@ name: smoke
 
 defaults:
   cluster:
-    name: archimedes
-    kubeconfig: ~/.kube/archimedes.yaml
+    name: test-cluster
+    kubeconfig: ~/.kube/config
   namespace: torque-stack-smoke
   apply:
     atomic: true

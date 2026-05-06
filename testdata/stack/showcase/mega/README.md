@@ -11,7 +11,7 @@ This fixture is a "busy" `torque stack` demo intended to showcase:
 
 ```bash
 ./bin/torque stack --config testdata/stack/showcase/mega apply \
-  --kubeconfig ~/.kube/archimedes.yaml \
+  --kubeconfig ~/.kube/config \
   --takeover --helm-logs
 ```
 
@@ -22,5 +22,5 @@ This fixture is a "busy" `torque stack` demo intended to showcase:
 - If you interrupt a run, Helm can leave a release in `pending-*`. For `pending-install` with no previous revision, the fix is:
 
 ```bash
-helm -n platform uninstall storage --kubeconfig ~/.kube/archimedes.yaml
+helm -n platform uninstall storage --kubeconfig ~/.kube/config
 ```

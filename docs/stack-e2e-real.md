@@ -20,7 +20,7 @@ For a more "realistic" (and intentionally more complex) demo stack, see `testdat
 ## Run
 
 ```bash
-export KUBECONFIG_PATH="$HOME/.kube/archimedes.yaml"
+export KUBECONFIG_PATH="$HOME/.kube/config"
 export TORQUE_STACK_E2E_NAMESPACE="torque-stack-e2e"
 export TORQUE_STACK_E2E_CONFIRM=1
 
@@ -32,7 +32,7 @@ export TORQUE_STACK_E2E_CONFIRM=1
 The standard suite above uses ConfigMaps only. For a separate verify-focused suite that creates Deployments/Pods and validates the `verify` phase behavior, use:
 
 ```bash
-export KUBECONFIG_PATH="$HOME/.kube/archimedes.yaml"
+export KUBECONFIG_PATH="$HOME/.kube/config"
 export TORQUE_STACK_VERIFY_E2E_NAMESPACE="torque-stack-verify-e2e"
 export TORQUE_STACK_VERIFY_E2E_CONFIRM=1
 

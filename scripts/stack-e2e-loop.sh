@@ -3,7 +3,7 @@ set -euo pipefail
 
 ITERATIONS="${ITERATIONS:-10}"
 ROOT="${1:-testdata/stack/smoke/basic}"
-KUBECONFIG_PATH="${KUBECONFIG_PATH:-$HOME/.kube/archimedes.yaml}"
+KUBECONFIG_PATH="${KUBECONFIG_PATH:-$HOME/.kube/config}"
 NAMESPACE="${TORQUE_STACK_SMOKE_NAMESPACE:-torque-stack-smoke}"
 
 if [[ ! -f "${KUBECONFIG_PATH}" ]]; then

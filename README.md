@@ -72,8 +72,8 @@ fallback, and review-ready outputs without touching a real cluster.
 
 ## Linux Build Benchmark
 
-Measured on `selectel-day1` against `testdata/build/dockerfiles/metadata` with
-base images pre-pulled.
+Measured on a representative Linux test host against
+`testdata/build/dockerfiles/metadata` with base images pre-pulled.
 
 | Runner | cold | warm2 |
 | --- | ---: | ---: |
@@ -84,8 +84,8 @@ base images pre-pulled.
 
 ## Secret Leak E2E
 
-Measured on `selectel-day1` with 50 fake-secret build cases and
-`torque build --secrets block --secrets-report`.
+Measured on a representative Linux test host with 50 fake-secret build cases
+and `torque build --secrets block --secrets-report`.
 
 | Leak surface | Cases | Blocked |
 | --- | ---: | ---: |

@@ -2,6 +2,6 @@ apiVersion: torque.dev/v1
 kind: Stack
 name: e2e-09-from-path
 defaults:
-  cluster: { name: archimedes, kubeconfig: ~/.kube/archimedes.yaml }
+  cluster: { name: test-cluster, kubeconfig: ~/.kube/config }
   namespace: torque-stack-e2e
 

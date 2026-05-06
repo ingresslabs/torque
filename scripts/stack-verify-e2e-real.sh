@@ -101,7 +101,7 @@ def rewrite(path: str) -> None:
 
     out = []
     for line in lines:
-        line = line.replace("kubeconfig: ~/.kube/archimedes.yaml", f"kubeconfig: {kubeconfig}")
+        line = line.replace("kubeconfig: ~/.kube/config", f"kubeconfig: {kubeconfig}")
         line = line.replace("namespace: torque-stack-verify-e2e", f"namespace: {namespace}")
         out.append(line)
 

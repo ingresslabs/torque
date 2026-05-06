@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KUBECONFIG_PATH="${KUBECONFIG_PATH:-$HOME/.kube/archimedes.yaml}"
+KUBECONFIG_PATH="${KUBECONFIG_PATH:-$HOME/.kube/config}"
 NAMESPACE="${TORQUE_STACK_E2E_NAMESPACE:-torque-stack-e2e}"
 ROOT_BASE="${1:-testdata/stack/e2e}"
 ITERATIONS="${ITERATIONS:-1}"

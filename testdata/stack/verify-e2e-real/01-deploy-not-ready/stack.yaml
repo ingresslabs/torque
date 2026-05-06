@@ -2,7 +2,7 @@ apiVersion: torque.dev/v1
 kind: Stack
 name: verify-01-deploy-not-ready
 defaults:
-  cluster: { name: archimedes, kubeconfig: ~/.kube/archimedes.yaml }
+  cluster: { name: test-cluster, kubeconfig: ~/.kube/config }
   namespace: torque-stack-verify-e2e
 releases:
   # Real-world scenario: Helm wait is disabled for speed, but torque verify should still
