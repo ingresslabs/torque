@@ -4,6 +4,21 @@ Text-only companion commands for the landing page demos. The animated demos live
 on the landing page; docs stay copy/paste friendly and free of GIF assets.
 
 <details open>
+<summary>Complex DAG stack orchestration</summary>
+
+```bash
+torque stack plan --config testdata/stack/e2e/10-large-graph \
+  --bundle ./dist/stack-large-graph.tgz
+torque stack plan --config testdata/stack/e2e/10-large-graph --output json
+torque stack status --config ./stacks/prod --follow
+```
+
+Plans a dependency-ordered stack, seals the review bundle, and follows rollout
+status in dependency waves.
+
+</details>
+
+<details open>
 <summary>Ship subcommand release flow</summary>
 
 ```bash
@@ -17,21 +32,6 @@ torque explain ./dist/torque-ship-api/apply.sqlite --format markdown
 Runs the focused build-to-deploy path as one command, writing build/apply
 captures, verifier output, plan output, explain output, and `ship.json` into a
 portable evidence directory.
-
-</details>
-
-<details open>
-<summary>Complex DAG stack orchestration</summary>
-
-```bash
-torque stack plan --config testdata/stack/e2e/10-large-graph \
-  --bundle ./dist/stack-large-graph.tgz
-torque stack plan --config testdata/stack/e2e/10-large-graph --output json
-torque stack status --config ./stacks/prod --follow
-```
-
-Plans a dependency-ordered stack, seals the review bundle, and follows rollout
-status in dependency waves.
 
 </details>
 
