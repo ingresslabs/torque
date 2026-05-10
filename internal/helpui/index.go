@@ -225,6 +225,72 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
+	if md := strings.TrimSpace(torquedocs.ApplySimulateMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:apply-simulate",
+			Kind:     "doc",
+			Title:    "Apply simulate",
+			Subtitle: "Live apply twin, server dry-run proof, replay, and repair",
+			Content:  md,
+			Tags:     []string{"doc", "apply", "simulate", "replay", "proof", "repair", "k3s", "dry-run"},
+		})
+	}
+
+	if md := strings.TrimSpace(torquedocs.GuardianMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:guardian",
+			Kind:     "doc",
+			Title:    "Torque Guardian",
+			Subtitle: "Observe-only runtime drift proof and repair artifacts",
+			Content:  md,
+			Tags:     []string{"doc", "guardian", "drift", "runtime", "events", "managed-fields", "repair", "proof"},
+		})
+	}
+
+	if md := strings.TrimSpace(torquedocs.IncidentMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:incident",
+			Kind:     "doc",
+			Title:    "Torque Incident",
+			Subtitle: "Observe-only incident capture, replay, explain, and PR artifacts",
+			Content:  md,
+			Tags:     []string{"doc", "incident", "replay", "root-cause", "events", "logs", "repair", "proof"},
+		})
+	}
+
+	if md := strings.TrimSpace(torquedocs.ContractMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:contract",
+			Kind:     "doc",
+			Title:    "Torque Runtime Contract",
+			Subtitle: "Observe-only contract synthesis, test proof, and PR artifacts",
+			Content:  md,
+			Tags:     []string{"doc", "contract", "runtime", "guardian", "incident", "recurrence", "proof"},
+		})
+	}
+
+	if md := strings.TrimSpace(torquedocs.SecretsVerifierEvidenceSpecMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:secrets-verifier-evidence-spec",
+			Kind:     "doc",
+			Title:    "Secrets and verifier evidence spec",
+			Subtitle: "Evidence-first secret detection, redaction, verifier rules, and suppressions",
+			Content:  md,
+			Tags:     []string{"doc", "secrets", "verifier", "verify", "redaction", "evidence", "security", "policy"},
+		})
+	}
+
+	if md := strings.TrimSpace(torquedocs.SecurityCorpusSpecMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:security-corpus-spec",
+			Kind:     "doc",
+			Title:    "Security benchmark corpus spec",
+			Subtitle: "Synthetic true/false secret fixtures, metrics, and release gates",
+			Content:  md,
+			Tags:     []string{"doc", "secrets", "security", "benchmark", "corpus", "detectors", "redaction", "evidence"},
+		})
+	}
+
 	if md := strings.TrimSpace(torquedocs.RecipesMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:recipes",

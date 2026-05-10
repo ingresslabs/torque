@@ -1,0 +1,198 @@
+{
+  "release": "bamboo-agent",
+  "namespace": "atlassian",
+  "chartVersion": "2.0.13",
+  "chartReference": "/tmp/torque-atlassian/charts/release/bamboo-agent",
+  "requestedChart": "/tmp/torque-atlassian/charts/release/bamboo-agent",
+  "valuesFiles": [
+    "/tmp/torque-atlassian/values/bamboo-agent.yaml"
+  ],
+  "graphNodes": [
+    {
+      "id": "cluster|configmap|bamboo-agent-jvm-config",
+      "kind": "ConfigMap",
+      "name": "bamboo-agent-jvm-config",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "keys": "2",
+        "kind": "configmap"
+      }
+    },
+    {
+      "id": "cluster|deployment|bamboo-agent",
+      "kind": "Deployment",
+      "name": "bamboo-agent",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "containers": "1",
+        "kind": "deployment"
+      }
+    },
+    {
+      "id": "cluster|secret|bamboo-agent-token",
+      "kind": "Secret",
+      "name": "bamboo-agent-token",
+      "source": "external",
+      "live": false
+    },
+    {
+      "id": "cluster|serviceaccount|bamboo-agent",
+      "kind": "ServiceAccount",
+      "name": "bamboo-agent",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "serviceaccount"
+      }
+    }
+  ],
+  "graphEdges": [
+    {
+      "from": "cluster|deployment|bamboo-agent",
+      "to": "cluster|configmap|bamboo-agent-jvm-config",
+      "reason": "env:bamboo-agent/WRAPPER_JAVA_INITMEMORY"
+    },
+    {
+      "from": "cluster|deployment|bamboo-agent",
+      "to": "cluster|configmap|bamboo-agent-jvm-config",
+      "reason": "env:bamboo-agent/WRAPPER_JAVA_MAXMEMORY"
+    },
+    {
+      "from": "cluster|deployment|bamboo-agent",
+      "to": "cluster|secret|bamboo-agent-token",
+      "reason": "env:bamboo-agent/SECURITY_TOKEN"
+    },
+    {
+      "from": "cluster|deployment|bamboo-agent",
+      "to": "cluster|serviceaccount|bamboo-agent",
+      "reason": "serviceAccount"
+    }
+  ],
+  "manifestBlobs": {
+    "cluster|configmap|bamboo-agent-jvm-config": "# Source: bamboo-agent/templates/config-jvm.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: bamboo-agent-jvm-config\n  labels:\n    helm.sh/chart: bamboo-agent-2.0.13\n    app.kubernetes.io/name: bamboo-agent\n    app.kubernetes.io/instance: bamboo-agent\n    app.kubernetes.io/version: \"12.1.6\"\n    app.kubernetes.io/managed-by: Helm\n    \ndata:\n  max_heap: 512m\n  min_heap: 256m",
+    "cluster|deployment|bamboo-agent": "# Source: bamboo-agent/templates/deployment-agent.yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: bamboo-agent\n  labels:\n    helm.sh/chart: bamboo-agent-2.0.13\n    app.kubernetes.io/name: bamboo-agent\n    app.kubernetes.io/instance: bamboo-agent\n    app.kubernetes.io/version: \"12.1.6\"\n    app.kubernetes.io/managed-by: Helm\n    \nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app.kubernetes.io/name: bamboo-agent\n      app.kubernetes.io/instance: bamboo-agent\n  template:\n    metadata:\n      annotations:\n        checksum/config-jvm: 7788c761caa5262205ee155e18c32ccdeaca523bbd2a93c423e9c3362de47f90\n        \n      labels:\n        app.kubernetes.io/name: bamboo-agent\n        app.kubernetes.io/instance: bamboo-agent\n        \n    spec:\n      serviceAccountName: bamboo-agent\n      terminationGracePeriodSeconds: 30\n      hostAliases:\n        \n      securityContext:\n        \n        fsGroup: 2005\n        fsGroupChangePolicy: OnRootMismatch\n        seccompProfile:\n          type: RuntimeDefault\n      initContainers:\n        \n      containers:\n        - name: bamboo-agent\n          image: \"torque.local/atlassian/bamboo-agent-base:12.1.6-custom-20260510\"\n          imagePullPolicy: IfNotPresent\n          env:\n            \n            - name: SECURITY_TOKEN\n              valueFrom:\n                secretKeyRef:\n                  name: bamboo-agent-token\n                  key: security-token\n            \n            - name: BAMBOO_SERVER\n              value: http://bamboo.atlassian.svc.cluster.local\n            - name: WRAPPER_JAVA_INITMEMORY\n              valueFrom:\n                configMapKeyRef:\n                  key: min_heap\n                  name: bamboo-agent-jvm-config\n            - name: WRAPPER_JAVA_MAXMEMORY\n              valueFrom:\n                configMapKeyRef:\n                  key: max_heap\n                  name: bamboo-agent-jvm-config\n            \n\n          startupProbe:\n            exec:\n              command: [\"sh\", \"-c\", \"/probe-startup.sh\"]\n            initialDelaySeconds: 1\n            periodSeconds: 1\n            failureThreshold: 120\n\n          readinessProbe:\n            exec:\n              command: [\"sh\", \"-c\", \"/probe-readiness.sh\"]\n            initialDelaySeconds: 1\n            periodSeconds: 5\n            failureThreshold: 30\n          securityContext:\n            allowPrivilegeEscalation: false\n            capabilities:\n              drop:\n              - ALL\n            runAsGroup: 2005\n            runAsNonRoot: true\n            runAsUser: 2005\n            seccompProfile:\n              type: RuntimeDefault\n          resources:\n            requests:\n              cpu: \"1\"\n              memory: 2G\n          volumeMounts:\n            \n          \n        \n      volumes:",
+    "cluster|serviceaccount|bamboo-agent": "# Source: bamboo-agent/templates/serviceaccount.yaml\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: bamboo-agent\n  labels:\n    helm.sh/chart: bamboo-agent-2.0.13\n    app.kubernetes.io/name: bamboo-agent\n    app.kubernetes.io/instance: bamboo-agent\n    app.kubernetes.io/version: \"12.1.6\"\n    app.kubernetes.io/managed-by: Helm"
+  },
+  "liveManifestBlobs": {
+    "cluster|configmap|bamboo-agent-jvm-config": "apiVersion: v1\ndata:\n  max_heap: 512m\n  min_heap: 256m\nkind: ConfigMap\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: bamboo-agent\n    meta.helm.sh/release-namespace: atlassian\n  labels:\n    app.kubernetes.io/instance: bamboo-agent\n    app.kubernetes.io/managed-by: Helm\n    app.kubernetes.io/name: bamboo-agent\n    app.kubernetes.io/version: 12.1.6\n    helm.sh/chart: bamboo-agent-2.0.13\n  name: bamboo-agent-jvm-config\n  namespace: atlassian\n",
+    "cluster|deployment|bamboo-agent": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  annotations:\n    deployment.kubernetes.io/revision: \"1\"\n    meta.helm.sh/release-name: bamboo-agent\n    meta.helm.sh/release-namespace: atlassian\n  labels:\n    app.kubernetes.io/instance: bamboo-agent\n    app.kubernetes.io/managed-by: Helm\n    app.kubernetes.io/name: bamboo-agent\n    app.kubernetes.io/version: 12.1.6\n    helm.sh/chart: bamboo-agent-2.0.13\n  name: bamboo-agent\n  namespace: atlassian\nspec:\n  progressDeadlineSeconds: 600\n  replicas: 1\n  revisionHistoryLimit: 10\n  selector:\n    matchLabels:\n      app.kubernetes.io/instance: bamboo-agent\n      app.kubernetes.io/name: bamboo-agent\n  strategy:\n    rollingUpdate:\n      maxSurge: 25%\n      maxUnavailable: 25%\n    type: RollingUpdate\n  template:\n    metadata:\n      annotations:\n        checksum/config-jvm: 7788c761caa5262205ee155e18c32ccdeaca523bbd2a93c423e9c3362de47f90\n      labels:\n        app.kubernetes.io/instance: bamboo-agent\n        app.kubernetes.io/name: bamboo-agent\n    spec:\n      containers:\n      - env:\n        - name: SECURITY_TOKEN\n          valueFrom:\n            secretKeyRef:\n              key: security-token\n              name: bamboo-agent-token\n        - name: BAMBOO_SERVER\n          value: http://bamboo.atlassian.svc.cluster.local\n        - name: WRAPPER_JAVA_INITMEMORY\n          valueFrom:\n            configMapKeyRef:\n              key: min_heap\n              name: bamboo-agent-jvm-config\n        - name: WRAPPER_JAVA_MAXMEMORY\n          valueFrom:\n            configMapKeyRef:\n              key: max_heap\n              name: bamboo-agent-jvm-config\n        image: atlassian/bamboo-agent-base:12.1.6\n        imagePullPolicy: IfNotPresent\n        name: bamboo-agent\n        readinessProbe:\n          exec:\n            command:\n            - sh\n            - -c\n            - /probe-readiness.sh\n          failureThreshold: 30\n          initialDelaySeconds: 1\n          periodSeconds: 5\n          successThreshold: 1\n          timeoutSeconds: 1\n        resources:\n          requests:\n            cpu: \"1\"\n            memory: 2G\n        securityContext:\n          allowPrivilegeEscalation: false\n          capabilities:\n            drop:\n            - ALL\n          runAsGroup: 2005\n          runAsNonRoot: true\n          runAsUser: 2005\n          seccompProfile:\n            type: RuntimeDefault\n        startupProbe:\n          exec:\n            command:\n            - sh\n            - -c\n            - /probe-startup.sh\n          failureThreshold: 120\n          initialDelaySeconds: 1\n          periodSeconds: 1\n          successThreshold: 1\n          timeoutSeconds: 1\n        terminationMessagePath: /dev/termination-log\n        terminationMessagePolicy: File\n      dnsPolicy: ClusterFirst\n      restartPolicy: Always\n      schedulerName: default-scheduler\n      securityContext:\n        fsGroup: 2005\n        fsGroupChangePolicy: OnRootMismatch\n        seccompProfile:\n          type: RuntimeDefault\n      serviceAccount: bamboo-agent\n      serviceAccountName: bamboo-agent\n      terminationGracePeriodSeconds: 30\n",
+    "cluster|serviceaccount|bamboo-agent": "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: bamboo-agent\n    meta.helm.sh/release-namespace: atlassian\n  labels:\n    app.kubernetes.io/instance: bamboo-agent\n    app.kubernetes.io/managed-by: Helm\n    app.kubernetes.io/name: bamboo-agent\n    app.kubernetes.io/version: 12.1.6\n    helm.sh/chart: bamboo-agent-2.0.13\n  name: bamboo-agent\n  namespace: atlassian\n"
+  },
+  "manifestDiffs": {
+    "cluster|configmap|bamboo-agent-jvm-config": "--- live\n+++ desired\n@@ -1,18 +1,15 @@\n+# Source: bamboo-agent/templates/config-jvm.yaml\n apiVersion: v1\n+kind: ConfigMap\n+metadata:\n+  name: bamboo-agent-jvm-config\n+  labels:\n+    helm.sh/chart: bamboo-agent-2.0.13\n+    app.kubernetes.io/name: bamboo-agent\n+    app.kubernetes.io/instance: bamboo-agent\n+    app.kubernetes.io/version: \"12.1.6\"\n+    app.kubernetes.io/managed-by: Helm\n+    \n data:\n   max_heap: 512m\n   min_heap: 256m\n-kind: ConfigMap\n-metadata:\n-  annotations:\n-    meta.helm.sh/release-name: bamboo-agent\n-    meta.helm.sh/release-namespace: atlassian\n-  labels:\n-    app.kubernetes.io/instance: bamboo-agent\n-    app.kubernetes.io/managed-by: Helm\n-    app.kubernetes.io/name: bamboo-agent\n-    app.kubernetes.io/version: 12.1.6\n-    helm.sh/chart: bamboo-agent-2.0.13\n-  name: bamboo-agent-jvm-config\n-  namespace: atlassian\n-\n",
+    "cluster|deployment|bamboo-agent": "--- live\n+++ desired\n@@ -1,108 +1,98 @@\n+# Source: bamboo-agent/templates/deployment-agent.yaml\n apiVersion: apps/v1\n kind: Deployment\n metadata:\n-  annotations:\n-    deployment.kubernetes.io/revision: \"1\"\n-    meta.helm.sh/release-name: bamboo-agent\n-    meta.helm.sh/release-namespace: atlassian\n+  name: bamboo-agent\n   labels:\n+    helm.sh/chart: bamboo-agent-2.0.13\n+    app.kubernetes.io/name: bamboo-agent\n     app.kubernetes.io/instance: bamboo-agent\n+    app.kubernetes.io/version: \"12.1.6\"\n     app.kubernetes.io/managed-by: Helm\n-    app.kubernetes.io/name: bamboo-agent\n-    app.kubernetes.io/version: 12.1.6\n-    helm.sh/chart: bamboo-agent-2.0.13\n-  name: bamboo-agent\n-  namespace: atlassian\n+    \n spec:\n-  progressDeadlineSeconds: 600\n   replicas: 1\n-  revisionHistoryLimit: 10\n   selector:\n     matchLabels:\n+      app.kubernetes.io/name: bamboo-agent\n       app.kubernetes.io/instance: bamboo-agent\n-      app.kubernetes.io/name: bamboo-agent\n-  strategy:\n-    rollingUpdate:\n-      maxSurge: 25%\n-      maxUnavailable: 25%\n-    type: RollingUpdate\n   template:\n     metadata:\n       annotations:\n         checksum/config-jvm: 7788c761caa5262205ee155e18c32ccdeaca523bbd2a93c423e9c3362de47f90\n+        \n       labels:\n+        app.kubernetes.io/name: bamboo-agent\n         app.kubernetes.io/instance: bamboo-agent\n-        app.kubernetes.io/name: bamboo-agent\n+        \n     spec:\n-      containers:\n-      - env:\n-        - name: SECURITY_TOKEN\n-          valueFrom:\n-            secretKeyRef:\n-              key: security-token\n-              name: bamboo-agent-token\n-        - name: BAMBOO_SERVER\n-          value: http://bamboo.atlassian.svc.cluster.local\n-        - name: WRAPPER_JAVA_INITMEMORY\n-          valueFrom:\n-            configMapKeyRef:\n-              key: min_heap\n-              name: bamboo-agent-jvm-config\n-        - name: WRAPPER_JAVA_MAXMEMORY\n-          valueFrom:\n-            configMapKeyRef:\n-              key: max_heap\n-              name: bamboo-agent-jvm-config\n-        image: atlassian/bamboo-agent-base:12.1.6\n-        imagePullPolicy: IfNotPresent\n-        name: bamboo-agent\n-        readinessProbe:\n-          exec:\n-            command:\n-            - sh\n-            - -c\n-            - /probe-readiness.sh\n-          failureThreshold: 30\n-          initialDelaySeconds: 1\n-          periodSeconds: 5\n-          successThreshold: 1\n-          timeoutSeconds: 1\n-        resources:\n-          requests:\n-            cpu: \"1\"\n-            memory: 2G\n-        securityContext:\n-          allowPrivilegeEscalation: false\n-          capabilities:\n-            drop:\n-            - ALL\n-          runAsGroup: 2005\n-          runAsNonRoot: true\n-          runAsUser: 2005\n-          seccompProfile:\n-            type: RuntimeDefault\n-        startupProbe:\n-          exec:\n-            command:\n-            - sh\n-            - -c\n-            - /probe-startup.sh\n-          failureThreshold: 120\n-          initialDelaySeconds: 1\n-          periodSeconds: 1\n-          successThreshold: 1\n-          timeoutSeconds: 1\n-        terminationMessagePath: /dev/termination-log\n-        terminationMessagePolicy: File\n-      dnsPolicy: ClusterFirst\n-      restartPolicy: Always\n-      schedulerName: default-scheduler\n+      serviceAccountName: bamboo-agent\n+      terminationGracePeriodSeconds: 30\n+      hostAliases:\n+        \n       securityContext:\n+        \n         fsGroup: 2005\n         fsGroupChangePolicy: OnRootMismatch\n         seccompProfile:\n           type: RuntimeDefault\n-      serviceAccount: bamboo-agent\n-      serviceAccountName: bamboo-agent\n-      terminationGracePeriodSeconds: 30\n+      initContainers:\n+        \n+      containers:\n+        - name: bamboo-agent\n+          image: \"torque.local/atlassian/bamboo-agent-base:12.1.6-custom-20260510\"\n+          imagePullPolicy: IfNotPresent\n+          env:\n+            \n+            - name: SECURITY_TOKEN\n+              valueFrom:\n+                secretKeyRef:\n+                  name: bamboo-agent-token\n+                  key: security-token\n+            \n+            - name: BAMBOO_SERVER\n+              value: http://bamboo.atlassian.svc.cluster.local\n+            - name: WRAPPER_JAVA_INITMEMORY\n+              valueFrom:\n+                configMapKeyRef:\n+                  key: min_heap\n+                  name: bamboo-agent-jvm-config\n+            - name: WRAPPER_JAVA_MAXMEMORY\n+              valueFrom:\n+                configMapKeyRef:\n+                  key: max_heap\n+                  name: bamboo-agent-jvm-config\n+            \n \n+          startupProbe:\n+            exec:\n+              command: [\"sh\", \"-c\", \"/probe-startup.sh\"]\n+            initialDelaySeconds: 1\n+            periodSeconds: 1\n+            failureThreshold: 120\n+\n+          readinessProbe:\n+            exec:\n+              command: [\"sh\", \"-c\", \"/probe-readiness.sh\"]\n+            initialDelaySeconds: 1\n+            periodSeconds: 5\n+            failureThreshold: 30\n+          securityContext:\n+            allowPrivilegeEscalation: false\n+            capabilities:\n+              drop:\n+              - ALL\n+            runAsGroup: 2005\n+            runAsNonRoot: true\n+            runAsUser: 2005\n+            seccompProfile:\n+              type: RuntimeDefault\n+          resources:\n+            requests:\n+              cpu: \"1\"\n+              memory: 2G\n+          volumeMounts:\n+            \n+          \n+        \n+      volumes:\n",
+    "cluster|serviceaccount|bamboo-agent": "--- live\n+++ desired\n@@ -1,15 +1,11 @@\n+# Source: bamboo-agent/templates/serviceaccount.yaml\n apiVersion: v1\n kind: ServiceAccount\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: bamboo-agent\n-    meta.helm.sh/release-namespace: atlassian\n+  name: bamboo-agent\n   labels:\n+    helm.sh/chart: bamboo-agent-2.0.13\n+    app.kubernetes.io/name: bamboo-agent\n     app.kubernetes.io/instance: bamboo-agent\n+    app.kubernetes.io/version: \"12.1.6\"\n     app.kubernetes.io/managed-by: Helm\n-    app.kubernetes.io/name: bamboo-agent\n-    app.kubernetes.io/version: 12.1.6\n-    helm.sh/chart: bamboo-agent-2.0.13\n-  name: bamboo-agent\n-  namespace: atlassian\n-\n"
+  },
+  "manifestTemplates": {
+    "cluster|configmap|bamboo-agent-jvm-config": "bamboo-agent/templates/config-jvm.yaml",
+    "cluster|deployment|bamboo-agent": "bamboo-agent/templates/deployment-agent.yaml",
+    "cluster|serviceaccount|bamboo-agent": "bamboo-agent/templates/serviceaccount.yaml"
+  },
+  "templateSources": {
+    "bamboo-agent/common/templates/_jmx.tpl": "{{/*\nJmx config volume\n*/}}\n{{- define \"common.jmx.config.volume\" -}}\n{{- if .Values.monitoring.exposeJmxMetrics }}\n- name: jmx-config\n  configMap:\n    name: {{ include \"common.names.fullname\" . }}-jmx-config\n{{- end }}\n{{- end }}\n\n{{/*\nJmx config volume mount\n*/}}\n\n{{- define \"common.jmx.config.volumeMounts\" -}}\n{{- if .Values.monitoring.exposeJmxMetrics }}\n- name: jmx-config\n  mountPath: /opt/atlassian/jmx\n{{- end }}\n{{- end }}\n\n\n{{/*\nJmx init container\n*/}}\n{{- define \"common.jmx.initContainer\" -}}\n{{- if and .Values.monitoring.exposeJmxMetrics .Values.monitoring.fetchJmxExporterJar }}\n- name: fetch-jmx-exporter\n  image: {{ .Values.monitoring.jmxExporterImageRepo}}:{{ .Values.monitoring.jmxExporterImageTag}}\n  command: [\"cp\"]\n  args: [\"{{ .Values.monitoring.jmxExporterInitContainer.jmxJarLocation | default \"/opt/bitnami/jmx-exporter/jmx_prometheus_javaagent.jar\" }}\", \"{{ .Values.volumes.sharedHome.mountPath }}\"]\n  {{- if .Values.monitoring.jmxExporterInitContainer.resources }}\n  resources:\n  {{- with .Values.monitoring.jmxExporterInitContainer.resources }}\n  {{- toYaml . | nindent 4 }}\n  {{- end }}\n  {{- end }}\n  {{- if .Values.openshift.runWithRestrictedSCC }}\n  {{- else}}\n  {{- if .Values.monitoring.jmxExporterInitContainer.runAsRoot }}\n  securityContext:\n    runAsUser: 0\n  {{- else if .Values.monitoring.jmxExporterInitContainer.customSecurityContext }}\n  securityContext:\n  {{- with .Values.monitoring.jmxExporterInitContainer.customSecurityContext }}\n  {{- toYaml .  | nindent 4 }}\n  {{- end }}\n  {{- end }}\n  {{- end }}\n  volumeMounts:\n    - mountPath: {{ .Values.volumes.sharedHome.mountPath | quote }}\n      name: shared-home\n      {{- if .Values.volumes.sharedHome.subPath }}\n      subPath: {{ .Values.volumes.sharedHome.subPath | quote }}\n      {{- end }}\n{{- end }}\n{{- end }}\n\n{{/*\nJmx port\n*/}}\n{{- define \"common.jmx.port\" -}}\n{{- if .Values.monitoring.exposeJmxMetrics }}\n- name: jmx\n  containerPort: {{ .Values.monitoring.jmxExporterPort }}\n  protocol: TCP\n{{- end }}\n{{- end }}\n\n{{/*\nJmx javaagent\n*/}}\n{{- define \"common.jmx.javaagent\" -}}\n{{- if .Values.monitoring.exposeJmxMetrics }}\n-javaagent:{{ .Values.monitoring.jmxExporterCustomJarLocation | default (printf \"%s/jmx_prometheus_javaagent.jar\"  .Values.volumes.sharedHome.mountPath) }}={{ .Values.monitoring.jmxExporterPort}}:/opt/atlassian/jmx/jmx-config.yaml\n{{- end }}\n{{- end }}\n\n{{/*\nJmx configuration yaml\n*/}}\n{{- define \"common.jmx.config\" -}}\n{{ if .Values.monitoring.jmxExporterCustomConfig }}\n{{- range $key, $value := .Values.monitoring.jmxExporterCustomConfig }}\n{{ $key }}: |\n{{ $value | indent 2 }}\n{{- end }}\n{{ else }}\njmx-config.yaml: |\n  lowercaseOutputLabelNames: true\n  lowercaseOutputName: true\n  rules:\n    - pattern: \".*\"\n{{- end }}\n{{- end }}\n",
+    "bamboo-agent/common/templates/_labels.tpl": "{{/* vim: set filetype=mustache: */}}\n{{/*\nCommon labels\n*/}}\n{{- define \"common.labels.commonLabels\" -}}\nhelm.sh/chart: {{ include \"common.names.chart\" . }}\n{{ include \"common.labels.selectorLabels\" . }}\n{{- if .Chart.AppVersion }}\napp.kubernetes.io/version: {{ .Chart.AppVersion | quote }}\n{{- end }}\napp.kubernetes.io/managed-by: {{ .Release.Service }}\n{{ with .Values.additionalLabels }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{/*\nSelector labels\n*/}}\n{{- define \"common.labels.selectorLabels\" -}}\napp.kubernetes.io/name: {{ include \"common.names.name\" . }}\napp.kubernetes.io/instance: {{ .Release.Name }}\n{{- end }}\n",
+    "bamboo-agent/common/templates/_names.tpl": "{{/* vim: set filetype=mustache: */}}\n{{/*\nExpand the name of the chart.\n*/}}\n{{- define \"common.names.name\" -}}\n{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" }}\n{{- end }}\n\n{{/*\nCreate chart name and version as used by the chart label.\n*/}}\n{{- define \"common.names.chart\" -}}\n{{- printf \"%s-%s\" .Chart.Name .Chart.Version | replace \"+\" \"_\" | trunc 63 | trimSuffix \"-\" }}\n{{- end }}\n\n{{/*\nCreate a default fully qualified app name.\nWe truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).\nIf release name contains chart name it will be used as a full name.\n*/}}\n{{- define \"common.names.fullname\" -}}\n{{- if .Values.fullnameOverride }}\n{{- .Values.fullnameOverride | trunc 63 | trimSuffix \"-\" }}\n{{- else }}\n{{- $name := default .Chart.Name .Values.nameOverride }}\n{{- if contains $name .Release.Name }}\n{{- .Release.Name | trunc 63 | trimSuffix \"-\" }}\n{{- else }}\n{{- printf \"%s-%s\" .Release.Name $name | trunc 63 | trimSuffix \"-\" }}\n{{- end }}\n{{- end }}\n{{- end }}\n",
+    "bamboo-agent/templates/NOTES.txt": "Thank you for installing {{ title .Chart.Name }}.\n\nYour release is named {{ .Release.Name }}, and resides in namespace {{ .Release.Namespace }}.\n\nPlease run sanity tests against the release to verify it's healthy:\n\n  $ helm test {{ .Release.Name }} -n {{ .Release.Namespace }}\n\nIf the Kubernetes resources in the release are still starting up, then the tests may fail, so it\nis advisable to wait for the tests to pass before continuing.\n\nTo see the custom values you used for this release:\n\n  $ helm get values {{ .Release.Name }} -n {{ .Release.Namespace }}\n{{- if not .Values.agent.securityToken -}}\n\n#################################################################################\n######      WARNING: Security token not provided for authentication!!!      #####\n######      Agents will not be able to authenticate with Bamboo server.     #####\n#################################################################################\n{{- end }}\n{{- if not .Values.agent.server -}}\n\n#################################################################################\n######           WARNING: Bamboo Server URL not provided!!!                 #####\n######      Agents will not be able to connect to the Bamboo server.        #####\n#################################################################################\n{{- end }}\n\nFor further documentation, see https://atlassian.github.io/data-center-helm-charts/",
+    "bamboo-agent/templates/_helpers.tpl": "{{/* vim: set filetype=mustache: */}}\n{{/*\nThe K8s DNS record for the Bamboo server service\n*/}}\n{{- define \"agent.bambooServerServiceDns\" -}}\n{{- if .Values.agent.server }}\n{{- printf \"%s://%s\" .Values.agent.serverProtocol .Values.agent.server }}\n{{- end }}\n{{- end }}\n\n{{/*\nThe secret token with which to authenticate to the Bamboo server\n*/}}\n{{- define \"agent.securityToken\" -}}\n{{- if .Values.agent.securityToken }}\n{{- printf .Values.agent.securityToken }}\n{{- end }}\n{{- end }}\n\n{{/*\nThe name of the service account to be used.\nIf the name is defined in the chart values, then use that,\nelse if we're creating a new service account then use the name of the Helm release,\nelse just use the \"default\" service account.\n*/}}\n{{- define \"agent.serviceAccountName\" -}}\n{{- if .Values.serviceAccount.name -}}\n{{- .Values.serviceAccount.name -}}\n{{- else -}}\n{{- if .Values.serviceAccount.create -}}\n{{- include \"common.names.fullname\" . -}}\n{{- else -}}\ndefault\n{{- end -}}\n{{- end -}}\n{{- end }}\n\n{{/*\nPod labels\n*/}}\n{{- define \"agent.podLabels\" -}}\n{{ with .Values.podLabels }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{- define \"agent.image\" -}}\n{{- if .Values.image.registry -}}\n{{ .Values.image.registry}}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}\n{{- else -}}\n{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine pod annotations here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.podAnnotations\" -}}\n{{- range $key, $value := .Values.podAnnotations }}\n{{ $key }}: {{ tpl $value $ | quote }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional init containers here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.additionalInitContainers\" -}}\n{{- with .Values.additionalInitContainers }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional containers here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.additionalContainers\" -}}\n{{- with .Values.additionalContainers }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional ports here instead of in values.yaml to allow template overrides\n*/}}\n{{- define \"agent.additionalPorts\" -}}\n{{- with .Values.agent.additionalPorts }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional environment variables here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.additionalEnvironmentVariables\" -}}\n{{- with .Values.agent.additionalEnvironmentVariables }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional hosts here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.additionalHosts\" -}}\n{{- with .Values.additionalHosts }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional volumes here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.additionalVolumes\" -}}\n{{- with .Values.volumes.additional }}\n{{- toYaml . | nindent 0 }}\n{{- end }}\n{{- end }}\n\n{{/*\nDefine additional volume mounts here to allow template overrides when used as a sub chart\n*/}}\n{{- define \"agent.additionalVolumeMounts\" -}}\n{{- with .Values.agent.additionalVolumeMounts }}\n{{- toYaml . }}\n{{- end }}\n{{- end }}\n",
+    "bamboo-agent/templates/config-jvm.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: {{ include \"common.names.fullname\" . }}-jvm-config\n  labels:\n    {{- include \"common.labels.commonLabels\" . | nindent 4 }}\ndata:\n  max_heap: {{ .Values.agent.resources.jvm.maxHeap }}\n  min_heap: {{ .Values.agent.resources.jvm.minHeap }}",
+    "bamboo-agent/templates/deployment-agent.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: {{ include \"common.names.fullname\" . }}\n  labels:\n  {{- include \"common.labels.commonLabels\" . | nindent 4 }}\nspec:\n  replicas: {{ .Values.replicaCount }}\n  selector:\n    matchLabels:\n  {{- include \"common.labels.selectorLabels\" . | nindent 6 }}\n  template:\n    metadata:\n      annotations:\n        checksum/config-jvm: {{ include (print $.Template.BasePath \"/config-jvm.yaml\") . | sha256sum }}\n        {{- include \"agent.podAnnotations\" . | nindent 8 }}\n      labels:\n        {{- include \"common.labels.selectorLabels\" . | nindent 8 }}\n        {{- include \"agent.podLabels\" . | nindent 8 }}\n    spec:\n      {{- with .Values.hostNamespaces }}\n      {{- toYaml . | nindent 6 }}\n      {{- end }}\n      serviceAccountName: {{ include \"agent.serviceAccountName\" . }}\n      terminationGracePeriodSeconds: {{ .Values.agent.shutdown.terminationGracePeriodSeconds }}\n      hostAliases:\n        {{- include \"agent.additionalHosts\" . | nindent 8 }}\n      {{- if .Values.openshift.runWithRestrictedSCC }}\n      {{- else }}\n      {{- if .Values.agent.securityContextEnabled }}\n      {{- with .Values.agent.securityContext }}\n      securityContext:\n        {{ toYaml . | nindent 8 }}\n        {{- $securityContext := . | default dict}}\n        {{- if not $securityContext.fsGroup }}\n        fsGroup: 2005\n        {{- end }}\n      {{- end }}\n      {{- end }}\n      {{- end }}\n      initContainers:\n        {{- include \"agent.additionalInitContainers\" . | nindent 8 }}\n      containers:\n        - name: {{ .Chart.Name }}\n          image: {{ include \"agent.image\" . | quote }}\n          imagePullPolicy: {{ .Values.image.pullPolicy }}\n          env:\n            {{ with .Values.agent.securityToken.secretName }}\n            - name: SECURITY_TOKEN\n              valueFrom:\n                secretKeyRef:\n                  name: {{ . }}\n                  key: {{ $.Values.agent.securityToken.secretKey }}\n            {{ end }}\n            - name: BAMBOO_SERVER\n              value: {{ include \"agent.bambooServerServiceDns\" . }}\n            - name: WRAPPER_JAVA_INITMEMORY\n              valueFrom:\n                configMapKeyRef:\n                  key: min_heap\n                  name: {{ include \"common.names.fullname\" . }}-jvm-config\n            - name: WRAPPER_JAVA_MAXMEMORY\n              valueFrom:\n                configMapKeyRef:\n                  key: max_heap\n                  name: {{ include \"common.names.fullname\" . }}-jvm-config\n            {{- include \"agent.additionalEnvironmentVariables\" . | nindent 12 }}\n\n          startupProbe:\n            exec:\n              command: [\"sh\", \"-c\", {{ .Values.agent.startupProbe.command | quote }}]\n            initialDelaySeconds: {{ .Values.agent.startupProbe.initialDelaySeconds }}\n            periodSeconds: {{ .Values.agent.startupProbe.periodSeconds }}\n            failureThreshold: {{ .Values.agent.startupProbe.failureThreshold }}\n\n          readinessProbe:\n            exec:\n              command: [\"sh\", \"-c\", {{ .Values.agent.readinessProbe.command | quote }}]\n            initialDelaySeconds: {{ .Values.agent.readinessProbe.initialDelaySeconds }}\n            periodSeconds: {{ .Values.agent.readinessProbe.periodSeconds }}\n            failureThreshold: {{ .Values.agent.readinessProbe.failureThreshold }}\n\n          {{- with .Values.agent.containerSecurityContext}}\n          securityContext:\n          {{- toYaml . | nindent 12}}\n          {{- end}}\n\n          {{- with .Values.agent.resources.container }}\n          resources:\n          {{- toYaml . | nindent 12 }}\n          {{- end }}\n          volumeMounts:\n            {{- include \"agent.additionalVolumeMounts\" . | nindent 12 }}\n            {{- range $i, $n := .Values.additionalFiles }}\n            - name: {{ .name }}-{{$i}}\n              mountPath: {{ .mountPath }}/{{ .key }}\n              subPath: {{ .key }}\n            {{ end }}\n          {{ if .Values.agent.additionalPorts }}\n          ports:\n          {{- include \"agent.additionalPorts\" . | nindent 12 }}\n          {{- end }}\n          {{- if .Values.agent.shutdown.command }}\n          lifecycle:\n            preStop:\n              exec:\n                command: [\"sh\", \"-c\", {{ .Values.agent.shutdown.command | quote }}]\n          {{- end }}\n      {{- include \"agent.additionalContainers\" . | nindent 8 }}\n      {{- with .Values.nodeSelector }}\n      nodeSelector:\n      {{- toYaml . | nindent 8 }}\n      {{- end }}\n      {{- with .Values.affinity }}\n      affinity:\n      {{- toYaml . | nindent 8 }}\n      {{- end }}\n      {{- with .Values.tolerations }}\n      tolerations:\n      {{- toYaml . | nindent 8 }}\n      {{- end }}\n      {{- with .Values.agent.topologySpreadConstraints }}\n      topologySpreadConstraints:\n      {{- toYaml . | nindent 8 }}\n      {{- end }}\n      {{- if .Values.schedulerName }}\n      schedulerName: {{ .Values.schedulerName  | quote }}\n      {{- end }}\n      {{- if .Values.priorityClassName }}\n      priorityClassName: {{ .Values.priorityClassName }}\n      {{- end }}\n      volumes:\n        {{ include \"agent.additionalVolumes\" . | nindent 8 }}\n        {{- range $i, $n := .Values.additionalFiles }}\n        - name: {{ .name }}-{{$i}}\n          {{ .type }}:\n            {{ if hasPrefix .type \"secret\" }}{{ .type}}Name{{ else }}name{{ end }}: {{ .name }}\n            items:\n              - key: {{ .key }}\n                path: {{ .key }}\n        {{ end }}\n",
+    "bamboo-agent/templates/serviceaccount.yaml": "{{- if .Values.serviceAccount.create -}}\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: {{ include \"agent.serviceAccountName\" . }}\n  labels:\n  {{- include \"common.labels.commonLabels\" . | nindent 4 }}\n  {{- with .Values.serviceAccount.annotations }}\n  annotations:\n    {{- toYaml . | nindent 4 }}\n  {{- end }}\n  {{- with .Values.serviceAccount.imagePullSecrets }}\nimagePullSecrets:\n  {{- toYaml . | nindent 2 }}\n{{- end -}}\n{{- end -}}"
+  },
+  "changes": [
+    {
+      "resource": {
+        "group": "apps",
+        "version": "v1",
+        "kind": "Deployment",
+        "name": "bamboo-agent"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,10 +1,6 @@\n apiVersion: apps/v1\n kind: Deployment\n metadata:\n-  annotations:\n-    deployment.kubernetes.io/revision: \"1\"\n-    meta.helm.sh/release-name: bamboo-agent\n-    meta.helm.sh/release-namespace: atlassian\n   labels:\n     app.kubernetes.io/instance: bamboo-agent\n     app.kubernetes.io/managed-by: Helm\n@@ -12,20 +8,12 @@\n     app.kubernetes.io/version: 12.1.6\n     helm.sh/chart: bamboo-agent-2.0.13\n   name: bamboo-agent\n-  namespace: atlassian\n spec:\n-  progressDeadlineSeconds: 600\n   replicas: 1\n-  revisionHistoryLimit: 10\n   selector:\n     matchLabels:\n       app.kubernetes.io/instance: bamboo-agent\n       app.kubernetes.io/name: bamboo-agent\n-  strategy:\n-    rollingUpdate:\n-      maxSurge: 25%\n-      maxUnavailable: 25%\n-    type: RollingUpdate\n   template:\n     metadata:\n       annotations:\n@@ -53,7 +41,7 @@\n             configMapKeyRef:\n               key: max_heap\n               name: bamboo-agent-jvm-config\n-        image: atlassian/bamboo-agent-base:12.1.6\n+        image: torque.local/atlassian/bamboo-agent-base:12.1.6-custom-20260510\n         imagePullPolicy: IfNotPresent\n         name: bamboo-agent\n         readinessProbe:\n@@ -65,8 +53,6 @@\n           failureThreshold: 30\n           initialDelaySeconds: 1\n           periodSeconds: 5\n-          successThreshold: 1\n-          timeoutSeconds: 1\n         resources:\n           requests:\n             cpu: \"1\"\n@@ -90,19 +76,15 @@\n           failureThreshold: 120\n           initialDelaySeconds: 1\n           periodSeconds: 1\n-          successThreshold: 1\n-          timeoutSeconds: 1\n-        terminationMessagePath: /dev/termination-log\n-        terminationMessagePolicy: File\n-      dnsPolicy: ClusterFirst\n-      restartPolicy: Always\n-      schedulerName: default-scheduler\n+        volumeMounts: null\n+      hostAliases: null\n+      initContainers: null\n       securityContext:\n         fsGroup: 2005\n         fsGroupChangePolicy: OnRootMismatch\n         seccompProfile:\n           type: RuntimeDefault\n-      serviceAccount: bamboo-agent\n       serviceAccountName: bamboo-agent\n       terminationGracePeriodSeconds: 30\n+      volumes: null\n \n"
+    },
+    {
+      "resource": {
+        "version": "v1",
+        "kind": "ServiceAccount",
+        "name": "bamboo-agent"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,9 +1,6 @@\n apiVersion: v1\n kind: ServiceAccount\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: bamboo-agent\n-    meta.helm.sh/release-namespace: atlassian\n   labels:\n     app.kubernetes.io/instance: bamboo-agent\n     app.kubernetes.io/managed-by: Helm\n@@ -11,5 +8,4 @@\n     app.kubernetes.io/version: 12.1.6\n     helm.sh/chart: bamboo-agent-2.0.13\n   name: bamboo-agent\n-  namespace: atlassian\n \n"
+    },
+    {
+      "resource": {
+        "version": "v1",
+        "kind": "ConfigMap",
+        "name": "bamboo-agent-jvm-config"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -4,9 +4,6 @@\n   min_heap: 256m\n kind: ConfigMap\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: bamboo-agent\n-    meta.helm.sh/release-namespace: atlassian\n   labels:\n     app.kubernetes.io/instance: bamboo-agent\n     app.kubernetes.io/managed-by: Helm\n@@ -14,5 +11,4 @@\n     app.kubernetes.io/version: 12.1.6\n     helm.sh/chart: bamboo-agent-2.0.13\n   name: bamboo-agent-jvm-config\n-  namespace: atlassian\n \n"
+    }
+  ],
+  "summary": {
+    "creates": 0,
+    "updates": 3,
+    "deletes": 0,
+    "unchanged": 0
+  },
+  "warnings": [
+    "Updating cluster/bamboo-agent Deployment (apps) will restart pods; ensure PodDisruptionBudgets allow the rollout."
+  ],
+  "desiredQuota": {
+    "namespace": "atlassian",
+    "desired": {
+      "cpuRequests": {
+        "value": "1"
+      },
+      "cpuLimits": {
+        "value": "0"
+      },
+      "memoryRequests": {
+        "value": "2G"
+      },
+      "memoryLimits": {
+        "value": "0"
+      },
+      "storage": {
+        "value": "0"
+      },
+      "pods": 1,
+      "services": 0,
+      "configmaps": 1,
+      "secrets": 0,
+      "pvcs": 0
+    }
+  },
+  "desiredQuotaByNamespace": {
+    "atlassian": {
+      "namespace": "atlassian",
+      "desired": {
+        "cpuRequests": {
+          "value": "1"
+        },
+        "cpuLimits": {
+          "value": "0"
+        },
+        "memoryRequests": {
+          "value": "2G"
+        },
+        "memoryLimits": {
+          "value": "0"
+        },
+        "storage": {
+          "value": "0"
+        },
+        "pods": 1,
+        "services": 0,
+        "configmaps": 1,
+        "secrets": 0,
+        "pvcs": 0
+      }
+    }
+  },
+  "clusterHost": "https://91.206.14.44:6443",
+  "installCommand": "helmer plan --chart '/tmp/torque-atlassian/charts/release/bamboo-agent' --release 'bamboo-agent' --namespace 'atlassian' --values '/tmp/torque-atlassian/values/bamboo-agent.yaml'",
+  "generatedAt": "2026-05-10T14:11:14.878062Z",
+  "offlineFallback": false
+}

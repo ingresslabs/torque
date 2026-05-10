@@ -13,7 +13,7 @@ This repo is a single-module Go CLI with an optional companion agent.
 - `init`
 - `build`
 - `explain`
-- `apply` (and `apply plan`)
+- `apply` (including `apply plan` and `apply simulate`)
 - `delete`
 - `stack`
 - `revert`
@@ -21,6 +21,8 @@ This repo is a single-module Go CLI with an optional companion agent.
 - `lint`
 - `logs`
 - `env`
+- `guardian`
+- `incident`
 - `secrets`
 - `version`
 
@@ -81,7 +83,7 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 ### `internal/deploy`
 
 - Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).
-- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.
+- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `ServerDryRunReport`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.
 - Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.
 
 ### `internal/deployplan`
@@ -95,6 +97,24 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 - Purpose: resolve `secret://` references in deploy-time values using pluggable providers.
 - Key types: `Resolver`, `Config`, `Provider`.
 - Invariants: never log secret values; audit references only.
+
+### `internal/securityevidence`
+
+- Purpose: write security evidence bundles that connect verifier findings, secret-flow scan reports, and redaction proof artifacts.
+- Key types: `BundleManifest`, `BundleOptions`.
+- Invariants: bundle artifacts contain redacted previews and counts only; raw secret values must not be stored.
+
+### Guardian Runtime Proof
+
+- Purpose: top-level `torque guardian` command for observe-only runtime proof.
+- Key surfaces: `guardian install`, `guardian report`, `guardian diff`, `guardian pr`.
+- Invariants: Guardian is observe-only; installed RBAC grants only `get`, `list`, and `watch`; drift, event, and secret-boundary evidence must redact secret-like strings.
+
+### Incident Replay Proof
+
+- Purpose: top-level `torque incident` command for observe-only incident capture, replay, explanation, and PR artifacts.
+- Key surfaces: `incident capture`, `incident replay`, `incident explain`, `incident pr`.
+- Invariants: Incident commands do not mutate clusters; captures must redact secret-like strings and omit Kubernetes Secret `data`/`stringData`; replay writes portable proof files only.
 
 ### `internal/ui`
 
@@ -150,5 +170,6 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 - UI design system (HTML/CSS surfaces): `DESIGN.md`
 - gRPC agent API: `docs/grpc-agent.md`
 - MCP server design: `docs/mcp-server-spec.md`
+- Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`
 - S3 BuildKit cache: `docs/s3-build-cache.md`
 - Generated package dependency map: `docs/deps.md` (refresh with `make deps`)

@@ -181,10 +181,17 @@ func TestRootHelpSubcommandOrder(t *testing.T) {
 		"  delete",
 		"  stack",
 		"  revert",
+		"  repair",
+		"  replay",
 		"  list",
 		"  lint",
 		"  logs",
 		"  env",
+		"  guardian",
+		"  incident",
+		"  secrets",
+		"  security",
+		"  version",
 	}
 	last := -1
 	for _, needle := range wantOrder {

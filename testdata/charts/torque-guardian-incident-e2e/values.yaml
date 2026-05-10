@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: invalid.invalid/torque/guardian-incident-e2e
+  tag: never
+
+config:
+  mode: expected
+  password: test-fixture-secret-placeholder
+
+env:
+  token: test-fixture-secret-placeholder

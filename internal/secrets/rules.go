@@ -34,7 +34,7 @@ func DefaultConfig() Config {
 				ID:        "arg_value_private_key",
 				Enabled:   &enabled,
 				Severity:  SeverityBlock,
-				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine},
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
 				Regex:     `-----BEGIN ([A-Z ]+ )?PRIVATE KEY-----`,
 				Message:   "private key material detected",
 			},
@@ -42,7 +42,7 @@ func DefaultConfig() Config {
 				ID:        "arg_value_jwt",
 				Enabled:   &enabled,
 				Severity:  SeverityWarn,
-				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine},
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
 				Regex:     `\beyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\b`,
 				Message:   "JWT-like token detected",
 			},
@@ -50,9 +50,49 @@ func DefaultConfig() Config {
 				ID:        "arg_value_github_token",
 				Enabled:   &enabled,
 				Severity:  SeverityWarn,
-				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine},
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
 				Regex:     `\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b`,
 				Message:   "GitHub token-like string detected",
+			},
+			{
+				ID:        "value_aws_access_key",
+				Enabled:   &enabled,
+				Severity:  SeverityBlock,
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
+				Regex:     `\b(A3T[A-Z0-9]|AKIA|ASIA)[0-9A-Z]{16}\b`,
+				Message:   "AWS access key-like value detected",
+			},
+			{
+				ID:        "value_openai_key",
+				Enabled:   &enabled,
+				Severity:  SeverityBlock,
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
+				Regex:     `\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b`,
+				Message:   "OpenAI-style API key detected",
+			},
+			{
+				ID:        "value_slack_token",
+				Enabled:   &enabled,
+				Severity:  SeverityBlock,
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
+				Regex:     `\bxox[baprs]-[A-Za-z0-9-]{20,}\b`,
+				Message:   "Slack token-like value detected",
+			},
+			{
+				ID:        "value_stripe_secret_key",
+				Enabled:   &enabled,
+				Severity:  SeverityBlock,
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
+				Regex:     `\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}\b`,
+				Message:   "Stripe secret key-like value detected",
+			},
+			{
+				ID:        "value_database_url_password",
+				Enabled:   &enabled,
+				Severity:  SeverityBlock,
+				AppliesTo: []ApplyTo{ApplyBuildArgValue, ApplyOCIContent, ApplyLogLine, ApplySourceScalar, ApplyRenderScalar},
+				Regex:     `(?i)\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis)://[^:\s/@]+:[^@\s]+@[^\s'"]+`,
+				Message:   "database URL contains inline credentials",
 			},
 			{
 				ID:        "oci_suspect_cred_file",
@@ -136,4 +176,15 @@ func (cr CompiledRule) Applies(target ApplyTo) bool {
 		}
 	}
 	return false
+}
+
+func (cr CompiledRule) FindAllString(value string) []string {
+	if cr.re == nil {
+		return nil
+	}
+	return cr.re.FindAllString(value, -1)
+}
+
+func (cr CompiledRule) MatchString(value string) bool {
+	return cr.re != nil && cr.re.MatchString(value)
 }

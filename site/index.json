@@ -12,7 +12,13 @@
         "# Initialize repo defaults\n  torque init",
         "# Launch the interactive help UI\n  torque --help --ui",
         "# Preview a Helm upgrade\n  torque apply plan --chart ./chart --release foo",
+        "# Simulate live API behavior before applying\n  torque apply simulate --chart ./chart --release foo --out ./torque-sim-proof",
         "# Revert a release to the last known-good revision\n  torque revert --release foo --namespace prod",
+        "# Turn failed apply proof into a repair plan\n  torque repair --from ./apply-proof.json --chart ./chart",
+        "# Benchmark security detection with evidence\n  torque security benchmark --corpus ./testdata/security --report benchmark.json",
+        "# Prove runtime drift from a simulation proof\n  torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json",
+        "# Synthesize and test runtime recurrence contracts\n  torque contract synthesize --from incident-replay-proof --guardian drift-proof.json --out torque-contract.yaml",
+        "# Capture and replay incident evidence\n  torque incident capture --release foo --namespace prod --since 1h --out incident.torque",
         "# Apply chart changes\n\ttorque apply --chart ./chart --release foo --namespace prod",
         "# Launch the built-in interactive help UI\ntorque --help --ui",
         "# Run the MCP bridge over stdio for an agent host\ntorque-mcp --stdio",
@@ -34,11 +40,13 @@
         "internal/deploy",
         "internal/ui"
       ],
-      "content": "Render and apply a Helm chart using upgrade --install\n\nUsage:\n  torque apply [flags]\n\nFlags:\n      --atomic                        Rollback changes if the upgrade fails (default true)\n      --capture string[=\"__auto__\"]   Capture deploy events/logs/manifests to a SQLite\n                                      database at this path\n      --capture-tag stringArray       Tag the capture session (KEY=VALUE). Repeatable.\n      --chart string                  Chart reference (path, repo/name, or OCI ref)\n      --create-namespace              Create the release namespace if it does not exist\n      --drift-guard                   Fail if live cluster resources drift from the\n                                      last applied Helm release state\n      --drift-guard-mode string       Drift guard mode: last-applied (compare to\n                                      current Helm release) or desired (compare to\n                                      newly rendered manifest) (default \"last-applied\")\n      --dry-run                       Render the chart without applying it\n  -n, --namespace string              Namespace for the Helm release (defaults to\n                                      active context)\n      --non-interactive               Fail instead of prompting (requires --yes)\n      --plan-server                   Use server-side dry-run to classify replacements\n                                      (slower; requires RBAC)\n      --release string                Helm release name\n      --require-verified string       Require a matching verify report (JSON) for this\n                                      exact render before applying\n      --secret-config string          Secrets provider config file (defaults to\n                                      ~/.torque/config.yaml and repo .torque.yaml)\n      --secret-provider string        Secret provider name for secret:// references\n      --set stringArray               Set values on the command line (key=val)\n      --set-file stringArray          Set values from files (key=path)\n      --set-string stringArray        Set STRING values on the command line\n      --timeout duration              Time to wait for any Kubernetes operation\n                                      (default 5m0s)\n      --ui string[=\":8080\"]           Serve the live deploy viewer at this address\n                                      (e.g. :8080)\n      --upgrade                       Only perform the upgrade path (skip install fallback)\n  -f, --values strings                Values files to apply (can be repeated)\n  -v, --verbose                       Enable verbose logging (equivalent to\n                                      --log-level=debug)\n      --version string                Chart version (default: latest)\n      --wait                          Wait for resources to be ready (default true)\n      --watch duration                After a successful deploy, stream logs/events\n                                      for this long (e.g. 2m)\n      --ws-listen string              Serve the raw deploy event stream over WebSocket\n                                      at this address (e.g. :9086)\n      --yes                           Alias for --auto-approve",
+      "content": "Render and apply a Helm chart using upgrade --install\n\nUsage:\n  torque apply [flags]\n\nFlags:\n      --atomic                             Rollback changes if the upgrade fails\n                                           (default true)\n      --auto-rollback                      Rollback and write proof when apply fails\n                                           or a rollout SLO gate fails\n      --capture string[=\"__auto__\"]        Capture deploy events/logs/manifests to a\n                                           SQLite database at this path\n      --capture-tag stringArray            Tag the capture session (KEY=VALUE). Repeatable.\n      --chart string                       Chart reference (path, repo/name, or OCI ref)\n      --create-namespace                   Create the release namespace if it does not\n                                           exist\n      --drift-guard                        Fail if live cluster resources drift from\n                                           the last applied Helm release state\n      --drift-guard-mode string            Drift guard mode: last-applied (compare to\n                                           current Helm release) or desired (compare\n                                           to newly rendered manifest) (default\n                                           \"last-applied\")\n      --dry-run                            Render the chart without applying it\n  -n, --namespace string                   Namespace for the Helm release (defaults to\n                                           active context)\n      --non-interactive                    Fail instead of prompting (requires --yes)\n      --plan-server                        Use server-side dry-run to classify\n                                           replacements (slower; requires RBAC)\n      --predict                            Predict rollout risk, restarts, missing\n                                           dependencies, quota pressure, and rollback\n                                           confidence before applying\n      --proof-bundle string[=\"__auto__\"]   Write a predictive apply proof bundle JSON\n                                           to this path (default:\n                                           torque-proof-bundle-<release>-<timestamp>.json)\n      --release string                     Helm release name\n      --require-verified string            Require a matching verify report (JSON) for\n                                           this exact render before applying\n      --rollback-proof string              Write auto-rollback proof JSON to this path\n                                           (default:\n                                           torque-rollback-proof-<release>-<timestamp>.json)\n      --secret-config string               Secrets provider config file (defaults to\n                                           ~/.torque/config.yaml and repo .torque.yaml)\n      --secret-provider string             Secret provider name for secret:// references\n      --set stringArray                    Set values on the command line (key=val)\n      --set-file stringArray               Set values from files (key=path)\n      --set-string stringArray             Set STRING values on the command line\n      --slo string                         Rollout SLO YAML for --auto-rollback gates\n      --timeout duration                   Time to wait for any Kubernetes operation\n                                           (default 5m0s)\n      --ui string[=\":8080\"]                Serve the live deploy viewer at this\n                                           address (e.g. :8080)\n      --upgrade                            Only perform the upgrade path (skip install\n                                           fallback)\n  -f, --values strings                     Values files to apply (can be repeated)\n  -v, --verbose                            Enable verbose logging (equivalent to\n                                           --log-level=debug)\n      --version string                     Chart version (default: latest)\n      --wait                               Wait for resources to be ready (default true)\n      --watch duration                     After a successful deploy, stream\n                                           logs/events for this long (e.g. 2m)\n      --ws-listen string                   Serve the raw deploy event stream over\n                                           WebSocket at this address (e.g. :9086)\n      --yes                                Alias for --auto-approve",
       "examples": [
         "# Apply a chart with prod values\n  torque apply --chart ./charts/web --release web-prod --namespace prod -f values/prod.yaml",
         "# Deploy a chart\ntorque apply --chart ./chart --release foo -n default",
         "# Run the deploy viewer\ntorque apply --chart ./chart --release foo -n default --ui",
+        "# Predict rollout risk and write a proof bundle\ntorque apply --chart ./chart --release foo -n default --predict --proof-bundle ./apply-proof.json --capture ./apply.sqlite --yes",
+        "# Roll back automatically and write proof if apply or SLO gates fail\ntorque apply --chart ./chart --release foo -n default --auto-rollback --slo ./slo.yaml --capture ./apply.sqlite --yes",
         "# Deploy with secret references\ntorque apply --chart ./chart --release foo -n default --secret-provider local",
         "# Deploy with Vault-backed secrets\ntorque apply --chart ./chart --release foo -n default --secret-provider vault"
       ],
@@ -72,6 +80,27 @@
         "command",
         "internal/deploy",
         "internal/ui"
+      ]
+    },
+    {
+      "id": "cmd:torque apply simulate",
+      "kind": "command",
+      "title": "torque apply simulate",
+      "subtitle": "Simulate a Helm apply against live API behavior and write a proof bundle",
+      "sources": [
+        "internal/deploy",
+        "internal/deployplan"
+      ],
+      "content": "Render a Helm release, diff it against live state, run Kubernetes server-side dry-run checks, score rollout risk, and write a replayable simulation proof bundle without applying changes.\n\nUsage:\n  torque apply simulate [flags]\n\nFlags:\n      --chart string               Chart reference (path, repo/name, or OCI ref)\n      --fail-on-blocked            Exit non-zero when the simulation proof is blocked\n      --format string              Output format: text or json (default \"text\")\n      --from-live                  Use live cluster state and server-side dry-run\n                                   behavior (default true)\n      --include-crds               Render CRDs in addition to the main chart objects\n  -n, --namespace string           Namespace for the Helm release (defaults to active\n                                   context)\n      --out string                 Proof bundle directory (default:\n                                   ./torque-sim-proof-<release>-<timestamp>)\n      --release string             Helm release name\n      --secret-config string       Secrets provider config file (defaults to\n                                   ~/.torque/config.yaml and repo .torque.yaml)\n      --secret-provider string     Secret provider name for secret:// references\n      --security-evidence string   Existing verifier/security evidence directory to attach\n      --set stringArray            Set values on the command line (key=val)\n      --set-file stringArray       Set values from files (key=path)\n      --set-string stringArray     Set STRING values on the command line\n      --slo string                 Rollout SLO YAML to attach to the proof bundle\n  -f, --values strings             Values files to apply (can be repeated)\n      --version string             Chart version (default: latest)",
+      "examples": [
+        "# Simulate a Helm apply and write a proof bundle\ntorque apply simulate --chart ./chart --release foo -n default --out ./torque-sim-proof",
+        "# Attach security evidence and SLO gates\ntorque apply simulate --chart ./chart --release foo -n default --security-evidence ./torque-security-evidence --slo ./slo.yaml --out ./torque-sim-proof",
+        "# Fail CI when the API dry-run or quota proof blocks the release\ntorque apply simulate --chart ./chart --release foo -n default --out ./torque-sim-proof --fail-on-blocked"
+      ],
+      "tags": [
+        "command",
+        "internal/deploy",
+        "internal/deployplan"
       ]
     },
     {
@@ -164,6 +193,99 @@
       ]
     },
     {
+      "id": "cmd:torque contract",
+      "kind": "command",
+      "title": "torque contract",
+      "subtitle": "Synthesize and test runtime contracts from proof",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Runtime Contract turns Guardian drift proof and Incident replay proof into observe-only recurrence rules, machine-checkable test proof, and PR-ready artifacts.\n\nUsage:\n  torque contract",
+      "examples": [
+        "# Synthesize recurrence rules from Incident and Guardian proof\ntorque contract synthesize --from incident-replay-proof --guardian drift-proof.json --out torque-contract.yaml",
+        "# Test fresh proof against the RuntimeContract\ntorque contract test --contract torque-contract.yaml --from incident-replay-proof --guardian drift-proof.json --out contract-proof.json",
+        "# Generate PR artifacts from contract proof\ntorque contract pr --contract torque-contract.yaml --proof contract-proof.json --branch add/api-runtime-contract"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy",
+        "contract",
+        "runtime",
+        "guardian",
+        "incident",
+        "proof"
+      ]
+    },
+    {
+      "id": "cmd:torque contract pr",
+      "kind": "command",
+      "title": "torque contract pr",
+      "subtitle": "Generate PR-ready artifacts from a RuntimeContract proof",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Generate PR-ready artifacts from a RuntimeContract proof\n\nUsage:\n  torque contract pr [flags]\n\nFlags:\n      --branch string     Suggested contract branch name\n      --contract string   RuntimeContract YAML/JSON file\n      --format string     Output format: text or json (default \"text\")\n      --out string        Directory for PR artifacts (default: ./fix beside --proof)\n      --proof string      RuntimeContract proof JSON from torque contract test",
+      "examples": [
+        "# Generate patch and PR body from contract proof\ntorque contract pr --contract torque-contract.yaml --proof contract-proof.json --branch add/api-runtime-contract"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy"
+      ]
+    },
+    {
+      "id": "cmd:torque contract synthesize",
+      "kind": "command",
+      "title": "torque contract synthesize",
+      "subtitle": "Synthesize a RuntimeContract from proof evidence",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Synthesize a RuntimeContract from proof evidence\n\nUsage:\n  torque contract synthesize [flags]\n\nFlags:\n      --format string     Output format: text, json, or yaml (default \"text\")\n      --from string       Incident bundle, root cause JSON, or incident replay proof\n                          directory\n      --guardian string   Guardian drift proof JSON or runtime proof directory\n      --out string        Write RuntimeContract YAML/JSON to this path",
+      "examples": [
+        "# Write a RuntimeContract from combined proof\ntorque contract synthesize --from incident-replay-proof --guardian drift-proof.json --out torque-contract.yaml",
+        "# Print the synthesized contract as YAML\ntorque contract synthesize --from incident-replay-proof --guardian drift-proof.json --format yaml"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy",
+        "contract",
+        "runtime",
+        "recurrence",
+        "proof"
+      ]
+    },
+    {
+      "id": "cmd:torque contract test",
+      "kind": "command",
+      "title": "torque contract test",
+      "subtitle": "Test a RuntimeContract against proof evidence",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Test a RuntimeContract against proof evidence\n\nUsage:\n  torque contract test [flags]\n\nFlags:\n      --contract string   RuntimeContract YAML/JSON file\n      --fail-on-blocked   Exit non-zero when the contract test fails\n      --format string     Output format: text or json (default \"text\")\n      --from string       Incident bundle, root cause JSON, or incident replay proof\n                          directory\n      --guardian string   Guardian drift proof JSON or runtime proof directory\n      --out string        Write contract test proof JSON to this path",
+      "examples": [
+        "# Write machine-checkable contract test proof\ntorque contract test --contract torque-contract.yaml --from incident-replay-proof --guardian drift-proof.json --out contract-proof.json",
+        "# Fail CI when recurrence rules are violated\ntorque contract test --contract torque-contract.yaml --from incident-replay-proof --guardian drift-proof.json --fail-on-blocked"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy",
+        "contract",
+        "runtime",
+        "gate",
+        "proof"
+      ]
+    },
+    {
       "id": "cmd:torque delete",
       "kind": "command",
       "title": "torque delete",
@@ -213,6 +335,207 @@
       ],
       "tags": [
         "command"
+      ]
+    },
+    {
+      "id": "cmd:torque guardian",
+      "kind": "command",
+      "title": "torque guardian",
+      "subtitle": "Observe runtime drift and produce repair evidence",
+      "sources": [
+        "cmd/torque",
+        "internal/deployplan"
+      ],
+      "content": "Torque Guardian connects simulation proof, live runtime state, Kubernetes events, managed fields, secret-boundary checks, and PR-ready repair artifacts in observe-only mode.\n\nUsage:\n  torque guardian",
+      "examples": [
+        "# Install observe-only Guardian RBAC and config\ntorque guardian install --namespace torque-system --mode observe",
+        "# Compare a simulation proof against live runtime state\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json",
+        "# Generate PR artifacts from a drift proof\ntorque guardian pr --from drift-proof.json --branch fix/runtime-drift"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deployplan"
+      ]
+    },
+    {
+      "id": "cmd:torque guardian diff",
+      "kind": "command",
+      "title": "torque guardian diff",
+      "subtitle": "Compare simulation proof with live runtime state",
+      "sources": [
+        "cmd/torque",
+        "internal/deployplan"
+      ],
+      "content": "Compare simulation proof with live runtime state\n\nUsage:\n  torque guardian diff [flags]\n\nFlags:\n      --format string      Output format: text or json (default \"text\")\n      --live               Compare against live Kubernetes objects (default true)\n  -n, --namespace string   Namespace override for namespaced resources\n      --out string         Write drift proof JSON or proof directory\n      --since string       Runtime event window, for example 24h or 30m (default \"24h\")\n      --source string      Simulation proof directory from torque apply simulate",
+      "examples": [
+        "# Prove drift from simulation proof to live objects\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json",
+        "# Write the full runtime proof bundle directory\ntorque guardian diff --source ./torque-sim-proof --live --out ./torque-runtime-proof"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deployplan"
+      ]
+    },
+    {
+      "id": "cmd:torque guardian install",
+      "kind": "command",
+      "title": "torque guardian install",
+      "subtitle": "Install observe-only Guardian RBAC and config",
+      "sources": [
+        "cmd/torque",
+        "internal/deployplan"
+      ],
+      "content": "Install observe-only Guardian RBAC and config\n\nUsage:\n  torque guardian install [flags]\n\nFlags:\n      --dry-run            Print the install manifest without applying it\n      --mode string        Guardian mode (observe) (default \"observe\")\n      --namespace string   Namespace for Guardian observe config (default \"torque-system\")\n      --output string      Write install manifest to this path instead of applying it",
+      "examples": [
+        "# Install observe-only Guardian RBAC\ntorque guardian install --namespace torque-system --mode observe",
+        "# Review the manifest without applying it\ntorque guardian install --namespace torque-system --mode observe --dry-run"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deployplan"
+      ]
+    },
+    {
+      "id": "cmd:torque guardian pr",
+      "kind": "command",
+      "title": "torque guardian pr",
+      "subtitle": "Generate PR-ready artifacts from Guardian drift proof",
+      "sources": [
+        "cmd/torque",
+        "internal/deployplan"
+      ],
+      "content": "Generate PR-ready artifacts from Guardian drift proof\n\nUsage:\n  torque guardian pr [flags]\n\nFlags:\n      --branch string   Suggested repair branch name\n      --format string   Output format: text or json (default \"text\")\n      --from string     Guardian drift proof JSON or runtime proof directory\n      --out string      Directory for fix artifacts (default: ./fix beside the proof)",
+      "examples": [
+        "# Generate patch and PR body from a drift proof\ntorque guardian pr --from drift-proof.json --branch fix/runtime-drift",
+        "# Generate fix artifacts beside a runtime proof bundle\ntorque guardian pr --from ./torque-runtime-proof"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deployplan"
+      ]
+    },
+    {
+      "id": "cmd:torque guardian report",
+      "kind": "command",
+      "title": "torque guardian report",
+      "subtitle": "Write a runtime proof from live events",
+      "sources": [
+        "cmd/torque",
+        "internal/deployplan"
+      ],
+      "content": "Write a runtime proof from live events\n\nUsage:\n  torque guardian report [flags]\n\nFlags:\n      --all-namespaces     Inspect events across all namespaces\n      --format string      Output format: text or json (default \"text\")\n  -n, --namespace string   Namespace to inspect (defaults to active context)\n      --out string         Write runtime proof JSON to this path\n      --since string       Runtime event window, for example 24h or 30m (default \"24h\")",
+      "examples": [
+        "# Write a 24-hour runtime event proof\ntorque guardian report --since 24h --out runtime-proof.json",
+        "# Inspect all namespaces and print JSON\ntorque guardian report --since 30m --all-namespaces --format json"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deployplan"
+      ]
+    },
+    {
+      "id": "cmd:torque incident",
+      "kind": "command",
+      "title": "torque incident",
+      "subtitle": "Capture and replay observe-only incident evidence",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Torque Incident captures release runtime evidence, replays it as a portable lab proof, explains likely root cause, and writes PR-ready artifacts without mutating the cluster.\n\nUsage:\n  torque incident",
+      "examples": [
+        "# Capture observe-only incident evidence\ntorque incident capture --release api -n prod --since 1h --out incident.torque",
+        "# Replay the capture as a lab proof\ntorque incident replay incident.torque --lab k3s --out incident-replay-proof",
+        "# Generate PR artifacts from root cause\ntorque incident pr --from incident-replay-proof --branch fix/api-incident"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy"
+      ]
+    },
+    {
+      "id": "cmd:torque incident capture",
+      "kind": "command",
+      "title": "torque incident capture",
+      "subtitle": "Capture observe-only incident evidence for a release",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Capture observe-only incident evidence for a release\n\nUsage:\n  torque incident capture [flags]\n\nFlags:\n      --format string      Output format: text or json (default \"text\")\n      --log-tail int       Log lines per container to include (0 disables logs)\n                           (default 80)\n  -n, --namespace string   Release namespace (defaults to active context)\n      --out string         Write incident bundle JSON to this path\n      --release string     Helm release name to capture\n      --since string       Incident evidence window, for example 1h or 30m (default \"1h\")",
+      "examples": [
+        "# Capture a release incident bundle\ntorque incident capture --release api -n prod --since 1h --out incident.torque",
+        "# Print capture JSON and skip pod logs\ntorque incident capture --release api -n prod --log-tail 0 --format json"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy"
+      ]
+    },
+    {
+      "id": "cmd:torque incident explain",
+      "kind": "command",
+      "title": "torque incident explain",
+      "subtitle": "Explain root cause from incident proof",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Explain root cause from incident proof\n\nUsage:\n  torque incident explain [flags]\n\nFlags:\n      --format string   Output format: text or json (default \"text\")\n      --from string     Incident bundle or replay proof directory\n      --out string      Write root cause JSON to this path",
+      "examples": [
+        "# Write root-cause JSON from replay proof\ntorque incident explain --from incident-replay-proof --out root-cause.json"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy"
+      ]
+    },
+    {
+      "id": "cmd:torque incident pr",
+      "kind": "command",
+      "title": "torque incident pr",
+      "subtitle": "Generate PR-ready artifacts from incident root cause",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Generate PR-ready artifacts from incident root cause\n\nUsage:\n  torque incident pr [flags]\n\nFlags:\n      --branch string   Suggested repair branch name\n      --format string   Output format: text or json (default \"text\")\n      --from string     Root cause JSON, incident bundle, or replay proof directory\n      --out string      Directory for fix artifacts (default: ./fix beside --from)",
+      "examples": [
+        "# Generate patch and PR body from root cause\ntorque incident pr --from root-cause.json --branch fix/api-incident",
+        "# Generate fix artifacts beside replay proof\ntorque incident pr --from incident-replay-proof"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy"
+      ]
+    },
+    {
+      "id": "cmd:torque incident replay",
+      "kind": "command",
+      "title": "torque incident replay",
+      "subtitle": "Replay an incident bundle as a lab proof",
+      "sources": [
+        "cmd/torque",
+        "internal/deploy"
+      ],
+      "content": "Replay an incident bundle as a lab proof\n\nUsage:\n  torque incident replay <incident-bundle> [flags]\n\nFlags:\n      --fail-on-blocked   Exit non-zero when replayed incident remains blocked\n      --format string     Output format: text or json (default \"text\")\n      --lab string        Replay lab profile label (default \"k3s\")\n      --out string        Write incident replay proof directory",
+      "examples": [
+        "# Validate an incident bundle in the k3s lab profile\ntorque incident replay incident.torque --lab k3s --out incident-replay-proof",
+        "# Fail CI when replayed evidence remains blocked\ntorque incident replay incident.torque --lab k3s --fail-on-blocked"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque",
+        "internal/deploy"
       ]
     },
     {
@@ -319,6 +642,40 @@
       ]
     },
     {
+      "id": "cmd:torque repair",
+      "kind": "command",
+      "title": "torque repair",
+      "subtitle": "Turn failed apply proof into a chart repair plan",
+      "content": "Read a Torque apply or simulation proof bundle, diagnose likely rollout root cause, and optionally write PR-ready chart repair files.\n\nUsage:\n  torque repair [flags]\n\nFlags:\n      --apply             Write repair files into the chart\n      --branch string     Repair branch name to create when --apply is used in a clean\n                          git worktree\n      --chart string      Chart directory to patch\n      --format string     Output format: text, json, or markdown (default \"text\")\n      --from string       Apply proof bundle JSON to diagnose\n      --non-interactive   Fail instead of prompting (requires --yes)\n      --pr-body string    Write a Markdown PR body to this path\n      --yes               Auto-approve repair file writes",
+      "examples": [
+        "# Diagnose a failed apply proof bundle\ntorque repair --from ./apply-proof.json --chart ./chart",
+        "# Diagnose a simulation proof bundle through the fix alias\ntorque fix --from ./torque-sim-proof --chart ./chart",
+        "# Write chart repair files and a PR body\ntorque repair --from ./apply-proof.json --chart ./chart --branch fix/foo-rollout --apply --pr-body ./repair-pr.md --yes"
+      ],
+      "tags": [
+        "command"
+      ]
+    },
+    {
+      "id": "cmd:torque replay",
+      "kind": "command",
+      "title": "torque replay",
+      "subtitle": "Replay and validate a Torque proof bundle",
+      "sources": [
+        "cmd/torque"
+      ],
+      "content": "Validate a Torque simulation or apply proof bundle and report whether its evidence can be replayed in a lab workflow.\n\nUsage:\n  torque replay <proof-bundle> [flags]\n\nFlags:\n      --fail-on-blocked   Exit non-zero when the replayed proof is blocked\n      --format string     Output format: text or json (default \"text\")\n      --lab string        Replay lab profile label (default \"k3s\")",
+      "examples": [
+        "# Validate a simulation proof bundle in the k3s lab profile\ntorque replay ./torque-sim-proof --lab k3s",
+        "# Emit replay validation as JSON\ntorque replay ./torque-sim-proof --lab k3s --format json",
+        "# Fail CI when the replayed proof is blocked\ntorque replay ./torque-sim-proof --lab k3s --fail-on-blocked"
+      ],
+      "tags": [
+        "command",
+        "cmd/torque"
+      ]
+    },
+    {
       "id": "cmd:torque revert",
       "kind": "command",
       "title": "torque revert",
@@ -345,7 +702,10 @@
         "# List secrets under a provider prefix\ntorque secrets list --secret-provider local --path app --format json",
         "# Discover secret refs across the repo\ntorque secrets discover --scope repo",
         "# Discover secret refs for a chart\ntorque secrets discover --scope chart --chart ./chart --values values/dev.yaml",
-        "# Discover secret refs for a stack\ntorque secrets discover --scope stack --config ./stacks/prod"
+        "# Discover secret refs for a stack\ntorque secrets discover --scope stack --config ./stacks/prod",
+        "# Scan source files for secret-like values\ntorque secrets scan --scope repo --report secrets.json --mode block",
+        "# Scan source files and include a redacted secret flow graph\ntorque secrets scan --scope repo --report secrets.json --mode block --flow-graph",
+        "# Scan rendered manifests and allow Kubernetes Secret boundaries\ntorque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block --flow-graph"
       ],
       "tags": [
         "command",
@@ -395,6 +755,20 @@
       ]
     },
     {
+      "id": "cmd:torque secrets scan",
+      "kind": "command",
+      "title": "torque secrets scan",
+      "subtitle": "Scan source, rendered manifests, or artifacts for secret evidence",
+      "sources": [
+        "internal/secretstore"
+      ],
+      "content": "Scan source files, rendered Kubernetes manifests, or text artifacts for secret-like values and write a redacted evidence-first report.\n\nUsage:\n  torque secrets scan [ARTIFACT] [flags]\n\nFlags:\n      --chart string              Helm chart path for --scope render\n      --evaluated-at string       Override evaluation time (RFC3339) for deterministic\n                                  reports/tests\n      --fail-on string            Fail threshold: info|low|medium|high|critical\n                                  (default \"high\")\n      --flow-graph                Add a redacted secret flow graph to the JSON report\n      --format string             Output format: table or json (default \"table\")\n      --manifest string           Rendered manifest path for --scope render\n      --mode string               Scan mode: warn|block|off (default \"warn\")\n  -n, --namespace string          Namespace for --scope render\n      --release string            Helm release name for --scope render\n      --report string             Write JSON report to this path\n      --root string               Root directory or artifact path to scan (default \".\")\n      --scope string              Scan scope: repo, render, build, or artifact\n                                  (default \"repo\")\n      --security-profile string   Security profile to apply (default or enterprise)\n      --set strings               Set value(s) for --scope render chart mode\n      --values strings            Values file(s) for --scope render chart mode",
+      "tags": [
+        "command",
+        "internal/secretstore"
+      ]
+    },
+    {
       "id": "cmd:torque secrets test",
       "kind": "command",
       "title": "torque secrets test",
@@ -406,6 +780,41 @@
       "tags": [
         "command",
         "internal/secretstore"
+      ]
+    },
+    {
+      "id": "cmd:torque security",
+      "kind": "command",
+      "title": "torque security",
+      "subtitle": "Run security evidence workflows",
+      "content": "Run security evidence workflows such as benchmark corpus evaluation for secret detection, redaction, and Kubernetes boundary proofs.\n\nUsage:\n  torque security",
+      "examples": [
+        "# Benchmark secret detection, redaction, flow graph, and boundary evidence\ntorque security benchmark --corpus ./testdata/security --report benchmark.json"
+      ],
+      "tags": [
+        "command",
+        "security",
+        "benchmark",
+        "evidence"
+      ]
+    },
+    {
+      "id": "cmd:torque security benchmark",
+      "kind": "command",
+      "title": "torque security benchmark",
+      "subtitle": "Benchmark secret detection, redaction, and boundary evidence",
+      "content": "Benchmark secret detection against a corpus and publish recall, precision, false-positive, runtime, redaction, flow-graph, and Kubernetes boundary metrics.\n\nUsage:\n  torque security benchmark [flags]\n\nFlags:\n      --corpus string              Security benchmark corpus directory (default\n                                   \"./testdata/security\")\n      --evaluated-at string        Override evaluation time (RFC3339) for\n                                   deterministic reports/tests\n      --format string              Output format: table or json (default \"table\")\n      --live-confirm               Confirm that --live-k3s-boundary-matrix may create\n                                   and delete its namespace\n      --live-k3s-boundary-matrix   Run the live k3s boundary matrix probe against a\n                                   temporary namespace\n      --live-namespace string      Namespace for --live-k3s-boundary-matrix (default:\n                                   generated)\n      --report string              Write benchmark JSON report to this path",
+      "examples": [
+        "# Publish corpus-backed security metrics\ntorque security benchmark --corpus ./testdata/security --report benchmark.json",
+        "# Include the live k3s boundary matrix probe\ntorque security benchmark --corpus ./testdata/security --report benchmark.json --live-k3s-boundary-matrix --live-confirm --kubeconfig ~/.kube/k3s.yaml"
+      ],
+      "tags": [
+        "command",
+        "security",
+        "benchmark",
+        "secrets",
+        "redaction",
+        "evidence"
       ]
     },
     {
@@ -700,11 +1109,28 @@
       ]
     },
     {
+      "id": "doc:apply-simulate",
+      "kind": "doc",
+      "title": "Apply simulate",
+      "subtitle": "Live apply twin, server dry-run proof, replay, and repair",
+      "content": "# Apply Simulate\n\n`torque apply simulate` is the Live Apply Twin workflow. It renders a Helm\nrelease, compares it with live cluster state, runs Kubernetes server-side\napply dry-run checks, scores rollout risk, and writes a replayable proof bundle\nwithout applying changes.\n\n```bash\ntorque apply simulate \\\n  --chart ./chart \\\n  --release api \\\n  --namespace prod \\\n  --from-live \\\n  --slo ./slo.yaml \\\n  --security-evidence ./torque-security-evidence \\\n  --out ./torque-sim-proof\n```\n\nThe bundle is designed for PRs, CI gates, and incident review:\n\n```text\ntorque-sim-proof/\n  manifest.json\n  predicted-live-state.json\n  server-dry-run.json\n  admission.results.json\n  field-ownership.conflicts.json\n  quota.capacity.risk.json\n  rollout.prediction.json\n  verifier.report.json\n  apply.proof.json\n  fixes/\n    fix.patch\n    pr.md\n```\n\n## What It Proves\n\n- objects that will be created, updated, deleted, or left unchanged;\n- server-side apply dry-run results from the Kubernetes API server;\n- admission webhook denials and API validation failures;\n- field ownership conflicts;\n- immutable-field failures;\n- namespace/API mapping skips;\n- quota capacity failures and warnings;\n- rollout prediction risk, missing dependencies, restarts, and rollback\n  confidence;\n- attached verifier/security evidence when `--security-evidence` is provided;\n- repair artifacts generated from the same proof.\n\n## Replay\n\nUse `torque replay` to validate that a proof bundle is complete and replayable:\n\n```bash\ntorque replay ./torque-sim-proof --lab k3s\ntorque replay ./torque-sim-proof --lab k3s --format json\n```\n\n`--fail-on-blocked` makes replay suitable for CI gates:\n\n```bash\ntorque replay ./torque-sim-proof --lab k3s --fail-on-blocked\n```\n\nUse Guardian after simulation when you need to prove what happened in the live\ncluster:\n\n```bash\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json\n```\n\n## Repair\n\n`torque fix` is an alias for `torque repair`, so simulation bundles can feed the\nsame repair workflow used by failed apply proof:\n\n```bash\ntorque fix --from ./torque-sim-proof --chart ./chart \\\n  --branch fix/api-sim --apply --pr-body ./repair-pr.md --yes\n```\n\nThe simulation bundle also writes `fixes/pr.md` and `fixes/fix.patch` for\nreview even when you do not apply repairs automatically.\n\n## Security Notes\n\n`predicted-live-state.json` redacts Kubernetes `Secret.data` and\n`Secret.stringData` values and masks common credential fields before writing\nthe proof. Attach `verifier --security-evidence` output when you need the full\nsecret flow graph, boundary matrix, and redaction proof beside the simulation.",
+      "tags": [
+        "doc",
+        "apply",
+        "simulate",
+        "replay",
+        "proof",
+        "repair",
+        "k3s",
+        "dry-run"
+      ]
+    },
+    {
       "id": "doc:architecture",
       "kind": "doc",
       "title": "Architecture",
       "subtitle": "Repo layout and core packages",
-      "content": "# TORQUE Architecture (Current)\n\nThis repo is a single-module Go CLI with an optional companion agent.\n\n## Layout\n- `cmd/torque`: end-user CLI (Cobra) and CLI-only helpers.\n- `cmd/torque-agent`: gRPC agent used by `--remote-agent` / `--mirror-bus`.\n- `internal/*`: non-exported libraries used by the CLI/agent (tailing, deploy/apply, UI mirroring, BuildKit workflows, config/feature flags).\n- `pkg/*`: reusable non-`internal` packages (BuildKit/Compose/registry helpers and generated API stubs under `pkg/api/torque/api/v1`).\n- `testdata/*`: fixtures and golden files.\n\n## Main Commands (wired today)\n- `init`\n- `build`\n- `explain`\n- `apply` (and `apply plan`)\n- `delete`\n- `stack`\n- `revert`\n- `list`\n- `lint`\n- `logs`\n- `env`\n- `secrets`\n- `version`\n\nThe root command wiring lives in `cmd/torque/main.go`.\n\nLegacy/experimental commands (`analyze`, `up`, `wait`) remain callable for compatibility but are hidden from the focused CLI surface.\n\n## Companion Binaries\n- `verifier`: standalone policy verifier. The older `verify` binary remains as a compatibility shim for existing CI scripts.\n- `torque-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.\n\n## Internal Package Map (Purpose, Key Types, Invariants)\n\nThis section is intentionally short and repetitive: AI agents do best with a stable \u201cmap\u201d of where responsibilities live, which symbols are entrypoints, and what must not change.\n\n### `internal/config`\n\n- Purpose: shared CLI/config-layer options (flags + config binding + validation).\n- Key types: `Options` (`AddFlags`, `BindFlags`, `Validate`).\n- Invariants: CLI packages should call into `Options` rather than re-parsing env/config ad-hoc.\n\n### `internal/featureflags`\n\n- Purpose: register and resolve feature flags consistently.\n- Key types: `Definition`, `Flags` (`Enabled`, `EnabledNames`), `Name`, `Stage`.\n- Invariants: flag names stay kebab-cased; toggles flow via context/config/env (don\u2019t introduce new toggle mechanisms).\n\n### `internal/logging`\n\n- Purpose: structured logging configuration and shared logger helpers.\n- Key entrypoints: `internal/logging/logger.go` (logger construction/config).\n- Invariants: avoid global loggers; pass loggers/context through call chains.\n\n### `internal/grpcutil`\n\n- Purpose: gRPC dial/wiring helpers for local/remote agent connections.\n- Key entrypoints: `internal/grpcutil/dial.go`.\n- Invariants: keep connection/security defaults centralized here (avoid duplicating dial options in commands).\n\n### `internal/api/convert`\n\n- Purpose: translate between internal runtime structs and protobuf API types (`pkg/api/torque/api/v1`).\n- Key types: `BuildConfig`, `DeployApplyConfig`, `DeployDestroyConfig`.\n- Invariants: conversion is one-way \u201cboundary glue\u201d; don\u2019t leak protobuf types into core packages.\n\n### `internal/kube`\n\n- Purpose: Kubernetes client helpers used by tailing/deploy.\n- Key types: `Client` (`Exec`).\n- Invariants: Kubernetes API calls accept `context.Context` and are cancellable.\n\n### `internal/tailer`\n\n- Purpose: stream logs (pods/nodes) and feed observers (terminal, UI).\n- Key types: `Tailer` (`Run`), `LogRecord`, `LogObserver`, `Option`.\n- Invariants: tailing is streaming and cancellation-driven; observers must tolerate bursts and duplicates.\n\n### `internal/deploy`\n\n- Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).\n- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.\n- Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.\n\n### `internal/deployplan`\n\n- Purpose: shared apply-plan rendering helpers for `torque apply plan`.\n- Key types: `ResourceKey`, `ManifestDoc`, `QuotaReport`, `QuotaHeadroom`.\n- Invariants: manifest parsing, graph node IDs, manifest blob/diff rendering, and quota/headroom calculations stay here rather than being copied into command packages.\n\n### `internal/secretstore`\n\n- Purpose: resolve `secret://` references in deploy-time values using pluggable providers.\n- Key types: `Resolver`, `Config`, `Provider`.\n- Invariants: never log secret values; audit references only.\n\n### `internal/ui`\n\n- Purpose: terminal UX primitives (deploy console, spinner).\n- Key types: `DeployConsole` + `DeployConsoleOptions`, `DeployMetadata`.\n- Invariants: UI code should consume observer/event interfaces rather than reaching into core packages.\n\n### `internal/caststream`\n\n- Purpose: \u201cUI mirror\u201d server (HTTP/WebSocket) that streams logs/build/deploy events to the browser.\n- Key types: `Server` (`Run`, `ObserveLog`, `HandleDeployEvent`), `Mode`, `Option`.\n- Invariants: server is a pure observer of streaming events; it must not own core business logic.\n\n### `internal/mirrorbus`\n\n- Purpose: publish log streams onto the gRPC \u201cmirror bus\u201d for remote viewers.\n- Key types: `Publisher` (`ObserveLog`, `Close`).\n- Invariants: publisher must remain non-blocking and safe to close at any point.\n\n### `internal/dockerconfig`\n\n- Purpose: Docker auth/config resolution used during builds and remote operations.\n- Key entrypoints: `internal/dockerconfig/dockerconfig.go`.\n- Invariants: never log credentials; keep file paths/config parsing centralized.\n\n### `internal/csvutil` / `internal/castutil`\n\n- Purpose: small utilities for CSV/cast formatting used across workflows.\n- Invariants: keep these packages dependency-light and free of side effects.\n\n### `internal/workflows/buildsvc`\n\n- Purpose: BuildKit-based image build workflow orchestration (including sandbox support and progress observers).\n- Key types: `service.Run(ctx, opts) (*Result, error)`, `Result`, `Dependencies`, `Streams`, `BuildMode`.\n- Invariants: build is streaming + cancellable; sandbox policy is selected/configured centrally (don\u2019t fork policy logic in commands).\n- Notes: progress observers emit cache diagnostics and a post-build \u201ccache intelligence\u201d report (input diffs, cache key/graph diffs, slow steps, and OCI layer size rollups when an OCI layout is produced). First-class S3 cache options are normalized here before they become BuildKit `cache-from`/`cache-to` entries.\n\n### `internal/agent`\n\n- Purpose: gRPC server implementation for the remote agent.\n- Key types: `Server` (`Run`), per-service handlers (`LogServer`, `BuildServer`, `DeployServer`, `MirrorServer`, `StackServer`).\n- Invariants: agent handlers forward events via existing observer interfaces (don\u2019t duplicate deploy/build logic inside the agent).\n\n### `internal/mcpserver`\n\n- Purpose: MCP adapter for agent-facing Torque workflows over stdio/HTTP, with optional remote gRPC bridge mode.\n- Key entrypoints: `Server` tool/resource/prompt handlers, session store, root/path policy checks.\n- Invariants: MCP handlers validate schemas and enforce MCP roots, then delegate to local Torque commands or existing `torque-agent` gRPC services; never log or return remote tokens.\n\n## Agent-Facing Docs\n\n- Golden paths + validation commands: `docs/agent-playbook.md`\n- UI design system (HTML/CSS surfaces): `DESIGN.md`\n- gRPC agent API: `docs/grpc-agent.md`\n- MCP server design: `docs/mcp-server-spec.md`\n- S3 BuildKit cache: `docs/s3-build-cache.md`\n- Generated package dependency map: `docs/deps.md` (refresh with `make deps`)",
+      "content": "# TORQUE Architecture (Current)\n\nThis repo is a single-module Go CLI with an optional companion agent.\n\n## Layout\n- `cmd/torque`: end-user CLI (Cobra) and CLI-only helpers.\n- `cmd/torque-agent`: gRPC agent used by `--remote-agent` / `--mirror-bus`.\n- `internal/*`: non-exported libraries used by the CLI/agent (tailing, deploy/apply, UI mirroring, BuildKit workflows, config/feature flags).\n- `pkg/*`: reusable non-`internal` packages (BuildKit/Compose/registry helpers and generated API stubs under `pkg/api/torque/api/v1`).\n- `testdata/*`: fixtures and golden files.\n\n## Main Commands (wired today)\n- `init`\n- `build`\n- `explain`\n- `apply` (including `apply plan` and `apply simulate`)\n- `delete`\n- `stack`\n- `revert`\n- `list`\n- `lint`\n- `logs`\n- `env`\n- `guardian`\n- `incident`\n- `secrets`\n- `version`\n\nThe root command wiring lives in `cmd/torque/main.go`.\n\nLegacy/experimental commands (`analyze`, `up`, `wait`) remain callable for compatibility but are hidden from the focused CLI surface.\n\n## Companion Binaries\n- `verifier`: standalone policy verifier. The older `verify` binary remains as a compatibility shim for existing CI scripts.\n- `torque-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.\n\n## Internal Package Map (Purpose, Key Types, Invariants)\n\nThis section is intentionally short and repetitive: AI agents do best with a stable \u201cmap\u201d of where responsibilities live, which symbols are entrypoints, and what must not change.\n\n### `internal/config`\n\n- Purpose: shared CLI/config-layer options (flags + config binding + validation).\n- Key types: `Options` (`AddFlags`, `BindFlags`, `Validate`).\n- Invariants: CLI packages should call into `Options` rather than re-parsing env/config ad-hoc.\n\n### `internal/featureflags`\n\n- Purpose: register and resolve feature flags consistently.\n- Key types: `Definition`, `Flags` (`Enabled`, `EnabledNames`), `Name`, `Stage`.\n- Invariants: flag names stay kebab-cased; toggles flow via context/config/env (don\u2019t introduce new toggle mechanisms).\n\n### `internal/logging`\n\n- Purpose: structured logging configuration and shared logger helpers.\n- Key entrypoints: `internal/logging/logger.go` (logger construction/config).\n- Invariants: avoid global loggers; pass loggers/context through call chains.\n\n### `internal/grpcutil`\n\n- Purpose: gRPC dial/wiring helpers for local/remote agent connections.\n- Key entrypoints: `internal/grpcutil/dial.go`.\n- Invariants: keep connection/security defaults centralized here (avoid duplicating dial options in commands).\n\n### `internal/api/convert`\n\n- Purpose: translate between internal runtime structs and protobuf API types (`pkg/api/torque/api/v1`).\n- Key types: `BuildConfig`, `DeployApplyConfig`, `DeployDestroyConfig`.\n- Invariants: conversion is one-way \u201cboundary glue\u201d; don\u2019t leak protobuf types into core packages.\n\n### `internal/kube`\n\n- Purpose: Kubernetes client helpers used by tailing/deploy.\n- Key types: `Client` (`Exec`).\n- Invariants: Kubernetes API calls accept `context.Context` and are cancellable.\n\n### `internal/tailer`\n\n- Purpose: stream logs (pods/nodes) and feed observers (terminal, UI).\n- Key types: `Tailer` (`Run`), `LogRecord`, `LogObserver`, `Option`.\n- Invariants: tailing is streaming and cancellation-driven; observers must tolerate bursts and duplicates.\n\n### `internal/deploy`\n\n- Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).\n- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `ServerDryRunReport`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.\n- Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.\n\n### `internal/deployplan`\n\n- Purpose: shared apply-plan rendering helpers for `torque apply plan`.\n- Key types: `ResourceKey`, `ManifestDoc`, `QuotaReport`, `QuotaHeadroom`.\n- Invariants: manifest parsing, graph node IDs, manifest blob/diff rendering, and quota/headroom calculations stay here rather than being copied into command packages.\n\n### `internal/secretstore`\n\n- Purpose: resolve `secret://` references in deploy-time values using pluggable providers.\n- Key types: `Resolver`, `Config`, `Provider`.\n- Invariants: never log secret values; audit references only.\n\n### `internal/securityevidence`\n\n- Purpose: write security evidence bundles that connect verifier findings, secret-flow scan reports, and redaction proof artifacts.\n- Key types: `BundleManifest`, `BundleOptions`.\n- Invariants: bundle artifacts contain redacted previews and counts only; raw secret values must not be stored.\n\n### Guardian Runtime Proof\n\n- Purpose: top-level `torque guardian` command for observe-only runtime proof.\n- Key surfaces: `guardian install`, `guardian report`, `guardian diff`, `guardian pr`.\n- Invariants: Guardian is observe-only; installed RBAC grants only `get`, `list`, and `watch`; drift, event, and secret-boundary evidence must redact secret-like strings.\n\n### Incident Replay Proof\n\n- Purpose: top-level `torque incident` command for observe-only incident capture, replay, explanation, and PR artifacts.\n- Key surfaces: `incident capture`, `incident replay`, `incident explain`, `incident pr`.\n- Invariants: Incident commands do not mutate clusters; captures must redact secret-like strings and omit Kubernetes Secret `data`/`stringData`; replay writes portable proof files only.\n\n### `internal/ui`\n\n- Purpose: terminal UX primitives (deploy console, spinner).\n- Key types: `DeployConsole` + `DeployConsoleOptions`, `DeployMetadata`.\n- Invariants: UI code should consume observer/event interfaces rather than reaching into core packages.\n\n### `internal/caststream`\n\n- Purpose: \u201cUI mirror\u201d server (HTTP/WebSocket) that streams logs/build/deploy events to the browser.\n- Key types: `Server` (`Run`, `ObserveLog`, `HandleDeployEvent`), `Mode`, `Option`.\n- Invariants: server is a pure observer of streaming events; it must not own core business logic.\n\n### `internal/mirrorbus`\n\n- Purpose: publish log streams onto the gRPC \u201cmirror bus\u201d for remote viewers.\n- Key types: `Publisher` (`ObserveLog`, `Close`).\n- Invariants: publisher must remain non-blocking and safe to close at any point.\n\n### `internal/dockerconfig`\n\n- Purpose: Docker auth/config resolution used during builds and remote operations.\n- Key entrypoints: `internal/dockerconfig/dockerconfig.go`.\n- Invariants: never log credentials; keep file paths/config parsing centralized.\n\n### `internal/csvutil` / `internal/castutil`\n\n- Purpose: small utilities for CSV/cast formatting used across workflows.\n- Invariants: keep these packages dependency-light and free of side effects.\n\n### `internal/workflows/buildsvc`\n\n- Purpose: BuildKit-based image build workflow orchestration (including sandbox support and progress observers).\n- Key types: `service.Run(ctx, opts) (*Result, error)`, `Result`, `Dependencies`, `Streams`, `BuildMode`.\n- Invariants: build is streaming + cancellable; sandbox policy is selected/configured centrally (don\u2019t fork policy logic in commands).\n- Notes: progress observers emit cache diagnostics and a post-build \u201ccache intelligence\u201d report (input diffs, cache key/graph diffs, slow steps, and OCI layer size rollups when an OCI layout is produced). First-class S3 cache options are normalized here before they become BuildKit `cache-from`/`cache-to` entries.\n\n### `internal/agent`\n\n- Purpose: gRPC server implementation for the remote agent.\n- Key types: `Server` (`Run`), per-service handlers (`LogServer`, `BuildServer`, `DeployServer`, `MirrorServer`, `StackServer`).\n- Invariants: agent handlers forward events via existing observer interfaces (don\u2019t duplicate deploy/build logic inside the agent).\n\n### `internal/mcpserver`\n\n- Purpose: MCP adapter for agent-facing Torque workflows over stdio/HTTP, with optional remote gRPC bridge mode.\n- Key entrypoints: `Server` tool/resource/prompt handlers, session store, root/path policy checks.\n- Invariants: MCP handlers validate schemas and enforce MCP roots, then delegate to local Torque commands or existing `torque-agent` gRPC services; never log or return remote tokens.\n\n## Agent-Facing Docs\n\n- Golden paths + validation commands: `docs/agent-playbook.md`\n- UI design system (HTML/CSS surfaces): `DESIGN.md`\n- gRPC agent API: `docs/grpc-agent.md`\n- MCP server design: `docs/mcp-server-spec.md`\n- Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`\n- S3 BuildKit cache: `docs/s3-build-cache.md`\n- Generated package dependency map: `docs/deps.md` (refresh with `make deps`)",
       "tags": [
         "doc",
         "internals",
@@ -745,7 +1171,7 @@
       "kind": "doc",
       "title": "Config atlas",
       "subtitle": "stack.yaml, verifier YAML, sandbox profiles",
-      "content": "# Configuration atlas\n\nPractical, copy/paste-friendly examples for the configs that power `torque`.\n\nThis is intentionally biased toward \u201cwhat do I put in the file?\u201d rather than exhaustive schema docs.\n\n## torque config (`.torque.yaml` / `~/.torque/config.yaml`)\n\nUse the repo or global config file to set deploy-time secret providers or build defaults.\n\n```yaml\n# .torque.yaml\nbuild:\n  profile: ci\n\nsecrets:\n  defaultProvider: local\n  providers:\n    local:\n      type: file\n      path: ./secrets.dev.yaml\n\n  # Example Vault provider\n  # vault:\n  #   type: vault\n  #   address: https://vault.example.com\n  #   authMethod: approle\n  #   authMount: approle\n  #   roleId: 00000000-0000-0000-0000-000000000000\n  #   secretId: s.0000000000000000000000\n  #   # kubernetesRole: torque\n  #   # kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token\n  #   # awsRole: torque\n  #   # awsRegion: us-east-1\n  #   # awsHeaderValue: vault.example.com\n  #   mount: secret\n  #   kvVersion: 2\n  #   key: value\n```\n\n### Vault auth method examples\n\nAppRole:\n```yaml\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: approle\n      authMount: approle\n      roleId: 00000000-0000-0000-0000-000000000000\n      secretId: s.0000000000000000000000\n      mount: secret\n      kvVersion: 2\n```\n\nKubernetes:\n```yaml\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: kubernetes\n      authMount: kubernetes\n      kubernetesRole: torque\n      kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token\n      mount: secret\n      kvVersion: 2\n```\n\nAWS IAM:\n```yaml\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: aws\n      authMount: aws\n      awsRole: torque\n      awsRegion: us-east-1\n      awsHeaderValue: vault.example.com\n      mount: secret\n      kvVersion: 2\n```\n\n## `stack.yaml` (minimal, with CLI defaults)\n\nThis is the \u201cminimal-flags\u201d stack workflow: keep defaults in `stack.yaml` under `cli:` and override with `TORQUE_STACK_*` only when needed.\n\n```yaml\n# stack.yaml\nname: prod\n\n# Defaults applied to all releases unless overridden.\ndefaults:\n  namespace: platform\n\n  # Optional Kubernetes-only post-apply health gates (see docs/stack-verify.md).\n  verify:\n    enabled: true\n    failOnWarnings: true\n    warnOnly: false\n    eventsWindow: 15m\n    timeout: 2m\n    denyReasons: [\"FailedMount\", \"FailedScheduling\", \"ImagePullBackOff\", \"ErrImagePull\", \"BackOff\"]\n\n  # Runner behavior (how releases are scheduled/executed).\n  runner:\n    concurrency: 6\n    progressiveConcurrency: true\n\n# CLI defaults for `torque stack ...` so you can run with fewer flags.\n# Precedence: flags > TORQUE_STACK_* env > stack.yaml cli > built-in defaults.\ncli:\n  output: table\n  inferDeps: true\n  inferConfigRefs: false\n  selector:\n    clusters: [\"prod-us\"]\n    tags: [\"critical\"]\n    includeDeps: true\n    includeDependents: false\n    allowMissingDeps: false\n  apply:\n    dryRun: false\n    diff: true\n  delete:\n    confirmThreshold: 50\n  resume:\n    allowDrift: false\n    rerunFailed: false\n\nreleases:\n  - name: api\n    chart: ./charts/app\n    values: [\"./values/api.yaml\"]\n    tags: [\"critical\", \"team-payments\"]\n\n  - name: worker\n    chart: ./charts/app\n    values: [\"./values/worker.yaml\"]\n    tags: [\"team-payments\"]\n    # Override verify settings per release.\n    verify:\n      enabled: false\n```\n\nNotes:\n- `torque stack` is read-only by default (prints a plan); use `torque stack apply` / `torque stack delete` to execute.\n- Profile overlays: use `profiles.<name>.cli` and `profiles.<name>.defaults` to override per environment (dev/stage/prod).\n- For CLI schema details, see `docs/stack-cli-defaults.md`.\n\n## Verifier YAML (chart render + live checks)\n\n`verifier` supports multiple targets. Two common ones:\n\nTip: generate a starter config with `verifier init chart|namespace` and then customize it.\n\n### Verify a chart render (no cluster access)\n\n```yaml\n# verify-chart-render.yaml\nversion: v1\n\ntarget:\n  kind: chart\n  chart:\n    chart: ./chart\n    release: foo\n    namespace: default\n    values:\n      - values.yaml\n    set:\n      - image.tag=dev\n    useCluster: false\n    includeCRDs: false\n\nverify:\n  mode: block        # warn|block\n  failOn: high       # low|medium|high|critical\n  selectors:\n    include:\n      namespaces: [\"default\"]\n    exclude:\n      kinds: [\"ConfigMap\"]\n  baseline:\n    write: ./baseline.json   # write a JSON baseline snapshot\n    read: ./baseline.json    # compare against baseline on next run\n    exitOnDelta: true        # fail when new/changed findings appear\n\noutput:\n  format: table      # table|json|sarif|html|md\n  report: \"-\"        # \"-\" stdout, or a path\n```\n\nTip: CLI overrides are available for baselines:\n```bash\nverifier verify.yaml --baseline ./baseline.json\nverifier verify.yaml --compare-to ./baseline.json\n```\n\n### Verify a live namespace\n\n```yaml\n# verify-namespace.yaml\nversion: v1\n\ntarget:\n  kind: namespace\n  namespace: default\n\nkube:\n  context: my-context\n\nverify:\n  mode: warn\n  failOn: high\n\noutput:\n  format: table\n  report: \"-\"\n```\n\n## Sandbox profiles (`sandbox/*.cfg`)\n\nSandbox policies live under `sandbox/` and are selected via `TORQUE_SANDBOX_CONFIG` (or `--sandbox-config`).\n\nExample (CI-like policy):\n\n```bash\nexport TORQUE_SANDBOX_CONFIG=\"$(pwd)/sandbox/linux-ci.cfg\"\ntorque build . --tag ghcr.io/acme/app:dev\n```\n\nWhat matters most in a policy:\n- `name`/`hostname` so logs clearly identify the profile in use.\n- `clone_new*` namespace settings (user/pid/cgroup isolation vs compatibility).\n- `rlimit_*` ceilings (tmpfs sizes, file size, nproc, etc.).\n- `mount` blocks (what is visible in the sandbox).\n\nFor threat model + guidance, see `docs/sandbox-security.md`.",
+      "content": "# Configuration atlas\n\nPractical, copy/paste-friendly examples for the configs that power `torque`.\n\nThis is intentionally biased toward \u201cwhat do I put in the file?\u201d rather than exhaustive schema docs.\n\n## torque config (`.torque.yaml` / `~/.torque/config.yaml`)\n\nUse the repo or global config file to set deploy-time secret providers or build defaults.\n\n```yaml\n# .torque.yaml\nbuild:\n  profile: ci\n\nsecrets:\n  defaultProvider: local\n  providers:\n    local:\n      type: file\n      path: ./secrets.dev.yaml\n\n  # Example Vault provider\n  # vault:\n  #   type: vault\n  #   address: https://vault.example.com\n  #   authMethod: approle\n  #   authMount: approle\n  #   roleId: 00000000-0000-0000-0000-000000000000\n  #   secretId: s.0000000000000000000000\n  #   # kubernetesRole: torque\n  #   # kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token\n  #   # awsRole: torque\n  #   # awsRegion: us-east-1\n  #   # awsHeaderValue: vault.example.com\n  #   mount: secret\n  #   kvVersion: 2\n  #   key: value\n```\n\n### Vault auth method examples\n\nAppRole:\n```yaml\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: approle\n      authMount: approle\n      roleId: 00000000-0000-0000-0000-000000000000\n      secretId: s.0000000000000000000000\n      mount: secret\n      kvVersion: 2\n```\n\nKubernetes:\n```yaml\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: kubernetes\n      authMount: kubernetes\n      kubernetesRole: torque\n      kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token\n      mount: secret\n      kvVersion: 2\n```\n\nAWS IAM:\n```yaml\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: aws\n      authMount: aws\n      awsRole: torque\n      awsRegion: us-east-1\n      awsHeaderValue: vault.example.com\n      mount: secret\n      kvVersion: 2\n```\n\n## `stack.yaml` (minimal, with CLI defaults)\n\nThis is the \u201cminimal-flags\u201d stack workflow: keep defaults in `stack.yaml` under `cli:` and override with `TORQUE_STACK_*` only when needed.\n\n```yaml\n# stack.yaml\nname: prod\n\n# Defaults applied to all releases unless overridden.\ndefaults:\n  namespace: platform\n\n  # Optional Kubernetes-only post-apply health gates (see docs/stack-verify.md).\n  verify:\n    enabled: true\n    failOnWarnings: true\n    warnOnly: false\n    eventsWindow: 15m\n    timeout: 2m\n    denyReasons: [\"FailedMount\", \"FailedScheduling\", \"ImagePullBackOff\", \"ErrImagePull\", \"BackOff\"]\n\n  # Runner behavior (how releases are scheduled/executed).\n  runner:\n    concurrency: 6\n    progressiveConcurrency: true\n\n# CLI defaults for `torque stack ...` so you can run with fewer flags.\n# Precedence: flags > TORQUE_STACK_* env > stack.yaml cli > built-in defaults.\ncli:\n  output: table\n  inferDeps: true\n  inferConfigRefs: false\n  selector:\n    clusters: [\"prod-us\"]\n    tags: [\"critical\"]\n    includeDeps: true\n    includeDependents: false\n    allowMissingDeps: false\n  apply:\n    dryRun: false\n    diff: true\n  delete:\n    confirmThreshold: 50\n  resume:\n    allowDrift: false\n    rerunFailed: false\n\nreleases:\n  - name: api\n    chart: ./charts/app\n    values: [\"./values/api.yaml\"]\n    tags: [\"critical\", \"team-payments\"]\n\n  - name: worker\n    chart: ./charts/app\n    values: [\"./values/worker.yaml\"]\n    tags: [\"team-payments\"]\n    # Override verify settings per release.\n    verify:\n      enabled: false\n```\n\nNotes:\n- `torque stack` is read-only by default (prints a plan); use `torque stack apply` / `torque stack delete` to execute.\n- Profile overlays: use `profiles.<name>.cli` and `profiles.<name>.defaults` to override per environment (dev/stage/prod).\n- For CLI schema details, see `docs/stack-cli-defaults.md`.\n\n## Verifier YAML (chart render + live checks)\n\n`verifier` supports multiple targets. Two common ones:\n\nTip: generate a starter config with `verifier init chart|namespace` and then customize it.\n\n### Verify a chart render (no cluster access)\n\n```yaml\n# verify-chart-render.yaml\nversion: v1\n\ntarget:\n  kind: chart\n  chart:\n    chart: ./chart\n    release: foo\n    namespace: default\n    values:\n      - values.yaml\n    set:\n      - image.tag=dev\n    useCluster: false\n    includeCRDs: false\n\nverify:\n  mode: block        # warn|block\n  failOn: high       # low|medium|high|critical\n  selectors:\n    include:\n      namespaces: [\"default\"]\n    exclude:\n      kinds: [\"ConfigMap\"]\n  baseline:\n    write: ./baseline.json   # write a JSON baseline snapshot\n    read: ./baseline.json    # compare against baseline on next run\n    exitOnDelta: true        # fail when new/changed findings appear\n  securityProfile: enterprise\n  securityBoundaryMatrix: true\n  secretFlowGraph: true\n  securityEvidence: ./torque-security-evidence\n  secrets:\n    report: ./secrets.json\n\noutput:\n  format: table      # table|json|sarif|html|md\n  report: \"-\"        # \"-\" stdout, or a path\n```\n\nTip: CLI overrides are available for baselines:\n```bash\nverifier verify.yaml --baseline ./baseline.json\nverifier verify.yaml --compare-to ./baseline.json\n```\n\n### Verify a live namespace\n\n```yaml\n# verify-namespace.yaml\nversion: v1\n\ntarget:\n  kind: namespace\n  namespace: default\n\nkube:\n  context: my-context\n\nverify:\n  mode: warn\n  failOn: high\n\noutput:\n  format: table\n  report: \"-\"\n```\n\n## Sandbox profiles (`sandbox/*.cfg`)\n\nSandbox policies live under `sandbox/` and are selected via `TORQUE_SANDBOX_CONFIG` (or `--sandbox-config`).\n\nExample (CI-like policy):\n\n```bash\nexport TORQUE_SANDBOX_CONFIG=\"$(pwd)/sandbox/linux-ci.cfg\"\ntorque build . --tag ghcr.io/acme/app:dev\n```\n\nWhat matters most in a policy:\n- `name`/`hostname` so logs clearly identify the profile in use.\n- `clone_new*` namespace settings (user/pid/cgroup isolation vs compatibility).\n- `rlimit_*` ceilings (tmpfs sizes, file size, nproc, etc.).\n- `mount` blocks (what is visible in the sandbox).\n\nFor threat model + guidance, see `docs/sandbox-security.md`.",
       "tags": [
         "doc",
         "config",
@@ -830,7 +1256,7 @@
       "kind": "doc",
       "title": "Recipes",
       "subtitle": "Golden paths and copy/paste workflows",
-      "content": "# Recipes (golden paths)\n\nCopy/paste workflows that cover the common \u201chappy paths\u201d for `torque`.\n\n## Zero-conf onboarding\n\n```bash\n# Initialize repo defaults and detect your kubecontext\ntorque init\n\n# Generate a starter stack.yaml from existing cluster state\ntorque init from-cluster\ntorque init from-cluster --all-namespaces --dry-run\n# Exports installed Helm chart archives by default; add current values too\ntorque init from-cluster --all-namespaces --write-values\n\n# Run the interactive setup wizard\ntorque init --interactive\n\n# Scaffold chart/ and values/ plus gitignore entries\ntorque init --layout --gitignore\n\n# Use an opinionated preset\ntorque init --preset prod\n\n# Apply an init template (built-in or URL)\ntorque init --template platform\ntorque init --template https://example.com/torque-init.yaml\n\n# Scaffold a Vault secrets provider\ntorque init --secrets-provider vault\n\n# Preview the config without writing\ntorque init --dry-run\n\n# Generate a replayable init plan\ntorque init --plan --plan-output .torque/init-plan.json\n\n# Apply a saved init plan\ntorque init --apply-plan .torque/init-plan.json\n\n# Launch the interactive help UI\ntorque --help --ui\n```\n\n## Apply a chart (with and without the UI)\n\n```bash\n# Preview what will change\ntorque apply plan --chart ./chart --release foo -n default\n\n# Write a PR-ready Markdown summary\ntorque apply plan --chart ./chart --release foo -n default --github-comment --output plan.md\n\n# Attach verifier and build evidence to the PR summary\nverifier --chart ./chart --release foo -n default --format json --report verify.json\ntorque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite\ntorque apply plan --chart ./chart --release foo -n default \\\n  --verify-report verify.json --build-capture ./build.sqlite \\\n  --github-comment --output plan.md\n\n# Deploy\ntorque apply --chart ./chart --release foo -n default\n\n# Deploy with the viewer UI\ntorque apply --chart ./chart --release foo -n default --ui\n```\n\n## Build \u2192 verify \u2192 plan \u2192 apply\n\n```bash\n# Build the image and capture build evidence.\ntorque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite\n\n# Verify the rendered chart.\nverifier --chart ./chart --release foo -n default --format json --report verify.json\n\n# Write a PR-ready plan with verifier and build evidence attached.\ntorque apply plan --chart ./chart --release foo -n default \\\n  --verify-report verify.json --build-capture ./build.sqlite \\\n  --github-comment --output plan.md\n\n# Apply with the verify report enforced, capture the rollout, and explain it.\ntorque apply --chart ./chart --release foo -n default \\\n  --require-verified verify.json --capture ./apply.sqlite --yes\ntorque explain ./apply.sqlite --format markdown\n```\n\n## Agent MCP bridge\n\n```bash\n# Run the MCP server over stdio for an IDE or agent host.\ntorque-mcp --stdio\n\n# Route agent tool calls to a remote Torque node over gRPC.\nexport TORQUE_REMOTE_TOKEN=\"$(openssl rand -hex 24)\"\ntorque-agent -listen :7443 -token \"$TORQUE_REMOTE_TOKEN\"\ntorque-mcp --stdio \\\n  --remote-agent 127.0.0.1:7443 \\\n  --remote-token \"$TORQUE_REMOTE_TOKEN\"\n```\n\n## Durable Linux agent host\n\n```bash\n# Install torque, torque-agent, torque-mcp, and systemd units.\ncurl -fsSL https://ingresslabs.github.io/torque/install.sh | sh -s -- --mode systemd-daemon\n\n# Inspect generated tokens and verify authenticated HTTP MCP.\n. /etc/torque/agent.env\nsystemctl status torque-agent.service torque-mcp.service\ncurl -fsS -H \"authorization: Bearer $TORQUE_MCP_TOKEN\" \\\n  -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}' \\\n  http://127.0.0.1:7331/mcp\n```\n\nEnterprise remote bridge with mTLS:\n\n```bash\nexport TORQUE_REMOTE_TOKEN=\"<from secret manager>\"\ntorque-agent -listen 0.0.0.0:7443 -token \"$TORQUE_REMOTE_TOKEN\" \\\n  -tls-cert /etc/torque/tls/agent.crt \\\n  -tls-key /etc/torque/tls/agent.key \\\n  -tls-client-ca /etc/torque/tls/client-ca.crt \\\n  -mirror-store /var/lib/torque/agent/mirror.sqlite\n\ntorque-mcp --stdio --remote-agent torque-agent.prod.internal:7443 \\\n  --remote-tls --remote-tls-ca /etc/torque/tls/ca.crt \\\n  --remote-tls-client-cert /etc/torque/tls/client.crt \\\n  --remote-tls-client-key /etc/torque/tls/client.key \\\n  --remote-tls-server-name torque-agent.prod.internal \\\n  --enable-write\n```\n\n## Build and ship with S3 cache\n\n```bash\n# Build with native BuildKit S3 cache import/export.\ntorque build . --tag ghcr.io/acme/foo:dev \\\n  --s3-cache s3://acme-build-cache/torque/main \\\n  --s3-cache-region us-east-1\n\n# Forward the same cache settings through the full ship workflow.\ntorque ship --chart ./chart --release foo -n default --build . \\\n  --tag ghcr.io/acme/foo:dev \\\n  --s3-cache s3://acme-build-cache/torque/main \\\n  --s3-cache-region us-east-1 --yes\n```\n\nFor MCP agents, use first-class cache tools before build fanout:\n\n```json\n{\n  \"tool\": \"torque.cache.plan\",\n  \"arguments\": {\n    \"contextDir\": \".\",\n    \"dockerfile\": \"Dockerfile\",\n    \"tags\": [\"ghcr.io/acme/foo:dev\"],\n    \"changedPaths\": [\"go.mod\", \"cmd/foo/main.go\"],\n    \"s3Cache\": \"s3://acme-build-cache/torque/main\",\n    \"s3CacheRegion\": \"us-east-1\",\n    \"s3CacheName\": \"foo-main\"\n  }\n}\n```\n\nWarm writes cache exports, so it requires `torque-mcp --enable-write` and\n`\"safety\": {\"confirm\": true}`. AWS credentials stay on the BuildKit daemon or\nworkload identity, not in MCP arguments.\n\n## 5-minute demo (public chart)\n\nDo this:\n```bash\nhelm repo add bitnami https://charts.bitnami.com/bitnami\nhelm repo update\n\ntorque apply plan --chart bitnami/nginx --release demo-nginx -n default --visualize\ntorque apply --chart bitnami/nginx --release demo-nginx -n default --yes\ntorque delete --release demo-nginx -n default --yes\n```\n\n## Recommended `.torque.yaml` layout\n\nDo this:\n```yaml\nbuild:\n  profile: ci\n\nsecrets:\n  defaultProvider: local\n  providers:\n    local:\n      type: file\n      path: ./secrets.dev.yaml\n```\n\n## Apply with secret references\n\n```bash\n# Define providers in .torque.yaml (or pass --secret-config)\ncat > .torque.yaml <<'YAML'\nsecrets:\n  defaultProvider: local\n  providers:\n    local:\n      type: file\n      path: ./secrets.dev.yaml\nYAML\n\n# Use secret:// references in values\ncat > values.dev.yaml <<'YAML'\ndb:\n  password: secret://local/db/password\nYAML\n\ntorque apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local\ntorque apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local\ntorque stack apply --config ./stacks/prod --secret-provider local --yes\n```\n\n## Vault-backed secrets\n\n```bash\ncat > .torque.yaml <<'YAML'\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: approle\n      authMount: approle\n      roleId: 00000000-0000-0000-0000-000000000000\n      secretId: s.0000000000000000000000\n      mount: secret\n      kvVersion: 2\n      key: value\n      # kubernetesRole: torque\n      # kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token\n      # awsRole: torque\n      # awsRegion: us-east-1\n      # awsHeaderValue: vault.example.com\nYAML\n\ncat > values.dev.yaml <<'YAML'\ndb:\n  password: secret://vault/app/db#password\nYAML\n\ntorque apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault\ntorque apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault\ntorque stack apply --config ./stacks/prod --secret-provider vault --yes\n```\n\nInspect providers and references:\n```bash\ntorque secrets test --secret-provider vault --ref secret://vault/app/db#password\ntorque secrets list --secret-provider vault --path app --format json\n```\n\nMinimal CLI workflow (sanity check before apply):\n```bash\ntorque secrets test --secret-provider vault --ref secret://vault/app/db#password\ntorque secrets list --secret-provider vault --path app\n```\n\n## Regression-proof plans\n\nDo this:\n```bash\ntorque apply plan --chart ./chart --release foo -n default --baseline ./plan.json\ntorque apply plan --chart ./chart --release foo -n default --compare-to ./plan.json\n```\n\n## Regression-proof verifier\n\nDo this:\n```bash\nverifier verify.yaml --baseline ./baseline.json\nverifier verify.yaml --compare-to ./baseline.json\n```\n\n## Share an `apply plan` visualization\n\n```bash\ntorque apply plan --visualize --chart ./chart --release foo -n default\n```\n\n## Stack: minimal-flags workflow (plan \u2192 apply)\n\n```bash\nexport TORQUE_STACK_ROOT=./stacks/prod\n\n# Read-only plan (default `torque stack` behaves like `torque stack plan`)\ntorque stack\n\n# Execute (DAG order)\ntorque stack apply --yes\n\n# Capture the full stack run evidence bundle\ntorque stack apply --yes --capture ./stack.sqlite\n```\n\n## Stack: resume / rerun failed\n\n```bash\nexport TORQUE_STACK_ROOT=./stacks/prod\n\n# Resume the most recent run (frozen plan unless --replan is set)\ntorque stack apply --resume --yes\n\n# Convenience: resume and schedule only failed nodes\ntorque stack rerun-failed --yes\n```\n\n## Stack: inspect runs\n\n```bash\nexport TORQUE_STACK_ROOT=./stacks/prod\n\ntorque stack runs --limit 50\ntorque stack status --follow\ntorque stack audit --output html > stack-audit.html\n```\n\n## Build: share the build stream over WebSocket\n\n```bash\ntorque build . --tag ghcr.io/acme/app:dev --ws-listen :9085\n```\n\n## Capture: record deploy/build/log evidence\n\n```bash\n# Record a deploy evidence file\ntorque apply --chart ./chart --release foo -n default --capture ./apply.sqlite --capture-tag change=CHG-1234\n\n# Record a stack evidence file\ntorque stack apply --config ./stacks/prod --yes --capture ./stack.sqlite\n\n# Save it as a CI/review artifact\ntar -czf torque-evidence.tgz ./apply.sqlite\n\n# Explain a captured session locally or in CI logs\ntorque explain ./apply.sqlite\ntorque explain ./apply.sqlite --format markdown\n```\n\n## Verifier: validate a chart render in CI\n\n```bash\ncat > verify-chart-render.yaml <<'YAML'\nversion: v1\n\ntarget:\n  kind: chart\n  chart:\n    chart: ./chart\n    release: foo\n    namespace: default\n    useCluster: false\n\nverify:\n  mode: block\n  failOn: high\n\noutput:\n  format: table\n  report: \"-\"\nYAML\n\nverifier verify-chart-render.yaml\n\n# Package a chart then verify the archive\ntorque-package ./chart --output dist/chart.sqlite\ntorque-package --verify dist/chart.sqlite\n```",
+      "content": "# Recipes (golden paths)\n\nCopy/paste workflows that cover the common \u201chappy paths\u201d for `torque`.\n\n## Zero-conf onboarding\n\n```bash\n# Initialize repo defaults and detect your kubecontext\ntorque init\n\n# Generate a starter stack.yaml from existing cluster state\ntorque init from-cluster\ntorque init from-cluster --all-namespaces --dry-run\n# Exports installed Helm chart archives by default; add current values too\ntorque init from-cluster --all-namespaces --write-values\n\n# Run the interactive setup wizard\ntorque init --interactive\n\n# Scaffold chart/ and values/ plus gitignore entries\ntorque init --layout --gitignore\n\n# Use an opinionated preset\ntorque init --preset prod\n\n# Apply an init template (built-in or URL)\ntorque init --template platform\ntorque init --template https://example.com/torque-init.yaml\n\n# Scaffold a Vault secrets provider\ntorque init --secrets-provider vault\n\n# Preview the config without writing\ntorque init --dry-run\n\n# Generate a replayable init plan\ntorque init --plan --plan-output .torque/init-plan.json\n\n# Apply a saved init plan\ntorque init --apply-plan .torque/init-plan.json\n\n# Launch the interactive help UI\ntorque --help --ui\n```\n\n## Apply a chart (with and without the UI)\n\n```bash\n# Preview what will change\ntorque apply plan --chart ./chart --release foo -n default\n\n# Write a PR-ready Markdown summary\ntorque apply plan --chart ./chart --release foo -n default --github-comment --output plan.md\n\n# Attach verifier and build evidence to the PR summary\nverifier --chart ./chart --release foo -n default \\\n  --security-evidence ./torque-security-evidence \\\n  --format json --report verify.json\ntorque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite\ntorque apply plan --chart ./chart --release foo -n default \\\n  --verify-report verify.json --build-capture ./build.sqlite \\\n  --github-comment --output plan.md\n\n# Simulate live API behavior and write a replayable proof directory\ntorque apply simulate --chart ./chart --release foo -n default \\\n  --security-evidence ./torque-security-evidence \\\n  --out ./torque-sim-proof\ntorque replay ./torque-sim-proof --lab k3s\n\n# Prove runtime drift after simulation\ntorque guardian install --namespace torque-system --mode observe\ntorque guardian report --since 24h --out runtime-proof.json\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json\ntorque guardian pr --from drift-proof.json --branch fix/runtime-drift\n\n# Capture and replay an incident window\ntorque incident capture --release foo -n default --since 1h --out incident.torque\ntorque incident replay incident.torque --lab k3s --out incident-replay-proof\ntorque incident explain --from incident-replay-proof --out root-cause.json\ntorque incident pr --from root-cause.json --branch fix/foo-incident\n\n# Deploy\ntorque apply --chart ./chart --release foo -n default\n\n# Deploy with the viewer UI\ntorque apply --chart ./chart --release foo -n default --ui\n\n# Predict rollout risk and write a portable proof bundle\ntorque apply --chart ./chart --release foo -n default \\\n  --predict --proof-bundle ./apply-proof.json \\\n  --capture ./apply.sqlite --yes\n\n# Deploy with auto rollback proof and rollout SLO gates\ncat > slo.yaml <<'YAML'\napiVersion: torque.ingresslabs.dev/v1alpha1\nkind: RolloutSLO\nspec:\n  minReadyPercent: 100\n  maxFailedResources: 0\n  maxPendingResources: 0\nYAML\ntorque apply --chart ./chart --release foo -n default \\\n  --auto-rollback --slo ./slo.yaml \\\n  --predict --proof-bundle ./apply-proof.json \\\n  --capture ./apply.sqlite --yes\n\n# Turn a failed proof bundle into a repair branch and PR body\ntorque repair --from ./apply-proof.json --chart ./chart \\\n  --branch fix/foo-rollout --apply --pr-body ./repair-pr.md --yes\n```\n\n## Build \u2192 verify \u2192 plan \u2192 apply\n\n```bash\n# Build the image and capture build evidence.\ntorque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite\n\n# Verify the rendered chart.\nverifier --chart ./chart --release foo -n default --format json --report verify.json\n\n# Verify with evidence-first secret flow checks and a redaction proof bundle.\nverifier --chart ./chart --release foo -n default \\\n  --security-profile enterprise \\\n  --security-boundary-matrix \\\n  --secrets-report secrets.json \\\n  --security-evidence ./torque-security-evidence \\\n  --format json --report verify.json\n\n# Write a PR-ready plan with verifier and build evidence attached.\ntorque apply plan --chart ./chart --release foo -n default \\\n  --verify-report verify.json --build-capture ./build.sqlite \\\n  --github-comment --output plan.md\n\n# Apply with the verify report enforced, capture the rollout, and explain it.\ntorque apply --chart ./chart --release foo -n default \\\n  --require-verified verify.json \\\n  --predict --proof-bundle ./apply-proof.json \\\n  --capture ./apply.sqlite --yes\ntorque repair --from ./apply-proof.json --chart ./chart --pr-body ./repair-pr.md\ntorque explain ./apply.sqlite --format markdown\n```\n\n## Agent MCP bridge\n\n```bash\n# Run the MCP server over stdio for an IDE or agent host.\ntorque-mcp --stdio\n\n# Route agent tool calls to a remote Torque node over gRPC.\nexport TORQUE_REMOTE_TOKEN=\"$(openssl rand -hex 24)\"\ntorque-agent -listen :7443 -token \"$TORQUE_REMOTE_TOKEN\"\ntorque-mcp --stdio \\\n  --remote-agent 127.0.0.1:7443 \\\n  --remote-token \"$TORQUE_REMOTE_TOKEN\"\n```\n\n## Durable Linux agent host\n\n```bash\n# Install torque, torque-agent, torque-mcp, and systemd units.\ncurl -fsSL https://ingresslabs.github.io/torque/install.sh | sh -s -- --mode systemd-daemon\n\n# Inspect generated tokens and verify authenticated HTTP MCP.\n. /etc/torque/agent.env\nsystemctl status torque-agent.service torque-mcp.service\ncurl -fsS -H \"authorization: Bearer $TORQUE_MCP_TOKEN\" \\\n  -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}' \\\n  http://127.0.0.1:7331/mcp\n```\n\nEnterprise remote bridge with mTLS:\n\n```bash\nexport TORQUE_REMOTE_TOKEN=\"<from secret manager>\"\ntorque-agent -listen 0.0.0.0:7443 -token \"$TORQUE_REMOTE_TOKEN\" \\\n  -tls-cert /etc/torque/tls/agent.crt \\\n  -tls-key /etc/torque/tls/agent.key \\\n  -tls-client-ca /etc/torque/tls/client-ca.crt \\\n  -mirror-store /var/lib/torque/agent/mirror.sqlite\n\ntorque-mcp --stdio --remote-agent torque-agent.prod.internal:7443 \\\n  --remote-tls --remote-tls-ca /etc/torque/tls/ca.crt \\\n  --remote-tls-client-cert /etc/torque/tls/client.crt \\\n  --remote-tls-client-key /etc/torque/tls/client.key \\\n  --remote-tls-server-name torque-agent.prod.internal \\\n  --enable-write\n```\n\n## Build and ship with S3 cache\n\n```bash\n# Build with native BuildKit S3 cache import/export.\ntorque build . --tag ghcr.io/acme/foo:dev \\\n  --s3-cache s3://acme-build-cache/torque/main \\\n  --s3-cache-region us-east-1\n\n# Forward the same cache settings through the full ship workflow.\ntorque ship --chart ./chart --release foo -n default --build . \\\n  --tag ghcr.io/acme/foo:dev \\\n  --s3-cache s3://acme-build-cache/torque/main \\\n  --s3-cache-region us-east-1 --yes\n```\n\nFor MCP agents, use first-class cache tools before build fanout:\n\n```json\n{\n  \"tool\": \"torque.cache.plan\",\n  \"arguments\": {\n    \"contextDir\": \".\",\n    \"dockerfile\": \"Dockerfile\",\n    \"tags\": [\"ghcr.io/acme/foo:dev\"],\n    \"changedPaths\": [\"go.mod\", \"cmd/foo/main.go\"],\n    \"s3Cache\": \"s3://acme-build-cache/torque/main\",\n    \"s3CacheRegion\": \"us-east-1\",\n    \"s3CacheName\": \"foo-main\"\n  }\n}\n```\n\nWarm writes cache exports, so it requires `torque-mcp --enable-write` and\n`\"safety\": {\"confirm\": true}`. AWS credentials stay on the BuildKit daemon or\nworkload identity, not in MCP arguments.\n\n## 5-minute demo (public chart)\n\nDo this:\n```bash\nhelm repo add bitnami https://charts.bitnami.com/bitnami\nhelm repo update\n\ntorque apply plan --chart bitnami/nginx --release demo-nginx -n default --visualize\ntorque apply --chart bitnami/nginx --release demo-nginx -n default --yes\ntorque delete --release demo-nginx -n default --yes\n```\n\n## Recommended `.torque.yaml` layout\n\nDo this:\n```yaml\nbuild:\n  profile: ci\n\nsecrets:\n  defaultProvider: local\n  providers:\n    local:\n      type: file\n      path: ./secrets.dev.yaml\n```\n\n## Apply with secret references\n\n```bash\n# Define providers in .torque.yaml (or pass --secret-config)\ncat > .torque.yaml <<'YAML'\nsecrets:\n  defaultProvider: local\n  providers:\n    local:\n      type: file\n      path: ./secrets.dev.yaml\nYAML\n\n# Use secret:// references in values\ncat > values.dev.yaml <<'YAML'\ndb:\n  password: secret://local/db/password\nYAML\n\ntorque apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local\ntorque apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider local\ntorque stack apply --config ./stacks/prod --secret-provider local --yes\n```\n\n## Vault-backed secrets\n\n```bash\ncat > .torque.yaml <<'YAML'\nsecrets:\n  defaultProvider: vault\n  providers:\n    vault:\n      type: vault\n      address: https://vault.example.com\n      authMethod: approle\n      authMount: approle\n      roleId: 00000000-0000-0000-0000-000000000000\n      secretId: s.0000000000000000000000\n      mount: secret\n      kvVersion: 2\n      key: value\n      # kubernetesRole: torque\n      # kubernetesTokenPath: /var/run/secrets/kubernetes.io/serviceaccount/token\n      # awsRole: torque\n      # awsRegion: us-east-1\n      # awsHeaderValue: vault.example.com\nYAML\n\ncat > values.dev.yaml <<'YAML'\ndb:\n  password: secret://vault/app/db#password\nYAML\n\ntorque apply plan --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault\ntorque apply --chart ./chart --release foo -n default -f values.dev.yaml --secret-provider vault\ntorque stack apply --config ./stacks/prod --secret-provider vault --yes\n```\n\nInspect providers and references:\n```bash\ntorque secrets test --secret-provider vault --ref secret://vault/app/db#password\ntorque secrets list --secret-provider vault --path app --format json\n```\n\nMinimal CLI workflow (sanity check before apply):\n```bash\ntorque secrets test --secret-provider vault --ref secret://vault/app/db#password\ntorque secrets list --secret-provider vault --path app\ntorque secrets scan --scope repo --report secrets.json --mode block --flow-graph\ntorque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block --flow-graph\ntorque security benchmark --corpus ./testdata/security --report benchmark.json\n```\n\n## Regression-proof plans\n\nDo this:\n```bash\ntorque apply plan --chart ./chart --release foo -n default --baseline ./plan.json\ntorque apply plan --chart ./chart --release foo -n default --compare-to ./plan.json\n```\n\n## Regression-proof verifier\n\nDo this:\n```bash\nverifier verify.yaml --baseline ./baseline.json\nverifier verify.yaml --compare-to ./baseline.json\n```\n\n## Share an `apply plan` visualization\n\n```bash\ntorque apply plan --visualize --chart ./chart --release foo -n default\n```\n\n## Stack: minimal-flags workflow (plan \u2192 apply)\n\n```bash\nexport TORQUE_STACK_ROOT=./stacks/prod\n\n# Read-only plan (default `torque stack` behaves like `torque stack plan`)\ntorque stack\n\n# Execute (DAG order)\ntorque stack apply --yes\n\n# Capture the full stack run evidence bundle\ntorque stack apply --yes --capture ./stack.sqlite\n```\n\n## Stack: resume / rerun failed\n\n```bash\nexport TORQUE_STACK_ROOT=./stacks/prod\n\n# Resume the most recent run (frozen plan unless --replan is set)\ntorque stack apply --resume --yes\n\n# Convenience: resume and schedule only failed nodes\ntorque stack rerun-failed --yes\n```\n\n## Stack: inspect runs\n\n```bash\nexport TORQUE_STACK_ROOT=./stacks/prod\n\ntorque stack runs --limit 50\ntorque stack status --follow\ntorque stack audit --output html > stack-audit.html\n```\n\n## Build: share the build stream over WebSocket\n\n```bash\ntorque build . --tag ghcr.io/acme/app:dev --ws-listen :9085\n```\n\n## Capture: record deploy/build/log evidence\n\n```bash\n# Record a deploy evidence file\ntorque apply --chart ./chart --release foo -n default --capture ./apply.sqlite --capture-tag change=CHG-1234\n\n# Record a stack evidence file\ntorque stack apply --config ./stacks/prod --yes --capture ./stack.sqlite\n\n# Save it as a CI/review artifact\ntar -czf torque-evidence.tgz ./apply.sqlite\n\n# Explain a captured session locally or in CI logs\ntorque explain ./apply.sqlite\ntorque explain ./apply.sqlite --format markdown\n```\n\n## Verifier: validate a chart render in CI\n\n```bash\ncat > verify-chart-render.yaml <<'YAML'\nversion: v1\n\ntarget:\n  kind: chart\n  chart:\n    chart: ./chart\n    release: foo\n    namespace: default\n    useCluster: false\n\nverify:\n  mode: block\n  failOn: high\n\noutput:\n  format: table\n  report: \"-\"\nYAML\n\nverifier verify-chart-render.yaml\n\n# Package a chart then verify the archive\ntorque-package ./chart --output dist/chart.sqlite\ntorque-package --verify dist/chart.sqlite\n```",
       "tags": [
         "doc",
         "recipes",
@@ -855,6 +1281,90 @@
       ]
     },
     {
+      "id": "doc:secrets-verifier-evidence-spec",
+      "kind": "doc",
+      "title": "Secrets and verifier evidence spec",
+      "subtitle": "Evidence-first secret detection, redaction, verifier rules, and suppressions",
+      "content": "# Evidence-First Secrets And Verifier Spec\n\nStatus: draft\n\nLast reviewed: 2026-05-10\n\nImplemented slice:\n\n- `torque secrets scan --scope repo|render|build|artifact` writes redacted\n  JSON secret scan reports.\n- `verifier --security-profile enterprise --secrets-report ...` merges\n  rendered secret-flow findings into verifier output and blocks high-risk leaks.\n- `torque security benchmark --corpus ./testdata/security --report\n  benchmark.json` publishes corpus-backed detector, redaction, flow-graph, and\n  boundary metrics.\n- `--security-evidence ./dir` exports a bundle with verifier report, secrets\n  report, boundary matrix, secret flow graph, redaction proof, manifest, and\n  Markdown summary.\n\nRelated docs:\n\n- [verifier.md](verifier.md)\n- [capture.md](capture.md)\n- [mcp-server-spec.md](mcp-server-spec.md)\n- [grpc-agent.md](grpc-agent.md)\n- [sandbox-security.md](sandbox-security.md)\n\n## Summary\n\nTorque should not try to win secret detection and Kubernetes verification by\nbeing \"one more scanner\". The advantage is that Torque sees the delivery path:\nsource files, build inputs, Helm rendering, Kubernetes manifests, live cluster\nstate, rollout logs, captures, proof bundles, gRPC streams, and MCP responses.\n\nThe product goal is:\n\n> Prove whether a release is safe to build, render, review, apply, capture, and\n> expose to humans or agents without leaking secrets or hiding operational risk.\n\nThis spec defines an evidence-first security layer that combines:\n\n- multi-stage secret detection;\n- a central redaction engine used by every output path;\n- secret reference taint tracking across build, render, apply, logs, captures,\n  and agent protocols;\n- contextual verifier rules that explain security and operational risk;\n- governed suppressions with owners, reasons, expiry dates, and stable\n  fingerprints;\n- benchmark suites that make any \"better than other tools\" claim measurable.\n\n## What Better Means\n\nTorque is better only if it can show measurable outcomes that simpler static\ntools cannot.\n\n1. Zero Torque-caused leaks.\n   Raw secrets must never appear in CLI output, build logs emitted by Torque,\n   apply logs, pod log captures, SQLite captures, proof bundles, HTML/Markdown\n   reports, GitHub comments, MCP responses, gRPC mirror frames, or exported\n   session JSONL.\n\n2. Cross-stage coverage.\n   A finding can point from the source value or `secret://` reference to the\n   rendered field, build argument, image metadata, runtime output, or agent\n   response where the leak happened.\n\n3. Low false positive rate.\n   Findings use confidence scoring, file-type context, key-name context,\n   entropy, provider-specific shape checks, and optional validators. The default\n   mode should block high-confidence leaks while reporting uncertain cases as\n   reviewable warnings.\n\n4. Operational context.\n   Verifier rules should combine manifest data, live-state drift, quota\n   headroom, rollout history, SLO gates, and rollback confidence. A public\n   Service in a dev namespace is not the same finding as a public Service in\n   production with no ingress policy and a high-risk rollout.\n\n5. Fixability.\n   Every rule should include a specific remediation path, not only a complaint.\n   When possible, the report should include an edit hint or patch against the\n   source values file, Helm template, Dockerfile, or manifest.\n\n6. Audit quality.\n   Every blocking decision should be replayable from a bundle that contains\n   inputs, rule versions, finding fingerprints, suppressions, redaction proof,\n   and before/after deltas.\n\n## Non-Goals\n\n- Do not store raw secret values in reports, captures, indexes, test goldens, or\n  rule evidence.\n- Do not make network validation of credentials the default. Provider\n  validation may exist, but must be explicit, rate-limited, and safe.\n- Do not replace Kubernetes RBAC, registry IAM, Vault policy, cloud IAM, or\n  admission control.\n- Do not expose a general shell, raw `kubectl`, raw Helm, or arbitrary SQL\n  through scanner or MCP surfaces.\n- Do not make mutating operations autonomous for agents. Secret and verifier\n  results can gate writes, but writes still require Torque's existing safety\n  confirmations and policy.\n\n## Threat Model\n\nTorque should defend against these cases:\n\n- accidental commits of real credentials in source files;\n- fake or test-looking secrets that are still routed into production output;\n- Helm values that render secrets into ConfigMaps, annotations, labels, args,\n  probes, env vars, or logs;\n- Dockerfile and Compose flows that put credentials into `ARG`, `ENV`, image\n  labels, history, or layers;\n- build and apply logs that echo credentials;\n- pod logs that contain tokens, passwords, kubeconfigs, connection strings, or\n  private keys;\n- proof bundles and PR comments that accidentally include sensitive values;\n- MCP/gRPC clients that request summaries, exports, or session replay and would\n  otherwise receive raw values;\n- malicious or sloppy suppressions that hide high-risk findings forever.\n\nAllowed materialization boundaries are narrow:\n\n- secret provider clients may hold raw values in memory only long enough to\n  resolve or submit them;\n- Kubernetes API writes may contain Secret `data`/`stringData` only when the\n  selected workflow explicitly applies a Secret;\n- redaction tests may use synthetic secrets in fixtures, but real secrets are\n  forbidden.\n\nEverything else should see only references, hashes, fingerprints, counts, or\nredacted previews.\n\n## Architecture\n\nAdd a security layer that is shared by CLI commands, verifier, build workflows,\ncapture exporters, gRPC agent handlers, MirrorService, and MCP.\n\nProposed packages:\n\n```text\ninternal/secrets/\n  detect.go          # existing detector package; extend beyond build/OCI scans\n  redact.go          # existing text redaction; evolve into streaming redaction\n  report.go          # existing report schema; migrate toward shared envelope\n\ninternal/redaction/\n  engine.go          # streaming redactor and known-secret registry\n  detectors.go       # reusable secret detector interface\n  proof.go           # redaction proof records with no raw values\n\ninternal/secrets/scan/\n  scan.go            # source/render/capture scan orchestration\n  parsers.go         # structured parsers and decoders\n  detectors/         # provider-specific detectors\n  report.go          # secret scan report schema\n\ninternal/secretflow/\n  graph.go           # flow nodes, edges, taint states\n  provenance.go      # safe origin/resource references\n  hmac.go            # per-run HMAC digests for equality checks\n\ninternal/securityevidence/\n  bundle.go          # evidence bundle writer/reader\n  suppression.go     # suppression loading and validation\n  benchmark.go       # result schema for eval runs\n```\n\nExisting packages should be adapted instead of duplicated:\n\n- `internal/verify` remains the verifier engine and report owner.\n- `internal/secrets` remains the current secret detection base and should grow\n  from build/OCI checks into the multi-stage scanner.\n- `internal/secretstore` remains the resolver for `secret://` references.\n- `internal/capture` records summaries and artifacts, but raw secret material is\n  never written to capture rows.\n- `internal/mcpserver` and `internal/agent` must call the shared redactor before\n  returning or mirroring user-visible bytes.\n- `cmd/torque/redact.go` should become thin CLI wiring over `internal/redaction`\n  once the shared engine exists.\n\n## Finding Model\n\nSecret and verifier findings should converge on one envelope so reports can be\nmerged, filtered, baselined, exported as SARIF, and consumed by agents.\n\nRequired fields:\n\n```json\n{\n  \"ruleId\": \"secret/aws_access_key\",\n  \"category\": \"secret\",\n  \"severity\": \"critical\",\n  \"confidence\": 0.97,\n  \"message\": \"AWS access key appears in Helm values and rendered env var\",\n  \"location\": \"values/prod.yaml:18\",\n  \"fieldPath\": \".database.accessKey\",\n  \"subject\": {\n    \"kind\": \"Deployment\",\n    \"namespace\": \"prod\",\n    \"name\": \"api\"\n  },\n  \"resourceKey\": \"apps/v1/Deployment/prod/api\",\n  \"fingerprint\": \"sha256:...\",\n  \"observed\": \"AKIA...ABCD\",\n  \"expected\": \"secret reference or Kubernetes Secret mount\",\n  \"evidence\": {\n    \"detector\": \"aws_access_key\",\n    \"evidenceKind\": \"provider_shape+key_context+render_flow\",\n    \"flowId\": \"secretflow:...\",\n    \"redaction\": \"value_preview_only\",\n    \"sourceStage\": \"source\",\n    \"sinkStage\": \"render\",\n    \"sink\": \"env[0].value\"\n  },\n  \"fix\": {\n    \"summary\": \"Move the value to a secret provider reference\",\n    \"patchHint\": \"database.accessKey: secret://vault/prod/api#aws_access_key\"\n  }\n}\n```\n\nRules:\n\n- `observed` must never contain a full secret. It may contain a safe preview\n  such as `AKIA...ABCD`, token class, length bucket, or digest label.\n- `fingerprint` must be stable across line-number shifts when the same logical\n  issue remains.\n- `confidence` must be a float from `0.0` to `1.0`.\n- `evidence` can include parsed context, flow IDs, decoded-field type, and\n  redaction counts, but never raw values.\n\n## Secret Detection\n\n### Detector Inputs\n\nDetectors receive a `Candidate`:\n\n```text\nraw bytes or structured scalar\nfile path\nfile type\nline/column or object path\nsurrounding key names\ndecoded forms\nstage: source|render|build|runtime|capture|agent\norigin command/session/build/apply IDs\n```\n\nThey return zero or more findings plus optional redaction matches.\n\n### Detector Classes\n\n1. Provider-specific detectors\n   AWS, GCP, Azure, GitHub, GitLab, Slack, Stripe, npm, Docker auth, OpenAI-style\n   keys, Kubernetes service account tokens, kubeconfigs, JWTs, private keys,\n   database URLs, SMTP URLs, Redis URLs, and webhook URLs.\n\n2. Structured credential detectors\n   Kubeconfig users, Docker config auth blocks, cloud SDK config files,\n   Terraform variables/state, GitHub Actions secrets contexts, Compose build\n   args, Helm values, Kubernetes Secret data, and `.env` assignments.\n\n3. Entropy detectors\n   High-entropy values with context-aware thresholds. Entropy alone is never a\n   critical finding; it needs supporting context unless explicitly configured.\n\n4. Keyword-context detectors\n   Values near keys such as `password`, `passwd`, `secret`, `token`, `apiKey`,\n   `accessKey`, `privateKey`, `clientSecret`, `connectionString`, and `dsn`.\n\n5. Decoding detectors\n   Base64, base64url, JSON-in-string, YAML-in-string, URL encoding, quoted shell\n   values, Docker auth base64, and JWT header/payload inspection.\n\n6. Known-secret detectors\n   Exact redaction for values resolved through `secret://` providers or detected\n   earlier in the run. Known-secret matching must be streaming-safe and must not\n   write the known value to logs or reports.\n\n### Confidence Scoring\n\nConfidence is additive, bounded, and explainable. Signals include:\n\n- provider-specific regex or checksum shape;\n- entropy above per-token thresholds;\n- nearby credential key name;\n- parsed file type and field type;\n- decoded data kind;\n- value appearing in both source and rendered output;\n- value appearing in logs, image metadata, captures, or agent responses;\n- known value from `secret://` resolution;\n- negative signals such as example paths, explicit test fixtures, known fake\n  prefixes, or documented allowlist entries.\n\nDefault severity mapping:\n\n| Condition | Default severity |\n| --- | --- |\n| Known `secret://` value appears outside approved boundary | critical |\n| Provider-shaped key in production source/render/runtime output | critical |\n| Provider-shaped key in test/example fixture | medium unless configured |\n| High entropy plus credential key context | high |\n| Entropy only | low or info |\n| Expired suppression | original severity plus suppression warning |\n\n## Scan Stages\n\n### Source Scanning\n\nScope:\n\n- Dockerfiles and `.dockerignore`;\n- Compose files;\n- Helm charts and values;\n- Kustomize overlays;\n- Terraform files and state files;\n- GitHub Actions and other CI configs;\n- `.env` and shell config files;\n- kubeconfigs;\n- YAML/JSON/TOML manifests;\n- shell, Python, Go, JavaScript, and common config scripts.\n\nRequirements:\n\n- Use structured parsers when available. Fall back to line scanning only when a\n  parser is unavailable or the file is invalid.\n- Respect `.gitignore` and configured ignore patterns by default.\n- Never scan known binary blobs unless explicitly requested.\n- Emit source maps that can later connect a rendered Helm field back to a values\n  file or template when the information exists.\n\n### Render Scanning\n\nScope:\n\n- rendered Helm manifests from `torque apply plan`;\n- standalone `verifier --chart` renders;\n- uploaded or file-based manifests;\n- live namespace collections.\n\nRequirements:\n\n- Decode Kubernetes Secret `data` values for classification, but report only\n  redacted previews and value classes.\n- Flag decoded secrets that are copied into ConfigMap, env var, args, command,\n  annotations, labels, probes, ingress annotations, pod template annotations, or\n  container image fields.\n- Track whether a sensitive value is intended for a Secret object or leaked into\n  a non-secret object.\n- Preserve resource identity and field path in every finding.\n\n### Build-Flow Scanning\n\nScope:\n\n- Dockerfile `ARG`, `ENV`, `LABEL`, `RUN`, and secret mount patterns;\n- Compose build args and environment;\n- BuildKit progress output;\n- image config labels/env/history;\n- OCI layer file names and selected text payloads when an OCI layout is\n  available;\n- build capture summaries.\n\nRequirements:\n\n- Treat build args and env vars containing secrets as high risk because they can\n  land in history, cache keys, or logs.\n- Prefer BuildKit secret mounts for expected secret usage, but still verify the\n  value did not appear in logs or layers.\n- Include cache and layer context when a secret appears in image metadata or\n  layer content.\n\n### Runtime-Output Scanning\n\nScope:\n\n- `torque logs`;\n- deploy/apply/delete output;\n- stack run output;\n- build output;\n- verifier output;\n- explain output;\n- proof bundles;\n- PR/Markdown comments;\n- HTML reports;\n- MCP and gRPC responses;\n- MirrorService frames and exported JSONL.\n\nRequirements:\n\n- Redaction happens before bytes leave a package boundary that writes to a user\n  surface.\n- Runtime detections can produce findings, but output must be redacted even if\n  finding report writing fails.\n- Redaction proof records count matches by rule and surface, not raw values.\n\n### Capture And Artifact Scanning\n\nScope:\n\n- SQLite captures;\n- proof bundles;\n- stack export bundles;\n- session JSONL exports;\n- saved plan/verifier reports.\n\nRequirements:\n\n- Existing captures can be scanned offline.\n- New captures should write `redaction_proof` and `security_summary` metadata.\n- Export commands must re-redact on export, even when the capture claims it was\n  already redacted.\n\n## Secret Flow Tracking\n\nSecret flow tracking is the main differentiator.\n\n### Flow Nodes\n\nEach node represents a location or boundary:\n\n```text\nsource:file:path#line\nhelm:value:path\nhelm:template:path\nrender:resource:key#field\nbuild:dockerfile#instruction\nbuild:arg:name\nbuild:env:name\nbuild:layer:digest#path\nruntime:log:session#sequence\ncapture:sqlite:table#row\nagent:mcp:tool_call#field\nagent:grpc:service/method#frame\n```\n\n### Flow Edges\n\nEdges represent transformations:\n\n```text\nread\ndecode:base64\ntemplate\ncopy\nredact\nwrite\nlog\ncapture\nexport\n```\n\n### Taint States\n\n```text\nreference_only       # secret:// reference preserved\nmaterialized_allowed # raw value exists only at approved boundary\nredacted_output      # value was found and replaced before output\nleaked_output        # value appeared in an unapproved output sink\nunknown              # insufficient provenance\n```\n\n### Value Identity Without Value Storage\n\nUse per-run HMAC digests for equality checks:\n\n```text\nsecretValueDigest = HMAC(runRedactionKey, normalizedSecretValue)\n```\n\nRules:\n\n- The HMAC key is generated per run and never stored in reports.\n- Digests prove equality inside one run only.\n- Reports can store flow IDs and redacted previews, not reusable value hashes\n  that allow offline guessing.\n- Low-entropy values such as `password123` should be reported by context, not\n  persisted as stable digests.\n\n## Redaction Engine\n\nThe redaction engine is a security boundary, not a UI helper.\n\n### API Shape\n\n```go\ntype Redactor interface {\n    AddKnownSecret(ref SecretRef, value []byte) error\n    RedactBytes(surface Surface, input []byte) (output []byte, proof Proof, findings []Finding)\n    RedactStream(surface Surface, r io.Reader, w io.Writer) (Proof, []Finding, error)\n    Proof() RedactionProof\n}\n```\n\n### Required Surfaces\n\n- terminal stdout/stderr;\n- log observers;\n- build progress observers;\n- deploy stream observers;\n- capture writers;\n- report writers;\n- HTML/Markdown renderers;\n- MirrorService publish/subscribe/export;\n- gRPC service responses;\n- MCP tool/resource/prompt responses;\n- HTTP/SSE gateway responses.\n\n### Failure Policy\n\n- If redaction initialization fails for a surface that may contain secrets, the\n  command must fail closed unless the user explicitly passes an unsafe debug\n  override.\n- If report writing fails after redaction has already protected output, keep the\n  redacted output and return an error for the missing report.\n- If a known secret cannot be registered, block any operation that would\n  materialize that secret.\n\n## Verifier Rules\n\nVerifier rules should explain operational risk, not just static lint.\n\n### Rule Categories\n\n| Category | Examples |\n| --- | --- |\n| `secret_flow` | secret in ConfigMap, secret in env var, secret in log sink |\n| `workload_security` | privileged container, hostPath, hostNetwork, hostPID |\n| `capabilities` | missing drop ALL, NET_RAW retained, privilege escalation |\n| `identity_rbac` | cluster-admin binding, wildcard verbs, default service account token |\n| `network_exposure` | public LoadBalancer, ingress without TLS, risky annotations |\n| `resilience` | missing probes, missing PDB, bad rollout strategy |\n| `resources` | missing requests/limits, quota headroom risk |\n| `storage` | PVC destructive change, unsafe reclaim assumptions |\n| `supply_chain` | latest tag, unpinned image, unsigned image, missing build evidence |\n| `drift` | live state diverges from desired state before apply |\n| `rollout_risk` | high predicted failure, weak rollback confidence, SLO gate risk |\n| `agent_boundary` | MCP write without confirmation, remote agent without TLS/mTLS |\n\n### Rule Contract\n\nEvery rule must define:\n\n```json\n{\n  \"id\": \"k8s/service_public_loadbalancer\",\n  \"category\": \"network_exposure\",\n  \"defaultSeverity\": \"high\",\n  \"description\": \"Service exposes a public LoadBalancer\",\n  \"rationale\": \"Public exposure requires explicit ownership and controls\",\n  \"inputs\": [\"rendered_manifest\", \"live_state\", \"namespace_policy\"],\n  \"confidence\": \"contextual\",\n  \"fix\": {\n    \"strategy\": \"change service type or attach approved ingress policy\",\n    \"patchable\": true\n  },\n  \"helpUrl\": \"https://...\"\n}\n```\n\nRules should produce fix plans through the existing verifier fix-plan path when\npossible.\n\n### Contextual Severity\n\nSeverity is computed from a base plus modifiers.\n\nExample: public LoadBalancer\n\n| Signal | Modifier |\n| --- | --- |\n| namespace tagged production | +1 severity |\n| ingress TLS present | -1 severity |\n| no NetworkPolicy and no approved annotation | +1 severity |\n| owner suppression exists and not expired | report suppressed, not blocked |\n| service is internal-only cloud LB | -1 severity |\n| internet-facing LB with secret-like env vars in backing pods | critical |\n\nThe report must show why severity changed.\n\n## Suppressions\n\nSuppressions are allowed, but must be governed.\n\nExample:\n\n```yaml\nversion: v1\nsuppressions:\n  - rule: k8s/service_public_loadbalancer\n    fingerprint: sha256:2f1c...\n    owner: platform@example.com\n    reason: Public API endpoint approved by architecture review AR-1234\n    expires: 2026-07-01\n    scope:\n      namespace: prod\n      resource: v1/Service/prod/api\n```\n\nRequirements:\n\n- `owner`, `reason`, `expires`, `rule`, and `fingerprint` are required.\n- Expired suppressions fail CI by default.\n- Broad suppressions require an explicit `scope` and should warn by default.\n- Suppressed findings still appear in reports under `suppressedFindings`.\n- Suppression deltas are included in evidence bundles.\n- Suppressions cannot hide redaction failures.\n\n## Evidence Bundle\n\nThe evidence bundle is the product moat. It should be attachable to PRs, CI\nruns, releases, audits, and incident retrospectives.\n\nRecommended layout:\n\n```text\ntorque-security-evidence/\n  manifest.json\n  inputs.json\n  secrets.report.json\n  boundary.matrix.json\n  secret.flow.graph.json\n  verifier.report.json\n  findings.sarif\n  redaction.proof.json\n  suppressions.audit.json\n  plan.summary.json\n  capture.summary.json\n  benchmark.summary.json\n  reports/\n    security.md\n    security.html\n```\n\n`manifest.json` should include:\n\n- Torque version and commit;\n- ruleset version and hash;\n- detector version and hash;\n- config hash;\n- input file digests;\n- rendered manifest digest;\n- capture IDs and session IDs;\n- whether redaction was enabled for each surface;\n- whether any raw-value sink was blocked.\n\n`redaction.proof.json` example:\n\n```json\n{\n  \"surfaces\": [\n    {\n      \"surface\": \"mcp.tool_response\",\n      \"sessionId\": \"2026-05-10T12-00-00Z-api\",\n      \"matches\": [\n        { \"ruleId\": \"secret/aws_access_key\", \"count\": 2 },\n        { \"ruleId\": \"known_secret/secret_ref\", \"count\": 1 }\n      ],\n      \"rawSecretStored\": false\n    }\n  ],\n  \"failedClosed\": false\n}\n```\n\n## CLI Product Shape\n\nInitial commands:\n\n```bash\n# Repo/source scan with redacted flow graph.\ntorque secrets scan --scope repo --report secrets.json --flow-graph\n\n# Render-aware scan.\ntorque secrets scan --scope render --chart ./chart --release api -n prod \\\n  --report secrets.json --flow-graph\n\n# Build/capture scan.\ntorque secrets scan --scope build --capture build.sqlite --report build-secrets.json\n\n# Offline artifact scan.\ntorque secrets scan --scope artifact ./apply.sqlite --report artifact-secrets.json\n\n# Unified gate.\ntorque apply plan --chart ./chart --release api -n prod \\\n  --require-clean-secrets secrets.json \\\n  --require-verified verify.json \\\n  --security-evidence ./torque-security-evidence\n```\n\nVerifier additions:\n\n```bash\nverifier --chart ./chart --release api -n prod \\\n  --security-profile enterprise \\\n  --security-boundary-matrix \\\n  --secret-flow-graph \\\n  --secrets-report secrets.json \\\n  --report verify.json\n\nverifier rules list --category secret_flow\nverifier suppressions audit --config .torque/security.yaml\n```\n\nRedaction validation:\n\n```bash\ntorque redact --preset incident --proof redaction.proof.json < raw.log > redacted.log\ntorque security benchmark --corpus ./testdata/security --report benchmark.json\n```\n\nNames can change during implementation, but the product shape should preserve:\n\n- separate scan reports;\n- unified security evidence;\n- apply/ship gates that require clean secret and verifier reports;\n- offline re-scan for captures and exported artifacts.\n\n## MCP And gRPC Product Shape\n\nMCP tools:\n\n```text\ntorque.secrets.scan\ntorque.secrets.trace\ntorque.secrets.redaction_proof\ntorque.verify.run\ntorque.verify.suppressions.audit\ntorque.security.evidence.export\n```\n\nMCP resources:\n\n```text\ntorque://security/reports/{id}\ntorque://security/flows/{id}\ntorque://security/evidence/{id}\ntorque://security/redaction-proof/{id}\n```\n\ngRPC additions can either extend existing services or add a dedicated\n`SecurityService`:\n\n```text\nSecurityService.Scan\nSecurityService.TraceSecretFlow\nSecurityService.ExportEvidence\nSecurityService.AuditSuppressions\n```\n\nMirrorService frames should include redaction metadata:\n\n```json\n{\n  \"redacted\": true,\n  \"redactionRules\": [\"secret/aws_access_key\", \"known_secret/secret_ref\"],\n  \"redactionProofId\": \"redaction-proof:...\"\n}\n```\n\n## Configuration\n\n`.torque/security.yaml`:\n\n```yaml\nversion: v1\n\nprofiles:\n  default:\n    secrets:\n      mode: block\n      failOn: high\n      scan:\n        source: true\n        render: true\n        build: true\n        runtime: true\n        captures: true\n      validators:\n        network: false\n      confidence:\n        blockAt: 0.85\n        warnAt: 0.55\n\n    verifier:\n      mode: block\n      failOn: high\n      contextualSeverity: true\n      requireFixPlanForCritical: true\n\n    redaction:\n      failClosed: true\n      surfaces:\n        cli: true\n        capture: true\n        reports: true\n        mcp: true\n        grpc: true\n        mirror: true\n\n    suppressions:\n      files:\n        - .torque/suppressions.yaml\n      expired: fail\n      requireOwner: true\n      requireReason: true\n      maxTTL: 180d\n```\n\n## Benchmark And Evaluation\n\nClaims must be backed by a repeatable corpus under `testdata/security/`.\nThe detailed data rules, fixture schema, detector-family requirements, and\nrelease gates are defined in\n[Security Benchmark Corpus Spec](security-corpus-spec.md).\n\nCorpus groups:\n\n- `source-realistic`: synthetic credentials embedded in real-looking repos;\n- `source-false-positive`: UUIDs, hashes, checksums, docs examples, test keys;\n- `helm-render`: values and templates that render secrets into safe and unsafe\n  fields;\n- `kubernetes`: manifests with workload, RBAC, network, storage, and resilience\n  risks;\n- `build-flow`: Dockerfile/Compose cases for ARG, ENV, BuildKit secrets, logs,\n  labels, history, and OCI layers;\n- `runtime-output`: logs, proof bundles, Markdown, HTML, MCP, gRPC, and JSONL;\n- `suppressions`: valid, expired, broad, and malicious suppression examples;\n- `scale`: large chart/repo/capture inputs for performance budgets.\n\nRequired metrics:\n\n```text\nsecret recall by detector family\nsecret precision by file type\nfalse positive rate by file type\nruntime cost\nredaction escape count\nsecret flow graph nodes/edges\nsource-to-live provenance chains\nlive k3s boundary matrix pass/fail\nverifier rule recall by risk category\nfinding fingerprint stability\nsuppression audit correctness\nscan wall time and memory\nreport size\n```\n\nRelease gates for security claims:\n\n- redaction escape count must be zero;\n- no raw synthetic secret may appear in any generated report, capture, bundle,\n  HTML, Markdown, MCP response, gRPC frame, or JSONL export;\n- high-confidence secret recall should meet the configured threshold before a\n  detector family is enabled in blocking mode;\n- false positive budgets must be documented per detector family;\n- every built-in critical/high verifier rule must have at least one fail fixture,\n  pass fixture, edge fixture, and report golden.\n\n## Implementation Plan\n\n### Phase 0: Test Harness And Schemas\n\nDeliverables:\n\n- canonical finding envelope for secret and verifier reports;\n- security corpus layout under `testdata/security/`;\n- no-raw-secret assertion helper usable by CLI, verifier, MCP, and gRPC tests;\n- redaction proof schema.\n\nAcceptance:\n\n- synthetic secrets in the corpus are detected in positive fixtures;\n- synthetic secrets are absent from all generated reports;\n- schema examples round-trip through JSON tests.\n\n### Phase 1: Shared Redaction Boundary\n\nDeliverables:\n\n- `internal/redaction`;\n- migrate existing incident redaction presets into the shared package;\n- integrate redaction into CLI output, report writers, capture export, MCP, gRPC,\n  and MirrorService;\n- fail-closed behavior for configured sensitive surfaces.\n\nAcceptance:\n\n- redaction escape count is zero across runtime-output corpus;\n- existing `torque redact` behavior remains compatible;\n- MirrorService export and SSE tail never emit raw synthetic secrets.\n\n### Phase 2: Source And Render Secret Scan\n\nDeliverables:\n\n- `torque secrets scan --scope repo`;\n- render scan through `torque apply plan` and `verifier --chart`;\n- Kubernetes Secret base64 decoding and non-secret sink detection;\n- confidence scoring and JSON/SARIF reports.\n\nAcceptance:\n\n- source and render fixture recall meets initial threshold;\n- `secret://` references stay reference-only in reports;\n- findings include source locations and rendered resource paths where available.\n\n### Phase 3: Build And Capture Secret Flow\n\nDeliverables:\n\n- Dockerfile/Compose build-flow detectors;\n- BuildKit progress redaction and scan hooks;\n- image config/history/layer scan when OCI layout is available;\n- capture scan and security summary metadata.\n\nAcceptance:\n\n- ARG/ENV/log/label/history/layer leaks are detected;\n- BuildKit secret mount cases pass when values do not leak;\n- capture exports are re-redacted and include redaction proof.\n\n### Phase 4: Secret Flow Graph\n\nDeliverables:\n\n- `internal/secretflow`;\n- HMAC-backed per-run value identity;\n- flow graph export in evidence bundles;\n- `torque.secrets.trace` MCP tool.\n\nAcceptance:\n\n- a value flowing from source to rendered env var produces one connected trace;\n- a `secret://` value that stays within approved boundaries produces a clean\n  proof;\n- reports can distinguish `reference_only`, `materialized_allowed`,\n  `redacted_output`, and `leaked_output`.\n\n### Phase 5: Contextual Verifier Rules\n\nDeliverables:\n\n- contextual severity engine;\n- rule metadata contract and fix-plan coverage;\n- secret-flow rules in verifier;\n- network exposure, quota, drift, rollout risk, rollback confidence, storage,\n  and agent-boundary rule packs.\n\nAcceptance:\n\n- contextual severity changes are explained in report evidence;\n- suppressions apply by fingerprint and expiry;\n- `torque apply plan --require-verified` can block on combined verifier and\n  secret-flow reports.\n\n### Phase 6: Enterprise Evidence And Integrations\n\nDeliverables:\n\n- evidence bundle export;\n- GitHub/GitLab comment summaries with redaction proof;\n- Backstage/Workbench-ready JSON resources;\n- central evidence-store adapter for S3/GCS/local paths;\n- benchmark report published with release artifacts.\n\nAcceptance:\n\n- one bundle can explain all blocking findings for a release;\n- generated Markdown/HTML contains no raw synthetic secrets;\n- benchmark summary is attached to CI/release runs.\n\n## Open Questions\n\n- Should provider validation live in Torque core, optional plugins, or an\n  enterprise-only rule pack?\n- Should secret scanning use a separate binary for air-gapped CI environments,\n  or remain inside `torque` and `verifier`?\n- What is the default TTL for suppressions in open-source mode?\n- Should `torque apply` block on missing security evidence by default in\n  production-tagged namespaces?\n- Which evidence store should be first-class first: local directory, S3, or the\n  existing MirrorService store?",
+      "tags": [
+        "doc",
+        "secrets",
+        "verifier",
+        "verify",
+        "redaction",
+        "evidence",
+        "security",
+        "policy"
+      ]
+    },
+    {
+      "id": "doc:security-corpus-spec",
+      "kind": "doc",
+      "title": "Security benchmark corpus spec",
+      "subtitle": "Synthetic true/false secret fixtures, metrics, and release gates",
+      "content": "# Security Benchmark Corpus Spec\n\nStatus: draft\n\nLast reviewed: 2026-05-10\n\nThis spec defines the repeatable benchmark corpus under `testdata/security/`.\nIts purpose is to make Torque secret detection claims measurable, reviewable,\nand safe to publish.\n\n## Goals\n\nThe corpus must let Torque prove detector quality with evidence instead of\nmarketing. It must support these claims:\n\n- recall by detector family;\n- precision by file type and surface;\n- false positive rate by fixture group;\n- redaction escape count;\n- runtime and report-size cost;\n- source-to-live provenance coverage;\n- live k3s boundary matrix pass/fail;\n- block-mode eligibility per detector family.\n\nThe corpus is not a dump of leaked secrets. It is a deterministic, synthetic,\nprovider-shaped benchmark suite.\n\n## Non-Goals\n\n- Do not store real credentials, leaked tokens, customer data, production logs,\n  or copied incident artifacts.\n- Do not validate synthetic secrets against provider APIs by default.\n- Do not add one-off fixtures without machine-readable expected outcomes.\n- Do not tune detectors against a hidden private corpus and then claim public\n  quality from the public corpus.\n- Do not compare to other scanners unless every scanner runs against the exact\n  same fixture set and output adapter rules.\n\n## Data Sourcing Rules\n\nAllowed sources:\n\n- synthetic strings generated from public token shape knowledge such as prefix,\n  length, and character class;\n- fake examples already present in Torque unit tests, after centralizing them\n  under `testdata/security/`;\n- provider-shaped examples that are clearly non-functional and never submitted\n  to a provider;\n- benign false-positive fixtures created from checksums, UUIDs, example docs,\n  placeholders, public test keys, Kubernetes names, and generated hashes;\n- locally generated logs, Markdown, JSON, YAML, Dockerfile, Compose, Helm, and\n  Kubernetes manifests;\n- generated large fixtures for performance and report-size testing.\n\nForbidden sources:\n\n- real leaked secrets from public repositories, bug bounty reports, breach\n  writeups, Stack Overflow, GitHub issues, logs, customer incidents, or scanner\n  demos;\n- copied vendor test corpora unless their license explicitly permits reuse and\n  every value is verified synthetic;\n- values obtained by creating real provider tokens, even if immediately\n  revoked;\n- values that could authenticate to local lab systems, cloud accounts,\n  registries, CI, k3s clusters, or GitHub;\n- fixture data containing kubeconfigs, private keys, JWTs, cookies, session\n  IDs, or bearer tokens produced by a real system.\n\nEvery corpus value must be safe to publish in GitHub and safe to display in a\nfailing test log. Reports must still redact it, because the product promise is\nzero raw secret storage.\n\n## Directory Layout\n\nCanonical layout:\n\n```text\ntestdata/security/\n  README.md\n  corpus.yaml\n  families/\n    aws/\n      true/\n      false/\n    github/\n      true/\n      false/\n    slack/\n      true/\n      false/\n    openai/\n      true/\n      false/\n    stripe/\n      true/\n      false/\n    database-url/\n      true/\n      false/\n    private-key/\n      true/\n      false/\n  surfaces/\n    env/\n    yaml/\n    json/\n    markdown/\n    dockerfile/\n    compose/\n    helm/\n    kubernetes/\n    logs/\n    reports/\n  boundary/\n    allowed/\n    blocked/\n    live-k3s/\n  scale/\n    small/\n    medium/\n    large/\n```\n\n`corpus.yaml` is the source of truth. Directories provide readable fixture\norganization only; benchmark logic must load expectations from `corpus.yaml`.\n\n## Corpus Manifest Schema\n\n`corpus.yaml`:\n\n```yaml\nversion: v1\ngeneratedBy: manual\npolicy:\n  rawValuesAreSynthetic: true\n  providerValidation: disabled\n  noRawSecretInReports: true\n\ncases:\n  - id: aws-env-positive\n    family: aws_access_key\n    scope: repo\n    surface: env\n    path: families/aws/true/env\n    fileType: env\n    sourceKind: synthetic-provider-shaped\n    expectedFindings:\n      - ruleId: secret/value_aws_access_key\n        family: aws_access_key\n        fileType: env\n        minCount: 1\n        confidenceAtLeast: 0.95\n    expectedFlow:\n      forbiddenBoundary: true\n      redactedOutput: true\n      provenanceKinds:\n        - source\n        - boundary\n        - redaction\n    rawSecrets:\n      - AKIA1234567890ABCDEF\n    blockModeEligible: true\n```\n\nRequired case fields:\n\n- `id`: stable unique identifier, kebab-cased;\n- `scope`: `repo`, `render`, `build`, `artifact`, or `live`;\n- `path` or `manifest`: fixture location relative to corpus root;\n- `fileType`: primary format used for precision accounting;\n- `expectedFindings`: explicit expected rule IDs for positive cases;\n- `rawSecrets`: synthetic values that must never appear in generated reports.\n\nRecommended case fields:\n\n- `family`: detector family for recall accounting;\n- `surface`: logical surface such as `env`, `yaml`, `helm`, `logs`, `kubernetes`;\n- `sourceKind`: `synthetic-provider-shaped`, `placeholder`, `hash`,\n  `public-test-key`, `generated-log`, `generated-scale`;\n- `expectedFlow`: provenance and boundary expectations;\n- `blockModeEligible`: whether the detector should be allowed to block when the\n  case is representative and precision gates pass;\n- `notes`: short reviewer context for why the case exists.\n\n## Fixture Data Rules\n\nPositive fixtures must:\n\n- match the detector family shape exactly enough to exercise production logic;\n- be placed in realistic context, not only bare strings;\n- include at least one negative neighbor value in the same file when practical;\n- be listed in `rawSecrets`;\n- assert the exact expected `ruleId`;\n- assert whether the flow should reach a forbidden or allowed boundary.\n\nNegative fixtures must:\n\n- represent a plausible false positive;\n- include no `expectedFindings`;\n- explain the false-positive class through `sourceKind` or `notes`;\n- be counted toward precision and false-positive rate;\n- be stable across platforms and line endings.\n\nAll fixtures must:\n\n- be deterministic;\n- be small enough for normal unit tests unless they live under `scale/`;\n- avoid external network access;\n- avoid binary blobs unless the case is explicitly testing binary-skip behavior;\n- avoid generated timestamps unless the benchmark injects them.\n\n## Detector Families\n\nMinimum first-class families:\n\n| Family | Positive examples | False-positive pressure |\n| --- | --- | --- |\n| `aws_access_key` | `AKIA`, `ASIA`, `A3T` shaped keys | example AWS docs keys, random uppercase IDs |\n| `github_token` | `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_` shapes | placeholder tokens, docs snippets |\n| `slack_token` | `xoxb-`, `xoxa-`, `xoxp-`, `xoxr-` shapes | hyphenated IDs, fake bot examples |\n| `openai_key` | `sk-` and `sk-proj-` shaped keys | generic `sk-` examples and docs placeholders |\n| `stripe_secret_key` | `sk_test_`, `sk_live_`, `rk_test_`, `rk_live_` shapes | Stripe publishable keys and examples |\n| `database_url_password` | Postgres, MySQL, MongoDB, Redis URLs with credentials | URLs without passwords, docs URLs |\n| `private_key` | PEM private key headers in source/log contexts | public keys, certificate headers |\n| `jwt` | JWT-like three-part strings | docs examples, unsigned placeholders |\n| `contextual_credential` | suspicious key plus literal value | placeholders, low-entropy examples |\n\nEach family must have:\n\n- at least one positive fixture in `env`, `yaml`, and `json` when applicable;\n- at least one false-positive fixture;\n- at least one rendered Kubernetes boundary case when applicable;\n- a documented confidence threshold;\n- a block-mode decision.\n\n## Surface Matrix\n\nThe benchmark must eventually cover these surfaces:\n\n| Surface | Required fixture types |\n| --- | --- |\n| `env` | `.env`, shell exports, quoted and unquoted values |\n| `yaml` | Helm values, app configs, nested maps, lists |\n| `json` | app settings, service account-like but fake data, escaped strings |\n| `markdown` | docs examples, fenced code blocks, inline snippets |\n| `dockerfile` | `ARG`, `ENV`, labels, comments |\n| `compose` | service env, env files, labels |\n| `helm` | values to templates to rendered manifests |\n| `kubernetes` | Secret, ConfigMap, env.value, annotations, labels, args, probes |\n| `logs` | plain logs, JSON logs, multiline stack traces |\n| `reports` | JSON, Markdown, HTML, SARIF-like outputs |\n| `mcp-grpc` | tool responses, mirror frames, streamed events |\n\n## False-Positive Taxonomy\n\nEvery negative case should map to one of these classes:\n\n- `placeholder`: `${TOKEN}`, `<api-key>`, `replace-me`, `example`;\n- `hash`: SHA1/SHA256/MD5-like strings;\n- `uuid`: UUIDs and ULIDs;\n- `checksum`: package checksums, image digests, SRI hashes;\n- `public-example`: public fake examples such as documentation keys;\n- `public-key-material`: PEM public keys and certificates;\n- `low-entropy-secret-key`: suspicious key name with non-secret value;\n- `test-fixture`: obvious fake unit-test credentials;\n- `identifier`: Kubernetes names, resource IDs, request IDs;\n- `encoded-benign`: base64 text that decodes to non-secret data.\n\nPrecision reports must break down failures by taxonomy when metadata is\navailable.\n\n## Provenance Expectations\n\nSecret flow graph expectations are part of the corpus, not incidental output.\n\nRepo/source cases should prove:\n\n```text\nsource -> boundary -> redaction\n```\n\nHelm cases should prove:\n\n```text\nvalues -> helm_template -> rendered_object -> boundary -> redaction\n```\n\nLive k3s cases should prove:\n\n```text\nlive_object -> boundary -> redaction\n```\n\nApply/runtime cases should eventually prove:\n\n```text\nvalues -> helm_template -> rendered_object -> live_object -> runtime_output -> redaction\n```\n\nThe graph must never store raw secret values. Node IDs, edge IDs, digests, and\nfingerprints must be derived from metadata or redacted fingerprints only.\n\n## Redaction Requirements\n\nFor every case, the benchmark must scan generated artifacts for `rawSecrets`\nacross:\n\n- benchmark report JSON;\n- secrets report JSON;\n- secret flow graph JSON;\n- redaction proof JSON;\n- evidence bundle Markdown;\n- generated HTML or docs surfaces when included;\n- future MCP, gRPC, mirror, and JSONL exports.\n\n`redactionEscapeCount` must be zero. A single raw synthetic value in an artifact\nis a benchmark failure, even if the detector otherwise works.\n\n## Metrics\n\nThe benchmark report must expose:\n\n- `summary.recall`;\n- `summary.precision`;\n- `summary.falsePositiveRate`;\n- `summary.runtimeMillis`;\n- `summary.redactionEscapeCount`;\n- `summary.flowGraphNodes`;\n- `summary.flowGraphEdges`;\n- `summary.provenanceChains`;\n- `summary.liveObjects`;\n- `recallBySecretFamily`;\n- `precisionByFileType`;\n- `falsePositiveRateByTaxonomy` when metadata exists;\n- per-case `truePositives`, `falsePositives`, `falseNegatives`;\n- per-case `findingRules`;\n- live k3s boundary status when requested.\n\n## Block-Mode Eligibility\n\nA detector family can be enabled for blocking only when all are true:\n\n- family recall meets the configured threshold;\n- precision meets the configured threshold on every required file type;\n- false-positive rate is inside the configured budget;\n- redaction escape count is zero;\n- runtime increase is inside the configured budget;\n- at least one forbidden-boundary rendered or live case is covered when the\n  family can appear in Kubernetes workflows;\n- the detector has documented false-positive classes and suppressions guidance.\n\nExample policy:\n\n```yaml\nblockMode:\n  default:\n    minRecall: 0.98\n    minPrecision: 0.95\n    maxFalsePositiveRate: 0.02\n    maxRuntimeIncreasePercent: 10\n  families:\n    aws_access_key:\n      minRecall: 1.0\n      minPrecision: 0.98\n```\n\n## Generator\n\nThe corpus should include a deterministic generator once the fixture count grows:\n\n```bash\ngo run ./cmd/torque security corpus generate \\\n  --spec ./testdata/security/corpus.yaml \\\n  --out ./testdata/security\n```\n\nGenerator rules:\n\n- use a fixed seed checked into `corpus.yaml`;\n- generate only synthetic provider-shaped values;\n- mark generated values in comments where the file format allows comments;\n- emit a manifest update with `rawSecrets`;\n- refuse to overwrite hand-authored cases unless `--update` is passed;\n- never call provider APIs.\n\n## Review Checklist\n\nEvery corpus PR must answer:\n\n- Which detector family or false-positive class does this add?\n- Is every raw value synthetic and listed in `rawSecrets`?\n- Does the case have exact expected rule IDs?\n- Does the benchmark pass with zero redaction escapes?\n- Does the fixture improve recall, precision, boundary coverage, provenance, or\n  runtime evidence?\n- Is the detector block-mode decision unchanged or explicitly updated?\n\nRequired validation:\n\n```bash\ntorque security benchmark --corpus ./testdata/security --report benchmark.json\nmake preflight\n```\n\nWhen live Kubernetes boundaries are affected:\n\n```bash\ntorque security benchmark --corpus ./testdata/security \\\n  --report benchmark-live.json \\\n  --live-k3s-boundary-matrix --live-confirm\n```\n\n## Rollout Phases\n\nPhase 1: Family coverage\n\n- Add true/false fixtures for AWS, GitHub, Slack, OpenAI, Stripe, database URLs,\n  and private keys.\n- Add `family`, `surface`, `sourceKind`, and `blockModeEligible` metadata.\n- Keep all cases small enough for default `go test`.\n\nPhase 2: Surface coverage\n\n- Add Dockerfile, Compose, logs, Markdown, JSON, and Helm template cases.\n- Add false-positive taxonomy metrics.\n- Add per-file-type precision gates.\n\nPhase 3: Runtime and report surfaces\n\n- Add runtime-output fixtures for logs, evidence bundles, HTML, Markdown, MCP,\n  gRPC, mirror frames, and JSONL.\n- Assert zero raw escapes across all generated artifacts.\n\nPhase 4: Scale and regression gates\n\n- Add medium and large generated corpora.\n- Add runtime budget and report-size budget gates.\n- Add benchmark diff support for CI.\n\nPhase 5: Competitor adapters\n\n- Add optional adapters that run the same corpus through external scanners.\n- Normalize findings into the Torque benchmark schema.\n- Publish comparison only when commands, versions, and adapter assumptions are\n  recorded in the report.",
+      "tags": [
+        "doc",
+        "secrets",
+        "security",
+        "benchmark",
+        "corpus",
+        "detectors",
+        "redaction",
+        "evidence"
+      ]
+    },
+    {
+      "id": "doc:guardian",
+      "kind": "doc",
+      "title": "Torque Guardian",
+      "subtitle": "Observe-only runtime drift proof and repair artifacts",
+      "content": "# Torque Guardian\n\nTorque Guardian is the observe-only runtime proof layer. It connects a\n`torque apply simulate` proof to live Kubernetes objects, managed fields,\nevents, runtime secret-boundary checks, rollout aftercare, and PR-ready repair\nartifacts.\n\n```bash\ntorque guardian install --namespace torque-system --mode observe\n\ntorque guardian report --since 24h --out runtime-proof.json\n\ntorque guardian diff \\\n  --source ./torque-sim-proof \\\n  --live \\\n  --out drift-proof.json\n\ntorque guardian pr \\\n  --from drift-proof.json \\\n  --branch fix/runtime-drift\n```\n\n## Observe-Only Install\n\n`guardian install` creates read-only RBAC and a config marker. It does not\ninstall a mutating controller and does not apply fixes.\n\n```bash\ntorque guardian install --namespace torque-system --mode observe\ntorque guardian install --namespace torque-system --mode observe --dry-run\n```\n\nThe installed ClusterRole grants only `get`, `list`, and `watch` verbs.\n\n## Runtime Proof\n\n`guardian report` writes a runtime event proof for a time window:\n\n```bash\ntorque guardian report --since 24h --out runtime-proof.json\ntorque guardian report --since 30m --all-namespaces --format json\n```\n\nThe report redacts secret-like strings in event messages before writing output.\n\n## Drift Proof\n\n`guardian diff` compares `predicted-live-state.json` from a simulation proof\nagainst live objects:\n\n```bash\ntorque apply simulate --chart ./chart --release api -n prod --out ./torque-sim-proof\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json\n```\n\nIt catches:\n\n- live object drift from source/rendered state;\n- resources missing after simulation;\n- `kubectl edit` or suspicious managed-field owners;\n- webhook/controller/HPA field ownership changes;\n- Warning events in the aftercare window;\n- Deployment availability regressions;\n- secret-like values copied into ConfigMaps, metadata, or env values.\n\nThe comparison normalizes Helm ownership metadata and common Kubernetes API\ndefaults when those fields were absent from the desired object, so the proof\nstays focused on meaningful runtime drift.\n\nIf `--out` ends in `.json`, Guardian writes one JSON drift proof. If `--out` is\na directory, Guardian writes the full runtime proof bundle:\n\n```text\ntorque-runtime-proof/\n  manifest.json\n  predicted-vs-live.diff.json\n  managed-fields.owners.json\n  drift.timeline.json\n  events.timeline.json\n  runtime.secret.boundary.json\n  rollout.aftercare.json\n  fix/\n    drift-fix.patch\n    pr.md\n```\n\n## PR Artifacts\n\n`guardian pr` turns a drift proof into a review-ready Markdown body and a patch\nthat adds a `.torque/guardian/*-drift.md` evidence note:\n\n```bash\ntorque guardian pr --from drift-proof.json --branch fix/runtime-drift\ntorque guardian pr --from ./torque-runtime-proof --out ./fix\n```\n\nThe patch is intentionally conservative: Guardian does not decide whether the\nsource chart or the live object is authoritative. It records proof and\nvalidation commands so the repair happens through review.\n\n## Incident Replay\n\nUse Incident beside Guardian when drift proof is not enough and you need a\nportable failure timeline:\n\n```bash\ntorque incident capture --release api -n prod --since 1h --out incident.torque\ntorque incident replay incident.torque --lab k3s --out incident-replay-proof/\n```",
+      "tags": [
+        "doc",
+        "guardian",
+        "drift",
+        "runtime",
+        "events",
+        "managed-fields",
+        "repair",
+        "proof"
+      ]
+    },
+    {
+      "id": "doc:incident",
+      "kind": "doc",
+      "title": "Torque Incident",
+      "subtitle": "Observe-only incident capture, replay, explain, and PR artifacts",
+      "content": "# Torque Incident\n\nTorque Incident is the observe-only incident time machine. It captures runtime\nevidence for a release, validates the portable bundle in a lab replay, explains\nthe likely root cause, and writes PR-ready repair artifacts without mutating the\ncluster.\n\n```bash\ntorque incident capture \\\n  --release api \\\n  -n prod \\\n  --since 1h \\\n  --out incident.torque\n\ntorque incident replay \\\n  incident.torque \\\n  --lab k3s \\\n  --out incident-replay-proof/\n\ntorque incident explain \\\n  --from incident-replay-proof/ \\\n  --out root-cause.json\n\ntorque incident pr \\\n  --from root-cause.json \\\n  --branch fix/api-incident\n```\n\n## Observe-Only Capture\n\n`incident capture` reads release-labeled Kubernetes state and writes a single\nJSON bundle. It does not create, update, patch, delete, roll back, or repair\ncluster resources.\n\nCaptured evidence includes:\n\n- release-labeled workload, service, config, RBAC, HPA, PDB, and pod objects;\n- resource readiness/status snapshots;\n- Kubernetes events for the capture window;\n- bounded pod log snippets;\n- managed-field owners;\n- runtime Secret/ConfigMap/env boundary findings;\n- rollout aftercare findings;\n- a causal timeline and initial root-cause guess.\n\nSecret-like strings are redacted before output is written. Kubernetes Secret\n`data` and `stringData` are never copied into the bundle.\n\n## Replay Proof\n\n`incident replay` validates that the bundle is complete enough to explain in a\nlab workflow and writes a proof directory:\n\n```text\nincident-replay-proof/\n  manifest.json\n  capture.bundle.json\n  replay.result.json\n  causal.timeline.json\n  events.timeline.json\n  logs.redacted.json\n  managed-fields.owners.json\n  secret.boundary.json\n  root-cause.json\n  fix/\n    incident-fix.patch\n    pr.md\n```\n\nReplay is intentionally read-only in this first implementation. The `--lab k3s`\nlabel records which validation profile was used; it does not apply resources to\nthe lab cluster.\n\n## Root Cause And PR\n\n`incident explain` loads either an incident bundle or replay proof directory and\nwrites a root-cause JSON file. `incident pr` turns that explanation into a\nreview-ready Markdown body and an evidence patch under `.torque/incidents/`.\n\nThe first root-cause heuristics prioritize:\n\n- image pull failures;\n- crash loops;\n- runtime secret-boundary violations;\n- high-severity rollout aftercare and Warning events.\n\nUse Guardian with Incident when you need both source-to-live drift proof and\nincident replay evidence:\n\n```bash\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json\ntorque incident capture --release api -n prod --since 1h --out incident.torque\ntorque incident replay incident.torque --lab k3s --out incident-replay-proof/\n```",
+      "tags": [
+        "doc",
+        "incident",
+        "replay",
+        "root-cause",
+        "events",
+        "logs",
+        "repair",
+        "proof"
+      ]
+    },
+    {
+      "id": "doc:contract",
+      "kind": "doc",
+      "title": "Torque Runtime Contract",
+      "subtitle": "Observe-only contract synthesis, test proof, and PR artifacts",
+      "content": "# Torque Runtime Contract\n\nRuntime Contract turns proof from Guardian and Incident into observe-only\nrecurrence rules. It lets a team say \"this failure must not happen again\" in a\nmachine-checkable file, then prove future evidence satisfies that contract.\n\n```bash\ntorque contract synthesize \\\n  --from incident-replay-proof/ \\\n  --guardian drift-proof.json \\\n  --out torque-contract.yaml\n\ntorque contract test \\\n  --contract torque-contract.yaml \\\n  --from incident-replay-proof/ \\\n  --guardian drift-proof.json \\\n  --out contract-proof.json\n\ntorque contract pr \\\n  --contract torque-contract.yaml \\\n  --proof contract-proof.json \\\n  --branch add/api-runtime-contract\n```\n\nThe first implementation is strictly observe-only. It reads proof files and\nwrites contract/proof/PR artifacts. It does not install an admission webhook,\npatch Kubernetes objects, or mutate source files.\n\n## Contract Synthesis\n\n`contract synthesize` reads one or both evidence sources:\n\n- Incident bundle, root-cause JSON, or incident replay proof directory;\n- Guardian drift proof JSON or full runtime proof directory.\n\nIt writes a `RuntimeContract` YAML file with deterministic invariants derived\nfrom the evidence. Current invariant families include:\n\n- incident replay proof must be complete;\n- blocked incident root cause must be absent;\n- image pull failures must not recur;\n- runtime secret-boundary findings must be zero;\n- rollout aftercare must pass;\n- specific unhealthy resources must be available;\n- predicted live state must match Guardian simulation proof;\n- Warning event reasons must be absent;\n- suspicious managed-field owners must be absent;\n- captured log failure signals must be absent.\n\nIf the source proof contains no concrete failure signal, Torque writes a\nfallback `runtime.proof.clean` invariant that requires clean runtime proof.\n\n## Contract Test Proof\n\n`contract test` evaluates the contract against fresh proof artifacts and writes\nJSON:\n\n```json\n{\n  \"tool\": \"torque-contract\",\n  \"passed\": false,\n  \"blocked\": true,\n  \"summary\": {\n    \"invariants\": 8,\n    \"passed\": 1,\n    \"failed\": 7,\n    \"missingEvidence\": 0,\n    \"criticalFailures\": 2\n  }\n}\n```\n\nMissing evidence is a failure. For example, a contract that requires Guardian\ndrift proof fails if `--guardian` is omitted. Use `--fail-on-blocked` in CI when\nthe contract should gate a release.\n\nAll evidence messages are redacted before they are copied into the contract\nproof or PR body.\n\n## PR Artifacts\n\n`contract pr` turns a contract test proof into review-ready artifacts:\n\n```text\nfix/\n  runtime-contract.patch\n  pr.md\n```\n\nThe patch records a `.torque/contracts/*` evidence note. The PR body includes\ncontract status, failed invariants, missing evidence count, and a copy/paste\nvalidation command.\n\n## Recommended Flow\n\nUse Runtime Contract after a real incident has already been captured:\n\n```bash\ntorque guardian diff --source ./torque-sim-proof --live --out drift-proof.json\ntorque incident capture --release api -n prod --since 1h --out incident.torque\ntorque incident replay incident.torque --lab k3s --out incident-replay-proof/\n\ntorque contract synthesize \\\n  --from incident-replay-proof/ \\\n  --guardian drift-proof.json \\\n  --out torque-contract.yaml\n\ntorque contract test \\\n  --contract torque-contract.yaml \\\n  --from incident-replay-proof/ \\\n  --guardian drift-proof.json \\\n  --out contract-proof.json\n```\n\nThe first test against the original broken proof should usually fail; that is\nthe point. The same contract should pass only after fresh Guardian/Incident\nproof shows the root cause, drift, warning events, secret-boundary findings, and\naftercare issues are gone.",
+      "tags": [
+        "doc",
+        "contract",
+        "runtime",
+        "guardian",
+        "incident",
+        "recurrence",
+        "proof"
+      ]
+    },
+    {
       "id": "doc:troubleshooting",
       "kind": "doc",
       "title": "Troubleshooting",
@@ -871,7 +1381,7 @@
       "kind": "doc",
       "title": "Verifier",
       "subtitle": "Standalone policy verifier CLI",
-      "content": "# Verifier\n\nVerifier is the standalone Kubernetes policy verifier included with torque. It checks Helm charts, rendered manifests, and live namespaces with the shared torque verification engine.\n\n## Quick Start\n\n```bash\ngo install ./cmd/verifier\n\nverifier --chart ./chart --release my-app -n default\nverifier --manifest ./rendered.yaml\nverifier --namespace default --context my-context\n```\n\n## Reports And Baselines\n\n```bash\nverifier --manifest ./rendered.yaml --format html --report ./verify-report.html --open\nverifier verify.yaml --baseline ./baseline.json\nverifier verify.yaml --compare-to ./baseline.json\nverifier rules list\n```\n\nThe older `verify` binary remains available for existing CI scripts, but new docs and examples use `verifier`.\n\n![Verifier report](assets/verifier/verify.png)",
+      "content": "# Verifier\n\nVerifier is the standalone Kubernetes policy verifier included with torque. It checks Helm charts, rendered manifests, and live namespaces with the shared torque verification engine.\n\n## Quick Start\n\n```bash\ngo install ./cmd/verifier\n\nverifier --chart ./chart --release my-app -n default\nverifier --manifest ./rendered.yaml\nverifier --namespace default --context my-context\n```\n\n## Reports And Baselines\n\n```bash\nverifier --manifest ./rendered.yaml --format html --report ./verify-report.html --open\nverifier verify.yaml --baseline ./baseline.json\nverifier verify.yaml --compare-to ./baseline.json\nverifier rules list\n```\n\n## Evidence-First Security\n\n```bash\nverifier --chart ./chart --release api -n prod \\\n  --security-profile enterprise \\\n  --security-boundary-matrix \\\n  --secret-flow-graph \\\n  --secrets-report secrets.json \\\n  --security-evidence ./torque-security-evidence \\\n  --format json --report verify.json\n```\n\nThe enterprise security profile scans rendered Kubernetes objects for\nsecret-like values outside approved Secret boundaries, merges redacted\n`secret_flow` findings into the verifier report, writes a separate secrets\nreport, and exports a bundle with `manifest.json`, `secrets.report.json`,\n`verifier.report.json`, `boundary.matrix.json` when requested,\n`secret.flow.graph.json` when requested, `redaction.proof.json`, and\n`reports/security.md`.\n\nAdd `--security-boundary-matrix` when you want the secrets report and evidence\nbundle to include a row-by-row proof of where secret material is allowed or\nblocked. The matrix marks Kubernetes `Secret.data`/`stringData`, `secretKeyRef`,\nand secret volume references as allowed boundaries, and tracks blocked leak\nsurfaces such as `ConfigMap.data`, metadata labels/annotations, env values,\ncommands, args, and probe fields. Evidence bundles also write\n`boundary.matrix.json`.\n\nAdd `--secret-flow-graph` when you want the secrets report and evidence bundle\nto include a redacted graph of values input, Helm template, rendered object,\nlive Kubernetes object, boundary, and report redaction edges. The graph proves\nwhether a detected value reached a forbidden boundary, whether it was reported\nonly as a redacted preview, and whether allowed Kubernetes Secret material or\nreferences stayed inside approved boundaries.\n\nRun the benchmark corpus before making detector-quality claims:\n\n```bash\ntorque security benchmark --corpus ./testdata/security --report benchmark.json\n```\n\nThe benchmark publishes recall by secret family, precision by file type, false\npositive rate, runtime cost, redaction escape count, flow graph size,\nprovenance-chain count, and live k3s boundary matrix status when the live probe\nis enabled.\n\nThe older `verify` binary remains available for existing CI scripts, but new docs and examples use `verifier`.\n\nFor the next-generation security direction, see\n[Evidence-First Secrets And Verifier Spec](secrets-verifier-evidence-spec.md).\nFor corpus data rules and detector quality gates, see\n[Security Benchmark Corpus Spec](security-corpus-spec.md).\n\n![Verifier report](assets/verifier/verify.png)",
       "tags": [
         "doc",
         "verifier",
@@ -1527,6 +2037,15 @@
       ]
     },
     {
+      "id": "flag:apply",
+      "kind": "flag",
+      "title": "--apply",
+      "content": "Write repair files into the chart",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:apply-capture",
       "kind": "flag",
       "title": "--apply-capture",
@@ -1590,10 +2109,28 @@
       ]
     },
     {
+      "id": "flag:auto-rollback",
+      "kind": "flag",
+      "title": "--auto-rollback",
+      "content": "Rollback and write proof when apply fails or a rollout SLO gate fails",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:baseline",
       "kind": "flag",
       "title": "--baseline",
       "content": "Write plan JSON baseline to this path",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:branch",
+      "kind": "flag",
+      "title": "--branch",
+      "content": "Repair branch name to create when --apply is used in a clean git worktree\n\nAvailable on: 4 commands",
       "tags": [
         "flag"
       ]
@@ -1791,7 +2328,7 @@
       "id": "flag:chart",
       "kind": "flag",
       "title": "--chart",
-      "content": "Chart reference (path, repo/name, or OCI ref)\n\nAvailable on: 4 commands",
+      "content": "Chart reference (path, repo/name, or OCI ref)\n\nAvailable on: 7 commands",
       "tags": [
         "flag"
       ]
@@ -1950,6 +2487,24 @@
       ]
     },
     {
+      "id": "flag:contract",
+      "kind": "flag",
+      "title": "--contract",
+      "content": "RuntimeContract YAML/JSON file\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:corpus",
+      "kind": "flag",
+      "title": "--corpus",
+      "content": "Security benchmark corpus directory\n\nDefault: ./testdata/security",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:create-namespace",
       "kind": "flag",
       "title": "--create-namespace",
@@ -2061,7 +2616,16 @@
       "id": "flag:dry-run",
       "kind": "flag",
       "title": "--dry-run",
-      "content": "Render the chart without applying it\n\nAvailable on: 5 commands",
+      "content": "Render the chart without applying it\n\nAvailable on: 6 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:evaluated-at",
+      "kind": "flag",
+      "title": "--evaluated-at",
+      "content": "Override evaluation time (RFC3339) for deterministic reports/tests\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -2112,6 +2676,24 @@
       ]
     },
     {
+      "id": "flag:fail-on",
+      "kind": "flag",
+      "title": "--fail-on",
+      "content": "Fail threshold: info|low|medium|high|critical\n\nDefault: high",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:fail-on-blocked",
+      "kind": "flag",
+      "title": "--fail-on-blocked",
+      "content": "Exit non-zero when the replayed proof is blocked\n\nAvailable on: 4 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:failed",
       "kind": "flag",
       "title": "--failed",
@@ -2130,6 +2712,15 @@
       ]
     },
     {
+      "id": "flag:flow-graph",
+      "kind": "flag",
+      "title": "--flow-graph",
+      "content": "Add a redacted secret flow graph to the JSON report",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:force",
       "kind": "flag",
       "title": "--force",
@@ -2142,7 +2733,16 @@
       "id": "flag:format",
       "kind": "flag",
       "title": "--format",
-      "content": "Output format: table, json, yaml\n\nDefault: table\n\nAvailable on: 7 commands",
+      "content": "Output format: table, json, yaml\n\nDefault: table\n\nAvailable on: 22 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:from",
+      "kind": "flag",
+      "title": "--from",
+      "content": "Apply proof bundle JSON to diagnose\n\nAvailable on: 6 commands",
       "tags": [
         "flag"
       ]
@@ -2152,6 +2752,15 @@
       "kind": "flag",
       "title": "--from-bundle",
       "content": "Run from a sealed plan bundle (.tgz)\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:from-live",
+      "kind": "flag",
+      "title": "--from-live",
+      "content": "Use live cluster state and server-side dry-run behavior\n\nDefault: true",
       "tags": [
         "flag"
       ]
@@ -2193,6 +2802,15 @@
       ]
     },
     {
+      "id": "flag:guardian",
+      "kind": "flag",
+      "title": "--guardian",
+      "content": "Guardian drift proof JSON or runtime proof directory\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:helm",
       "kind": "flag",
       "title": "--helm",
@@ -2223,7 +2841,7 @@
       "id": "flag:include-crds",
       "kind": "flag",
       "title": "--include-crds",
-      "content": "Render CRDs in addition to the main chart objects",
+      "content": "Render CRDs in addition to the main chart objects\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -2319,6 +2937,15 @@
       ]
     },
     {
+      "id": "flag:lab",
+      "kind": "flag",
+      "title": "--lab",
+      "content": "Replay lab profile label\n\nDefault: k3s\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:layout",
       "kind": "flag",
       "title": "--layout",
@@ -2332,6 +2959,42 @@
       "kind": "flag",
       "title": "--limit",
       "content": "Maximum number of runs to list (newest first)\n\nDefault: 20",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:live",
+      "kind": "flag",
+      "title": "--live",
+      "content": "Compare against live Kubernetes objects\n\nDefault: true",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:live-confirm",
+      "kind": "flag",
+      "title": "--live-confirm",
+      "content": "Confirm that --live-k3s-boundary-matrix may create and delete its namespace",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:live-k3s-boundary-matrix",
+      "kind": "flag",
+      "title": "--live-k3s-boundary-matrix",
+      "content": "Run the live k3s boundary matrix probe against a temporary namespace",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:live-namespace",
+      "kind": "flag",
+      "title": "--live-namespace",
+      "content": "Namespace for --live-k3s-boundary-matrix (default: generated)",
       "tags": [
         "flag"
       ]
@@ -2391,10 +3054,28 @@
       ]
     },
     {
+      "id": "flag:log-tail",
+      "kind": "flag",
+      "title": "--log-tail",
+      "content": "Log lines per container to include (0 disables logs)\n\nDefault: 80",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:logfile",
       "kind": "flag",
       "title": "--logfile",
       "content": "Log to file instead of stdout/stderr",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:manifest",
+      "kind": "flag",
+      "title": "--manifest",
+      "content": "Rendered manifest path for --scope render",
       "tags": [
         "flag"
       ]
@@ -2439,7 +3120,7 @@
       "id": "flag:mode",
       "kind": "flag",
       "title": "--mode",
-      "content": "Build mode: auto, dockerfile, or compose",
+      "content": "Build mode: auto, dockerfile, or compose\n\nAvailable on: 3 commands",
       "tags": [
         "flag"
       ]
@@ -2538,7 +3219,7 @@
       "id": "flag:non-interactive",
       "kind": "flag",
       "title": "--non-interactive",
-      "content": "Fail instead of prompting (requires --yes)\n\nAvailable on: 4 commands",
+      "content": "Fail instead of prompting (requires --yes)\n\nAvailable on: 5 commands",
       "tags": [
         "flag"
       ]
@@ -2574,7 +3255,7 @@
       "id": "flag:out",
       "kind": "flag",
       "title": "--out",
-      "content": "Output bundle path (defaults to --root/.torque/stack/exports/<runId>.tgz)\n\nAvailable on: 3 commands",
+      "content": "Proof bundle directory (default: ./torque-sim-proof-<release>-<timestamp>)\n\nAvailable on: 14 commands",
       "tags": [
         "flag"
       ]
@@ -2583,7 +3264,7 @@
       "id": "flag:output",
       "kind": "flag",
       "title": "--output",
-      "content": "Build output mode: auto (default), tty (live dashboard), or logs (streaming)\n\nDefault: auto\n\nAvailable on: 7 commands",
+      "content": "Build output mode: auto (default), tty (live dashboard), or logs (streaming)\n\nDefault: auto\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -2706,6 +3387,24 @@
       ]
     },
     {
+      "id": "flag:pr-body",
+      "kind": "flag",
+      "title": "--pr-body",
+      "content": "Write a Markdown PR body to this path",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:predict",
+      "kind": "flag",
+      "title": "--predict",
+      "content": "Predict rollout risk, restarts, missing dependencies, quota pressure, and rollback confidence before applying",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:preset",
       "kind": "flag",
       "title": "--preset",
@@ -2728,6 +3427,24 @@
       "kind": "flag",
       "title": "--progressive-concurrency",
       "content": "Start at 1 worker, then ramp up/down based on successes/failures",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:proof",
+      "kind": "flag",
+      "title": "--proof",
+      "content": "RuntimeContract proof JSON from torque contract test",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:proof-bundle",
+      "kind": "flag",
+      "title": "--proof-bundle",
+      "content": "Write a predictive apply proof bundle JSON to this path (default: torque-proof-bundle-<release>-<timestamp>.json)",
       "tags": [
         "flag"
       ]
@@ -2790,7 +3507,7 @@
       "id": "flag:release",
       "kind": "flag",
       "title": "--release",
-      "content": "Helm release name\n\nAvailable on: 5 commands",
+      "content": "Helm release name\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -2895,6 +3612,15 @@
       ]
     },
     {
+      "id": "flag:report",
+      "kind": "flag",
+      "title": "--report",
+      "content": "Write JSON report to this path\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:require-verified",
       "kind": "flag",
       "title": "--require-verified",
@@ -2940,10 +3666,19 @@
       ]
     },
     {
+      "id": "flag:rollback-proof",
+      "kind": "flag",
+      "title": "--rollback-proof",
+      "content": "Write auto-rollback proof JSON to this path (default: torque-rollback-proof-<release>-<timestamp>.json)",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:root",
       "kind": "flag",
       "title": "--root",
-      "content": "Repo root (scope=repo) or stack root when --config is unset\n\nDefault: .",
+      "content": "Repo root (scope=repo) or stack root when --config is unset\n\nDefault: .\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -3096,7 +3831,7 @@
       "id": "flag:scope",
       "kind": "flag",
       "title": "--scope",
-      "content": "Discovery scope: repo, chart, or stack\n\nDefault: repo",
+      "content": "Discovery scope: repo, chart, or stack\n\nDefault: repo\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -3123,7 +3858,7 @@
       "id": "flag:secret-config",
       "kind": "flag",
       "title": "--secret-config",
-      "content": "Secrets provider config file (defaults to ~/.torque/config.yaml and repo .torque.yaml)\n\nAvailable on: 7 commands",
+      "content": "Secrets provider config file (defaults to ~/.torque/config.yaml and repo .torque.yaml)\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -3132,7 +3867,7 @@
       "id": "flag:secret-provider",
       "kind": "flag",
       "title": "--secret-provider",
-      "content": "Secret provider name for secret:// references\n\nAvailable on: 7 commands",
+      "content": "Secret provider name for secret:// references\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -3192,6 +3927,24 @@
       ]
     },
     {
+      "id": "flag:security-evidence",
+      "kind": "flag",
+      "title": "--security-evidence",
+      "content": "Existing verifier/security evidence directory to attach",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:security-profile",
+      "kind": "flag",
+      "title": "--security-profile",
+      "content": "Security profile to apply (default or enterprise)",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:session",
       "kind": "flag",
       "title": "--session",
@@ -3204,7 +3957,7 @@
       "id": "flag:set",
       "kind": "flag",
       "title": "--set",
-      "content": "Set values on the command line (key=val)\n\nDefault: []\n\nAvailable on: 6 commands",
+      "content": "Set values on the command line (key=val)\n\nDefault: []\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -3213,7 +3966,7 @@
       "id": "flag:set-file",
       "kind": "flag",
       "title": "--set-file",
-      "content": "Set values from files (key=path)\n\nDefault: []\n\nAvailable on: 5 commands",
+      "content": "Set values from files (key=path)\n\nDefault: []\n\nAvailable on: 6 commands",
       "tags": [
         "flag"
       ]
@@ -3222,7 +3975,7 @@
       "id": "flag:set-string",
       "kind": "flag",
       "title": "--set-string",
-      "content": "Set STRING values on the command line\n\nDefault: []\n\nAvailable on: 5 commands",
+      "content": "Set STRING values on the command line\n\nDefault: []\n\nAvailable on: 6 commands",
       "tags": [
         "flag"
       ]
@@ -3286,6 +4039,24 @@
       "kind": "flag",
       "title": "--skip-verify",
       "content": "Skip the verifier step and do not enforce --require-verified on apply",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:slo",
+      "kind": "flag",
+      "title": "--slo",
+      "content": "Rollout SLO YAML for --auto-rollback gates\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:source",
+      "kind": "flag",
+      "title": "--source",
+      "content": "Simulation proof directory from torque apply simulate",
       "tags": [
         "flag"
       ]
@@ -3483,7 +4254,7 @@
       "id": "flag:version",
       "kind": "flag",
       "title": "--version",
-      "content": "Print version and exit\n\nAvailable on: 4 commands",
+      "content": "Print version and exit\n\nAvailable on: 5 commands",
       "tags": [
         "flag"
       ]
@@ -3582,7 +4353,7 @@
       "id": "flag:yes",
       "kind": "flag",
       "title": "--yes",
-      "content": "Alias for --auto-approve\n\nAvailable on: 7 commands",
+      "content": "Alias for --auto-approve\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -3591,7 +4362,7 @@
       "id": "flag:all-namespaces",
       "kind": "flag",
       "title": "-A, --all-namespaces",
-      "content": "List releases across all namespaces\n\nAvailable on: 3 commands",
+      "content": "List releases across all namespaces\n\nAvailable on: 4 commands",
       "tags": [
         "flag"
       ]
@@ -3726,7 +4497,7 @@
       "id": "flag:values",
       "kind": "flag",
       "title": "-f, --values",
-      "content": "Values files to apply (can be repeated)\n\nDefault: []\n\nAvailable on: 6 commands",
+      "content": "Values files to apply (can be repeated)\n\nDefault: []\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -3798,7 +4569,7 @@
       "id": "flag:namespace",
       "kind": "flag",
       "title": "-n, --namespace",
-      "content": "Namespace for the Helm release (defaults to active context)\n\nAvailable on: 10 commands",
+      "content": "Namespace for the Helm release (defaults to active context)\n\nAvailable on: 16 commands",
       "tags": [
         "flag"
       ]
@@ -3843,7 +4614,7 @@
       "id": "flag:since",
       "kind": "flag",
       "title": "-s, --since",
-      "content": "Return logs newer than a relative duration like 5s, 2m, or 3h",
+      "content": "Return logs newer than a relative duration like 5s, 2m, or 3h\n\nAvailable on: 4 commands",
       "tags": [
         "flag"
       ]

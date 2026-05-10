@@ -1,0 +1,4 @@
+api:
+  endpoint: https://example.internal
+  awsAccessKey: AKIA1234567890ABCDEF
+  region: us-east-1

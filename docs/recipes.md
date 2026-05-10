@@ -53,17 +53,60 @@ torque apply plan --chart ./chart --release foo -n default
 torque apply plan --chart ./chart --release foo -n default --github-comment --output plan.md
 
 # Attach verifier and build evidence to the PR summary
-verifier --chart ./chart --release foo -n default --format json --report verify.json
+verifier --chart ./chart --release foo -n default \
+  --security-evidence ./torque-security-evidence \
+  --format json --report verify.json
 torque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
 torque apply plan --chart ./chart --release foo -n default \
   --verify-report verify.json --build-capture ./build.sqlite \
   --github-comment --output plan.md
+
+# Simulate live API behavior and write a replayable proof directory
+torque apply simulate --chart ./chart --release foo -n default \
+  --security-evidence ./torque-security-evidence \
+  --out ./torque-sim-proof
+torque replay ./torque-sim-proof --lab k3s
+
+# Prove runtime drift after simulation
+torque guardian install --namespace torque-system --mode observe
+torque guardian report --since 24h --out runtime-proof.json
+torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json
+torque guardian pr --from drift-proof.json --branch fix/runtime-drift
+
+# Capture and replay an incident window
+torque incident capture --release foo -n default --since 1h --out incident.torque
+torque incident replay incident.torque --lab k3s --out incident-replay-proof
+torque incident explain --from incident-replay-proof --out root-cause.json
+torque incident pr --from root-cause.json --branch fix/foo-incident
 
 # Deploy
 torque apply --chart ./chart --release foo -n default
 
 # Deploy with the viewer UI
 torque apply --chart ./chart --release foo -n default --ui
+
+# Predict rollout risk and write a portable proof bundle
+torque apply --chart ./chart --release foo -n default \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --yes
+
+# Deploy with auto rollback proof and rollout SLO gates
+cat > slo.yaml <<'YAML'
+apiVersion: torque.ingresslabs.dev/v1alpha1
+kind: RolloutSLO
+spec:
+  minReadyPercent: 100
+  maxFailedResources: 0
+  maxPendingResources: 0
+YAML
+torque apply --chart ./chart --release foo -n default \
+  --auto-rollback --slo ./slo.yaml \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --yes
+
+# Turn a failed proof bundle into a repair branch and PR body
+torque repair --from ./apply-proof.json --chart ./chart \
+  --branch fix/foo-rollout --apply --pr-body ./repair-pr.md --yes
 ```
 
 ## Build → verify → plan → apply
@@ -75,6 +118,14 @@ torque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
 # Verify the rendered chart.
 verifier --chart ./chart --release foo -n default --format json --report verify.json
 
+# Verify with evidence-first secret flow checks and a redaction proof bundle.
+verifier --chart ./chart --release foo -n default \
+  --security-profile enterprise \
+  --security-boundary-matrix \
+  --secrets-report secrets.json \
+  --security-evidence ./torque-security-evidence \
+  --format json --report verify.json
+
 # Write a PR-ready plan with verifier and build evidence attached.
 torque apply plan --chart ./chart --release foo -n default \
   --verify-report verify.json --build-capture ./build.sqlite \
@@ -82,7 +133,10 @@ torque apply plan --chart ./chart --release foo -n default \
 
 # Apply with the verify report enforced, capture the rollout, and explain it.
 torque apply --chart ./chart --release foo -n default \
-  --require-verified verify.json --capture ./apply.sqlite --yes
+  --require-verified verify.json \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --yes
+torque repair --from ./apply-proof.json --chart ./chart --pr-body ./repair-pr.md
 torque explain ./apply.sqlite --format markdown
 ```
 
@@ -263,6 +317,9 @@ Minimal CLI workflow (sanity check before apply):
 ```bash
 torque secrets test --secret-provider vault --ref secret://vault/app/db#password
 torque secrets list --secret-provider vault --path app
+torque secrets scan --scope repo --report secrets.json --mode block --flow-graph
+torque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block --flow-graph
+torque security benchmark --corpus ./testdata/security --report benchmark.json
 ```
 
 ## Regression-proof plans

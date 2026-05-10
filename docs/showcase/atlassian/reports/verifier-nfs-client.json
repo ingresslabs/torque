@@ -1,0 +1,224 @@
+{
+  "tool": "torque-verify",
+  "engine": {
+    "name": "builtin",
+    "ruleset": "builtin@6796ad0a7958e25e298f4ee1607d2b075086bdae00a7056bfe36d002b23c4cf1"
+  },
+  "mode": "block",
+  "failOn": "high",
+  "passed": true,
+  "blocked": false,
+  "evaluatedAt": "2026-05-10T14:10:05.203645Z",
+  "inputs": [
+    {
+      "kind": "chart",
+      "chart": "/tmp/torque-atlassian/charts/release/nfs-client",
+      "release": "nfs-client",
+      "namespace": "storage",
+      "renderedSha256": "13a22558673182682df69f2935e26c8717f012e7275ec169acb41dd265e67137"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "bySeverity": {
+      "low": 2,
+      "medium": 2
+    },
+    "byRule": {
+      "k8s/container_liveness_probe_required": 1,
+      "k8s/container_read_only_root_filesystem": 1,
+      "k8s/container_readiness_probe_required": 1,
+      "k8s/service_account_token_automount_not_disabled": 1
+    },
+    "byRuleSeverity": {
+      "k8s/container_liveness_probe_required": {
+        "low": 1
+      },
+      "k8s/container_read_only_root_filesystem": {
+        "medium": 1
+      },
+      "k8s/container_readiness_probe_required": {
+        "low": 1
+      },
+      "k8s/service_account_token_automount_not_disabled": {
+        "medium": 1
+      }
+    },
+    "passed": true,
+    "blocked": false
+  },
+  "findings": [
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/nfs-client.rendered.yaml",
+      "line": 150,
+      "location": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/Deployment/nfs-client-nfs-subdir-external-provisioner",
+      "expected": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/Deployment/nfs-client-nfs-subdir-external-provisioner:metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/nfs-client:v4.0.2-custom-20260510",
+            "name": "nfs-subdir-external-provisioner",
+            "resources": {
+              "limits.memory": "256Mi",
+              "requests.memory": "64Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner",
+        "serviceAccountName": "nfs-client-nfs-subdir-external-provisioner",
+        "templateSource": "nfs-subdir-external-provisioner/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/nfs-client.rendered.yaml",
+      "line": 136,
+      "location": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec",
+      "resourceKey": "cluster/Deployment/nfs-client-nfs-subdir-external-provisioner",
+      "expected": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/Deployment/nfs-client-nfs-subdir-external-provisioner:metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/nfs-client:v4.0.2-custom-20260510",
+            "name": "nfs-subdir-external-provisioner",
+            "resources": {
+              "limits.memory": "256Mi",
+              "requests.memory": "64Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner",
+        "serviceAccountName": "nfs-client-nfs-subdir-external-provisioner",
+        "templateSource": "nfs-subdir-external-provisioner/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_liveness_probe_required",
+      "severity": "low",
+      "category": "Reliability",
+      "message": "Containers should define a livenessProbe to help Kubernetes restart unhealthy workloads.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/nfs-client.rendered.yaml",
+      "line": 146,
+      "location": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.livenessProbe",
+      "resourceKey": "cluster/Deployment/nfs-client-nfs-subdir-external-provisioner",
+      "expected": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.livenessProbe should be defined",
+      "observed": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.livenessProbe is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner"
+      },
+      "fingerprint": "k8s/container_liveness_probe_required:cluster/Deployment/nfs-client-nfs-subdir-external-provisioner:metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.livenessProbe",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/nfs-client:v4.0.2-custom-20260510",
+            "name": "nfs-subdir-external-provisioner",
+            "resources": {
+              "limits.memory": "256Mi",
+              "requests.memory": "64Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner",
+        "serviceAccountName": "nfs-client-nfs-subdir-external-provisioner",
+        "templateSource": "nfs-subdir-external-provisioner/templates/deployment.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_readiness_probe_required",
+      "severity": "low",
+      "category": "Reliability",
+      "message": "Containers should define a readinessProbe to help Kubernetes route traffic only to ready workloads.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/nfs-client.rendered.yaml",
+      "line": 146,
+      "location": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.readinessProbe",
+      "resourceKey": "cluster/Deployment/nfs-client-nfs-subdir-external-provisioner",
+      "expected": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.readinessProbe should be defined",
+      "observed": "metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.readinessProbe is undefined",
+      "subject": {
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner"
+      },
+      "fingerprint": "k8s/container_readiness_probe_required:cluster/Deployment/nfs-client-nfs-subdir-external-provisioner:metadata.name={{nfs-client-nfs-subdir-external-provisioner}}.spec.template.spec.containers.name={{nfs-subdir-external-provisioner}}.readinessProbe",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/nfs-client:v4.0.2-custom-20260510",
+            "name": "nfs-subdir-external-provisioner",
+            "resources": {
+              "limits.memory": "256Mi",
+              "requests.memory": "64Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner",
+        "serviceAccountName": "nfs-client-nfs-subdir-external-provisioner",
+        "templateSource": "nfs-subdir-external-provisioner/templates/deployment.yaml"
+      }
+    }
+  ]
+}

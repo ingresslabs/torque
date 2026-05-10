@@ -1,0 +1,593 @@
+{
+  "tool": "torque-verify",
+  "engine": {
+    "name": "builtin",
+    "ruleset": "builtin@6796ad0a7958e25e298f4ee1607d2b075086bdae00a7056bfe36d002b23c4cf1"
+  },
+  "mode": "block",
+  "failOn": "high",
+  "passed": true,
+  "blocked": false,
+  "evaluatedAt": "2026-05-10T14:10:14.587155Z",
+  "inputs": [
+    {
+      "kind": "chart",
+      "chart": "/tmp/torque-atlassian/charts/atlassian-prereqs",
+      "release": "atlassian-prereqs",
+      "namespace": "atlassian",
+      "renderedSha256": "a3346c5b68fb96f4eeaedaffcfa5f6ed35437d1c88d61a560b24a2ba59f6a3f8"
+    }
+  ],
+  "summary": {
+    "total": 15,
+    "bySeverity": {
+      "info": 5,
+      "medium": 10
+    },
+    "byRule": {
+      "k8s/container_read_only_root_filesystem": 5,
+      "k8s/pod_fs_group_recommended": 5,
+      "k8s/service_account_token_automount_not_disabled": 5
+    },
+    "byRuleSeverity": {
+      "k8s/container_read_only_root_filesystem": {
+        "medium": 5
+      },
+      "k8s/pod_fs_group_recommended": {
+        "info": 5
+      },
+      "k8s/service_account_token_automount_not_disabled": {
+        "medium": 5
+      }
+    },
+    "passed": true,
+    "blocked": false
+  },
+  "findings": [
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 197,
+      "location": "metadata.name={{bamboo-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/StatefulSet/bamboo-db",
+      "expected": "metadata.name={{bamboo-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{bamboo-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "bamboo-db"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/StatefulSet/bamboo-db:metadata.name={{bamboo-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "StatefulSet",
+        "name": "bamboo-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 293,
+      "location": "metadata.name={{bitbucket-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/StatefulSet/bitbucket-db",
+      "expected": "metadata.name={{bitbucket-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{bitbucket-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "bitbucket-db"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/StatefulSet/bitbucket-db:metadata.name={{bitbucket-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "StatefulSet",
+        "name": "bitbucket-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 389,
+      "location": "metadata.name={{confluence-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/StatefulSet/confluence-db",
+      "expected": "metadata.name={{confluence-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{confluence-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "confluence-db"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/StatefulSet/confluence-db:metadata.name={{confluence-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "StatefulSet",
+        "name": "confluence-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 485,
+      "location": "metadata.name={{crowd-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/StatefulSet/crowd-db",
+      "expected": "metadata.name={{crowd-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{crowd-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd-db"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/StatefulSet/crowd-db:metadata.name={{crowd-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "StatefulSet",
+        "name": "crowd-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 581,
+      "location": "metadata.name={{jira-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/StatefulSet/jira-db",
+      "expected": "metadata.name={{jira-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{jira-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "jira-db"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/StatefulSet/jira-db:metadata.name={{jira-db}}.spec.template.spec.containers.name={{postgres}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "StatefulSet",
+        "name": "jira-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 184,
+      "location": "metadata.name={{bamboo-db}}.spec.template.spec",
+      "resourceKey": "cluster/StatefulSet/bamboo-db",
+      "expected": "metadata.name={{bamboo-db}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{bamboo-db}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "bamboo-db"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/StatefulSet/bamboo-db:metadata.name={{bamboo-db}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "StatefulSet",
+        "name": "bamboo-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 280,
+      "location": "metadata.name={{bitbucket-db}}.spec.template.spec",
+      "resourceKey": "cluster/StatefulSet/bitbucket-db",
+      "expected": "metadata.name={{bitbucket-db}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{bitbucket-db}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "bitbucket-db"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/StatefulSet/bitbucket-db:metadata.name={{bitbucket-db}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "StatefulSet",
+        "name": "bitbucket-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 376,
+      "location": "metadata.name={{confluence-db}}.spec.template.spec",
+      "resourceKey": "cluster/StatefulSet/confluence-db",
+      "expected": "metadata.name={{confluence-db}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{confluence-db}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "confluence-db"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/StatefulSet/confluence-db:metadata.name={{confluence-db}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "StatefulSet",
+        "name": "confluence-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 472,
+      "location": "metadata.name={{crowd-db}}.spec.template.spec",
+      "resourceKey": "cluster/StatefulSet/crowd-db",
+      "expected": "metadata.name={{crowd-db}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{crowd-db}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd-db"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/StatefulSet/crowd-db:metadata.name={{crowd-db}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "StatefulSet",
+        "name": "crowd-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 568,
+      "location": "metadata.name={{jira-db}}.spec.template.spec",
+      "resourceKey": "cluster/StatefulSet/jira-db",
+      "expected": "metadata.name={{jira-db}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{jira-db}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "jira-db"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/StatefulSet/jira-db:metadata.name={{jira-db}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/postgres:16-alpine-custom-20260510",
+            "name": "postgres",
+            "resources": {
+              "limits.memory": "1Gi",
+              "requests.memory": "256Mi"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "StatefulSet",
+        "name": "jira-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 88,
+      "location": "metadata.name={{bamboo-db}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Service/bamboo-db",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Service",
+        "name": "bamboo-db"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Service/bamboo-db:metadata.name={{bamboo-db}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "Service",
+        "name": "bamboo-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 105,
+      "location": "metadata.name={{bitbucket-db}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Service/bitbucket-db",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Service",
+        "name": "bitbucket-db"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Service/bitbucket-db:metadata.name={{bitbucket-db}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "Service",
+        "name": "bitbucket-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 122,
+      "location": "metadata.name={{confluence-db}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Service/confluence-db",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Service",
+        "name": "confluence-db"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Service/confluence-db:metadata.name={{confluence-db}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "Service",
+        "name": "confluence-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 139,
+      "location": "metadata.name={{crowd-db}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Service/crowd-db",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Service",
+        "name": "crowd-db"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Service/crowd-db:metadata.name={{crowd-db}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "Service",
+        "name": "crowd-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/atlassian-prereqs.rendered.yaml",
+      "line": 156,
+      "location": "metadata.name={{jira-db}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Service/jira-db",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Service",
+        "name": "jira-db"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Service/jira-db:metadata.name={{jira-db}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "Service",
+        "name": "jira-db",
+        "templateSource": "atlassian-prereqs/templates/databases.yaml"
+      }
+    }
+  ]
+}
