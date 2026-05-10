@@ -64,6 +64,18 @@ torque apply --chart ./chart --release foo -n default
 
 # Deploy with the viewer UI
 torque apply --chart ./chart --release foo -n default --ui
+
+# Deploy with auto rollback proof and rollout SLO gates
+cat > slo.yaml <<'YAML'
+apiVersion: torque.ingresslabs.dev/v1alpha1
+kind: RolloutSLO
+spec:
+  minReadyPercent: 100
+  maxFailedResources: 0
+  maxPendingResources: 0
+YAML
+torque apply --chart ./chart --release foo -n default \
+  --auto-rollback --slo ./slo.yaml --capture ./apply.sqlite --yes
 ```
 
 ## Build → verify → plan → apply

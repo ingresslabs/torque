@@ -73,6 +73,9 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 	var driftGuard bool
 	var driftGuardMode string
 	var requireVerified string
+	var autoRollback bool
+	var sloPath string
+	var rollbackProofPath string
 	timeout := 5 * time.Minute
 
 	cmd := &cobra.Command{
@@ -93,6 +96,9 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 				if strings.TrimSpace(requireVerified) != "" {
 					return fmt.Errorf("--require-verified is not supported with --remote-agent")
 				}
+				if autoRollback || strings.TrimSpace(sloPath) != "" || strings.TrimSpace(rollbackProofPath) != "" {
+					return fmt.Errorf("--auto-rollback/--slo/--rollback-proof are not supported with --remote-agent")
+				}
 				if strings.TrimSpace(secretProvider) != "" || strings.TrimSpace(secretConfig) != "" {
 					return fmt.Errorf("--secret-provider/--secret-config are not supported with --remote-agent")
 				}
@@ -105,6 +111,23 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 			}
 			if timeout <= 0 {
 				return fmt.Errorf("--timeout must be > 0")
+			}
+			if strings.TrimSpace(sloPath) != "" && !autoRollback {
+				return fmt.Errorf("--slo requires --auto-rollback")
+			}
+			if strings.TrimSpace(rollbackProofPath) != "" && !autoRollback {
+				return fmt.Errorf("--rollback-proof requires --auto-rollback")
+			}
+			if autoRollback {
+				if dryRun {
+					return fmt.Errorf("--auto-rollback cannot be combined with --dry-run")
+				}
+				if !wait {
+					return fmt.Errorf("--auto-rollback requires --wait=true")
+				}
+				if !atomic {
+					return fmt.Errorf("--auto-rollback requires --atomic=true")
+				}
 			}
 			return nil
 		},
@@ -121,8 +144,16 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 				lastSuccessful     *deploy.HistoryBreadcrumb
 				actionHeadline     string
 				console            *ui.DeployConsole
+				rollbackSLO        *applyRollbackSLO
 			)
 			ctx := cmd.Context()
+			if autoRollback {
+				var sloErr error
+				rollbackSLO, sloErr = loadApplyRollbackSLO(sloPath)
+				if sloErr != nil {
+					return sloErr
+				}
+			}
 			if remoteAgent != nil && strings.TrimSpace(*remoteAgent) != "" {
 				return runRemoteDeployApply(cmd, remoteDeployApplyArgs{
 					Chart:           chart,
@@ -471,6 +502,12 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 				_ = captureRecorder.RecordArtifact(ctx, "apply.inputs.set_string_values_json", captureJSON(setStringValues))
 				_ = captureRecorder.RecordArtifact(ctx, "apply.inputs.set_file_values_json", captureJSON(setFileValues))
 				_ = captureRecorder.RecordArtifact(ctx, "apply.inputs.values_files_json", captureJSON(deploy.HashFiles(valuesFiles)))
+				if autoRollback {
+					_ = captureRecorder.RecordArtifact(ctx, "apply.auto_rollback.enabled", "true")
+				}
+				if rollbackSLO != nil {
+					_ = captureRecorder.RecordArtifact(ctx, "apply.rollback_slo.json", captureJSON(rollbackSLO))
+				}
 			}
 
 			if stream != nil && (strings.TrimSpace(uiAddr) != "" || strings.TrimSpace(wsListenAddr) != "") {
@@ -547,6 +584,7 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 				}
 			}()
 			var statusUpdaters []deploy.StatusUpdateFunc
+			rollbackResources := &statusSnapshotRecorder{}
 			updateConsoleMetadata := func() {}
 			if console != nil {
 				updateConsoleMetadata = func() {
@@ -566,6 +604,9 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 				stopSpinner = ui.StartSpinner(errOut, fmt.Sprintf("Applying release %s", releaseName))
 			} else if shouldLogAtLevel(currentLogLevel, zapcore.WarnLevel) {
 				fmt.Fprintf(errOut, "Applying release %s\n", releaseName)
+			}
+			if autoRollback {
+				statusUpdaters = append(statusUpdaters, rollbackResources.Update)
 			}
 			// When rendering a plan (dry-run), don't start Kubernetes watchers or resource tracking:
 			// - resources aren't created, so "Pending/Unknown" tracking is misleading
@@ -645,7 +686,105 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 				ProgressObservers: progressObservers,
 			})
 			if err != nil {
+				if captureRecorder != nil {
+					_ = captureRecorder.RecordArtifact(ctx, "apply.status", "failed")
+					_ = captureRecorder.RecordArtifact(ctx, "apply.error", err.Error())
+				}
+				if autoRollback {
+					rows := rollbackResources.Snapshot()
+					if len(rows) == 0 {
+						snapCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+						rows = deploy.NewResourceTracker(kubeClient, resolvedNamespace, releaseName, trackerManifest, nil).Snapshot(snapCtx)
+						cancel()
+					}
+					historyAfter, lastSuccessfulAfter, _ := deploy.ReleaseHistoryBreadcrumbs(actionCfg, releaseName, historyBreadcrumbLimit)
+					proof := buildApplyRollbackProof(applyRollbackProofInput{
+						Release:              releaseName,
+						Namespace:            resolvedNamespace,
+						Chart:                chart,
+						ChartVersion:         version,
+						Mode:                 "helm-atomic",
+						Outcome:              "rollback-requested",
+						TriggerSource:        "helm",
+						TriggerReason:        "apply failed",
+						Err:                  err,
+						StartedAt:            startedAt,
+						SLO:                  rollbackSLO,
+						HistoryBefore:        historyBreadcrumbs,
+						LastSuccessfulBefore: lastSuccessful,
+						HistoryAfter:         historyAfter,
+						LastSuccessfulAfter:  lastSuccessfulAfter,
+						Resources:            rows,
+						PhaseDurations:       formatPhaseDurations(timerObserver.snapshot()),
+					})
+					if proofPath, proofErr := writeApplyRollbackProof(ctx, captureRecorder, rollbackProofPath, proof); proofErr != nil {
+						fmt.Fprintf(errOut, "Warning: unable to write rollback proof: %v\n", proofErr)
+					} else if proofPath != "" {
+						fmt.Fprintf(errOut, "Rollback proof written to %s\n", proofPath)
+					}
+				}
 				return err
+			}
+
+			if autoRollback && rollbackSLO != nil {
+				rows := rollbackResources.Snapshot()
+				snapCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+				rows = deploy.NewResourceTracker(kubeClient, resolvedNamespace, releaseName, trackerManifest, nil).Snapshot(snapCtx)
+				cancel()
+				if len(rows) == 0 {
+					rows = rollbackResources.Snapshot()
+				}
+				if sloErr := rollbackSLO.Evaluate(rows); sloErr != nil {
+					if captureRecorder != nil {
+						_ = captureRecorder.RecordArtifact(ctx, "apply.status", "failed")
+						_ = captureRecorder.RecordArtifact(ctx, "apply.error", sloErr.Error())
+					}
+					if stream != nil {
+						stream.EmitEvent("error", sloErr.Error())
+						stream.PhaseCompleted(deploy.PhaseWait, "failed", sloErr.Error())
+					}
+					if stopSpinner != nil {
+						stopSpinner(false)
+						stopSpinner = nil
+					}
+					mode, rollbackErr := runApplyRollback(ctx, actionCfg, releaseName, lastSuccessful, wait, timeout)
+					historyAfter, lastSuccessfulAfter, _ := deploy.ReleaseHistoryBreadcrumbs(actionCfg, releaseName, historyBreadcrumbLimit)
+					outcome := "rollback-completed"
+					triggerErr := sloErr
+					if rollbackErr != nil {
+						outcome = "rollback-failed"
+						triggerErr = errors.Join(sloErr, rollbackErr)
+					}
+					proof := buildApplyRollbackProof(applyRollbackProofInput{
+						Release:              releaseName,
+						Namespace:            resolvedNamespace,
+						Chart:                chart,
+						ChartVersion:         version,
+						Mode:                 mode,
+						Outcome:              outcome,
+						TriggerSource:        "slo",
+						TriggerReason:        "post-apply SLO failed",
+						Err:                  triggerErr,
+						StartedAt:            startedAt,
+						SLO:                  rollbackSLO,
+						HistoryBefore:        historyBreadcrumbs,
+						LastSuccessfulBefore: lastSuccessful,
+						HistoryAfter:         historyAfter,
+						LastSuccessfulAfter:  lastSuccessfulAfter,
+						Resources:            rows,
+						PhaseDurations:       formatPhaseDurations(timerObserver.snapshot()),
+					})
+					proofPath, proofErr := writeApplyRollbackProof(ctx, captureRecorder, rollbackProofPath, proof)
+					if proofErr != nil {
+						fmt.Fprintf(errOut, "Warning: unable to write rollback proof: %v\n", proofErr)
+					} else if proofPath != "" {
+						fmt.Fprintf(errOut, "Rollback proof written to %s\n", proofPath)
+					}
+					if rollbackErr != nil {
+						return fmt.Errorf("%w; auto rollback failed: %v", sloErr, rollbackErr)
+					}
+					return fmt.Errorf("%w; auto rollback completed", sloErr)
+				}
 			}
 
 			deployedRelease = result.Release
@@ -738,6 +877,9 @@ func newDeployApplyCommand(namespace *string, kubeconfig *string, kubeContext *s
 	cmd.Flags().BoolVar(&createNamespace, "create-namespace", false, "Create the release namespace if it does not exist")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Render the chart without applying it")
 	cmd.Flags().StringVar(&requireVerified, "require-verified", "", "Require a matching verify report (JSON) for this exact render before applying")
+	cmd.Flags().BoolVar(&autoRollback, "auto-rollback", false, "Rollback and write proof when apply fails or a rollout SLO gate fails")
+	cmd.Flags().StringVar(&sloPath, "slo", "", "Rollout SLO YAML for --auto-rollback gates")
+	cmd.Flags().StringVar(&rollbackProofPath, "rollback-proof", "", "Write auto-rollback proof JSON to this path (default: torque-rollback-proof-<release>-<timestamp>.json)")
 	cmd.Flags().BoolVar(&autoApprove, "auto-approve", false, "Skip interactive confirmation prompts")
 	_ = cmd.Flags().MarkHidden("auto-approve")
 	cmd.Flags().BoolVar(&autoApprove, "yes", false, "Alias for --auto-approve")

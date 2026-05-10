@@ -155,6 +155,7 @@ Apply a manifest or helm chart with instant log streaming.
 **Usage**: `torque apply [flags]`
 - `--chart`: Path to helm chart.
 - `--watch`: Stream logs after apply.
+- `--auto-rollback --slo ./slo.yaml`: Roll back failed applies or violated rollout SLO gates and write rollback proof.
 
 ## torque stack
 Manage complex multi-component releases.

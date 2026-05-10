@@ -73,6 +73,7 @@ var curatedExamples = map[string][]string{
 	"torque apply": {
 		"# Deploy a chart\ntorque apply --chart ./chart --release foo -n default",
 		"# Run the deploy viewer\ntorque apply --chart ./chart --release foo -n default --ui",
+		"# Roll back automatically and write proof if apply or SLO gates fail\ntorque apply --chart ./chart --release foo -n default --auto-rollback --slo ./slo.yaml --capture ./apply.sqlite --yes",
 		"# Deploy with secret references\ntorque apply --chart ./chart --release foo -n default --secret-provider local",
 		"# Deploy with Vault-backed secrets\ntorque apply --chart ./chart --release foo -n default --secret-provider vault",
 	},

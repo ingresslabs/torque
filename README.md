@@ -55,6 +55,16 @@ torque apply --chart ./chart --release api -n prod --capture ./apply.sqlite --ye
 torque logs 'api-.*' -n prod --capture ./logs.sqlite --tail 100
 ```
 
+Rollback-sensitive releases can ask Torque to keep proof when Helm fails or a
+post-apply SLO gate is violated:
+
+```bash
+torque apply --chart ./chart --release api -n prod \
+  --require-verified verify.json \
+  --auto-rollback --slo ./slo.yaml \
+  --capture ./apply.sqlite --yes
+```
+
 ## Showcase Reports
 
 Generated from the intentionally incomplete `testdata/charts/verify-findings`
@@ -76,6 +86,7 @@ fallback, and review-ready outputs without touching a real cluster.
 - MCP cache advisor tools for structured cache inspect, plan, and warm actions.
 - Helm release plans with Markdown, JSON, and rich HTML plan reports.
 - Verifier gates for charts, rendered manifests, and live namespaces.
+- Auto rollback proof for failed applies and rollout SLO gates.
 - Dependency-ordered stack planning and apply runs.
 - Portable SQLite evidence for builds, deploys, logs, and stack runs.
 - `torque-agent` workflows for agent-driven automation over gRPC.
