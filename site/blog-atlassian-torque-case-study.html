@@ -270,6 +270,49 @@
         border-bottom: 0;
       }
 
+      .log-tip-list {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .log-tip-list li {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid rgba(237, 241, 245, 0.14);
+        border-radius: 7px;
+        background: rgba(237, 241, 245, 0.04);
+      }
+
+      .log-tip-list strong {
+        display: block;
+        color: #ffffff;
+        font-size: 0.98rem;
+        line-height: 1.25;
+      }
+
+      .log-tip-list span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.55;
+      }
+
+      .log-tip-list pre {
+        margin: 12px 0 0;
+        padding: 12px;
+        color: #f7f9fb;
+        border: 1px solid rgba(237, 241, 245, 0.12);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.62);
+        font: 0.76rem/1.45 var(--font-mono);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
       footer {
         display: grid;
         grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
@@ -428,6 +471,38 @@
           <p>I also built custom images for the same stack. The goal was not to fork Atlassian products or bake configuration into images. The goal was to prove that Torque could own the image build step as part of the same delivery story. The Dockerfiles pinned the upstream Atlassian, PostgreSQL, and NFS provisioner bases by digest, added only small operational changes where useful, and ran through Torque build with secret scanning enabled. The Bamboo agent image is the clearest example: it keeps the upstream agent base but adds common diagnostic and CI tools such as <code>curl</code>, <code>git</code>, <code>jq</code>, <code>openssh-client</code>, <code>tar</code>, and <code>unzip</code>. The built OCI layouts were imported into k3s containerd on both nodes and then referenced from the stack values as <code>torque.local/atlassian/...</code> images.</p>
 
           <p>There were two useful debugging moments. First, generated reports showed that some chart warnings were acceptable for this lab only because the verifier gate was set to fail on high and above, not because all findings should be ignored in production. Second, one image build tripped a secret scanner false positive on packaged OpenSSH binaries inside the Bitbucket image. That is exactly the kind of case where policy should be adjustable but not disabled. I added a small scanner rules file that kept build argument and log scanning strict while avoiding that OCI-content false positive.</p>
+
+          <section class="evidence-panel" aria-labelledby="logs-title">
+            <h2 id="logs-title">Advanced Torque logs tips from this run</h2>
+            <p><code>torque logs</code> was the fastest way to separate Kubernetes problems from Atlassian first-run behavior. The same command can watch active ReplicaSets, include Kubernetes events, filter unhealthy pods, or follow a dependency chain from the stack file. I kept capture off during normal checks and only added it when the log stream needed to become durable evidence.</p>
+            <ul class="log-tip-list">
+              <li>
+                <strong>Follow an app rollout with events beside logs.</strong>
+                <span>For a stateful Atlassian product restart, include events and highlight the words that usually explain scheduling, image, and startup failures.</span>
+                <pre><code>torque logs deploy/jira -n atlassian --events --tail 80 --highlight 'ERROR|FATAL|Failed|ImagePull|BackOff'</code></pre>
+              </li>
+              <li>
+                <strong>Debug only the active Bamboo agent ReplicaSet.</strong>
+                <span>The Bamboo agent was expected to loop until Bamboo first-run setup was complete. Pinning to the active deployment view kept old ReplicaSet noise out of the session.</span>
+                <pre><code>torque logs deploy/bamboo-agent -n atlassian --deploy-mode active --events --tail 60 --highlight 'FATAL|fingerprint|setup|redirect'</code></pre>
+              </li>
+              <li>
+                <strong>Look across the namespace for pods that are not ready.</strong>
+                <span>This is useful after a stack apply because it catches app pods, database pods, and agents without guessing names first.</span>
+                <pre><code>torque logs -n atlassian --condition ready=false --events --tail 30 --exclude 'healthcheck|heartbeat'</code></pre>
+              </li>
+              <li>
+                <strong>Pull dependency context from the stack file.</strong>
+                <span>When an app complains about storage or the database, add <code>--deps</code> with the stack config so the log view follows the app and its declared prerequisites together.</span>
+                <pre><code>torque logs jira -n atlassian --config ./stack.yaml --deps --events --tail 60</code></pre>
+              </li>
+              <li>
+                <strong>Capture only the hard debugging sessions.</strong>
+                <span>For normal rollout checks, plain streaming is enough. For a case that needs handoff or later review, write a SQLite capture and attach it beside verifier and Helmer reports.</span>
+                <pre><code>torque logs deploy/bamboo-agent -n atlassian --events --tail 200 --capture ./reports/logs/bamboo-agent.sqlite</code></pre>
+              </li>
+            </ul>
+          </section>
 
           <p>The result is a repeatable path for a difficult stack. Atlassian first-run screens and license entry still exist, and Bamboo agents still depend on Bamboo being initialized. Torque does not remove product lifecycle steps. What it does is make the infrastructure side reviewable: the charts are rendered through one path, secrets come from a provider, verifier decides whether the release can proceed, drift guard protects the apply, Helmer produces readable plan evidence, and image builds can be attached to the same operational story. That is the practical value: less magic, more files, and a deployment that can be replayed without depending on terminal memory.</p>
 
