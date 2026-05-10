@@ -184,6 +184,71 @@ spec:
 	}
 }
 
+func TestScanRenderedSecretsBuildsSecretFlowGraph(t *testing.T) {
+	objects, err := DecodeK8SYAML(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: prod
+data:
+  awsAccessKey: AKIA1234567890ABCDEF
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    spec:
+      containers:
+        - name: api
+          image: nginx:1.27
+          env:
+            - name: SAFE_TOKEN
+              value: secret://vault/prod/api#token
+`)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	report, err := ScanRenderedSecrets(objects, SecretScanOptions{
+		Mode:        ModeBlock,
+		FailOn:      SeverityHigh,
+		Source:      "fixture",
+		FlowGraph:   true,
+		EvaluatedAt: time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("scan: %v", err)
+	}
+	if report.FlowGraph == nil {
+		t.Fatalf("missing flow graph")
+	}
+	if report.FlowGraph.Summary.ForbiddenFlows != 1 {
+		t.Fatalf("forbidden flows=%d, want 1", report.FlowGraph.Summary.ForbiddenFlows)
+	}
+	if report.FlowGraph.Summary.SecretReferences != 1 {
+		t.Fatalf("secret refs=%d, want 1", report.FlowGraph.Summary.SecretReferences)
+	}
+	if report.FlowGraph.Summary.Nodes == 0 || report.FlowGraph.Summary.Edges == 0 {
+		t.Fatalf("expected graph nodes and edges: %#v", report.FlowGraph)
+	}
+	raw, err := json.Marshal(report)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	text := string(raw)
+	for _, forbidden := range []string{syntheticAWSAccessKey, "vault/prod/api"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("flow graph leaked %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestScanTextSecretsRedactsReport(t *testing.T) {
 	report, err := ScanTextSecrets([]SecretTextInput{{
 		Path:    "values/prod.yaml",

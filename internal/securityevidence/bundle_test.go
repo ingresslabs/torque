@@ -42,6 +42,22 @@ func TestWriteBundleDoesNotStoreRawSecrets(t *testing.T) {
 				FindingCount: 1,
 			}},
 		},
+		FlowGraph: &verify.SecretFlowGraph{
+			Version: "v1",
+			Summary: verify.SecretFlowGraphSummary{
+				Nodes:           2,
+				Edges:           1,
+				ForbiddenFlows:  1,
+				RawSecretStored: false,
+			},
+			Nodes: []verify.SecretFlowNode{{
+				ID:           "node:test",
+				Kind:         "boundary",
+				RuleID:       "secret/value_aws_access_key",
+				ValuePreview: "AKI...DEF",
+				RawStored:    false,
+			}},
+		},
 		RedactionProof: verify.RedactionProof{
 			Surfaces: []verify.RedactionSurfaceProof{{
 				Surface:         "verifier.report",
@@ -68,7 +84,7 @@ func TestWriteBundleDoesNotStoreRawSecrets(t *testing.T) {
 	}, verifyReport, secretReport); err != nil {
 		t.Fatalf("write bundle: %v", err)
 	}
-	for _, name := range []string{"manifest.json", "secrets.report.json", "boundary.matrix.json", "verifier.report.json", "redaction.proof.json", filepath.Join("reports", "security.md")} {
+	for _, name := range []string{"manifest.json", "secrets.report.json", "boundary.matrix.json", "secret.flow.graph.json", "verifier.report.json", "redaction.proof.json", filepath.Join("reports", "security.md")} {
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
 			t.Fatalf("expected bundle file %s: %v", name, err)
 		}

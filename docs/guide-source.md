@@ -177,16 +177,26 @@ secret-like values without writing raw values to reports.
 **Usage**: `torque secrets scan --scope repo|render|build|artifact [flags]`
 - `--report secrets.json`: Write the JSON secret scan report.
 - `--mode block --fail-on high`: Fail when high-confidence findings are present.
+- `--flow-graph`: Include a redacted source-to-boundary-to-report flow graph.
 - `--scope render --manifest ./rendered.yaml`: Scan rendered Kubernetes objects and allow Secret boundaries.
+
+## torque security benchmark
+Run the checked-in security corpus and publish evidence-backed detector metrics.
+
+**Usage**: `torque security benchmark --corpus ./testdata/security --report benchmark.json`
+- `--corpus`: Directory containing `corpus.yaml` and fixture cases.
+- `--report benchmark.json`: Write recall, precision, false-positive, runtime, redaction, flow-graph, and boundary metrics.
+- `--live-k3s-boundary-matrix --live-confirm`: Also probe a temporary live namespace and include the k3s boundary pass/fail status.
 
 ## verifier security evidence
 Merge secret-flow findings into verifier output and write a review bundle.
 
-**Usage**: `verifier --chart ./chart --release api -n prod --security-profile enterprise --security-boundary-matrix --secrets-report secrets.json --security-evidence ./torque-security-evidence`
+**Usage**: `verifier --chart ./chart --release api -n prod --security-profile enterprise --security-boundary-matrix --secret-flow-graph --secrets-report secrets.json --security-evidence ./torque-security-evidence`
 - `--security-profile enterprise`: Enable blocking evidence-first secret checks.
 - `--security-boundary-matrix`: Add a Secret/ConfigMap/env/log-facing boundary proof to the secrets report and evidence bundle.
+- `--secret-flow-graph`: Export `secret.flow.graph.json` in the evidence bundle.
 - `--secrets-report secrets.json`: Write the redacted secret scan report.
-- `--security-evidence ./dir`: Export manifest, verifier report, secrets report, boundary matrix, redaction proof, and Markdown summary.
+- `--security-evidence ./dir`: Export manifest, verifier report, secrets report, boundary matrix, flow graph, redaction proof, and Markdown summary.
 
 ## torque stack
 Manage complex multi-component releases.

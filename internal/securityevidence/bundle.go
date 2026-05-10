@@ -76,6 +76,11 @@ func WriteBundle(opts BundleOptions, verifierReport *verify.Report, secretsRepor
 				return err
 			}
 		}
+		if secretsReport.FlowGraph != nil {
+			if err := writeJSON(filepath.Join(dir, "secret.flow.graph.json"), secretsReport.FlowGraph); err != nil {
+				return err
+			}
+		}
 		if err := writeJSON(filepath.Join(dir, "redaction.proof.json"), secretsReport.RedactionProof); err != nil {
 			return err
 		}
@@ -121,6 +126,14 @@ func renderMarkdown(manifest BundleManifest, verifierReport *verify.Report, secr
 		for _, row := range secretsReport.BoundaryMatrix.Rows {
 			fmt.Fprintf(&b, "| `%s` | `%s` | `%s` | `%d` |\n", row.Surface, row.Boundary, row.Status, row.FindingCount)
 		}
+	}
+	if secretsReport != nil && secretsReport.FlowGraph != nil {
+		fmt.Fprintf(&b, "\n## Secret Flow Graph\n\n")
+		fmt.Fprintf(&b, "- Nodes: `%d`\n", secretsReport.FlowGraph.Summary.Nodes)
+		fmt.Fprintf(&b, "- Edges: `%d`\n", secretsReport.FlowGraph.Summary.Edges)
+		fmt.Fprintf(&b, "- Forbidden flows: `%d`\n", secretsReport.FlowGraph.Summary.ForbiddenFlows)
+		fmt.Fprintf(&b, "- Secret references: `%d`\n", secretsReport.FlowGraph.Summary.SecretReferences)
+		fmt.Fprintf(&b, "- Raw secret stored: `%t`\n", secretsReport.FlowGraph.Summary.RawSecretStored)
 	}
 	if verifierReport != nil && len(verifierReport.Findings) > 0 {
 		fmt.Fprintf(&b, "\n## Verifier Findings\n\n")

@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: prod
+data:
+  awsAccessKey: QUtJQTEyMzQ1Njc4OTBBQkNERUY=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: prod
+data:
+  awsAccessKey: AKIA1234567890ABCDEF
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+  annotations:
+    torque.dev/leak: AKIA1234567890ABCDEF
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: nginx:1.27
+          env:
+            - name: SAFE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: awsAccessKey
+          volumeMounts:
+            - name: app-secret
+              mountPath: /var/run/app-secret
+      volumes:
+        - name: app-secret
+          secret:
+            secretName: app-secret

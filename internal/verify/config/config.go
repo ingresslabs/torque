@@ -89,6 +89,7 @@ type Rules struct {
 	SecurityProfile        string `yaml:"securityProfile,omitempty"`
 	SecurityEvidence       string `yaml:"securityEvidence,omitempty"`
 	SecurityBoundaryMatrix bool   `yaml:"securityBoundaryMatrix,omitempty"`
+	SecretFlowGraph        bool   `yaml:"secretFlowGraph,omitempty"`
 
 	FixPlan bool `yaml:"fixPlan,omitempty"`
 }
@@ -209,6 +210,9 @@ func (c *Config) Validate(baseDir string) error {
 		c.Verify.Secrets.Enabled = true
 	}
 	if c.Verify.SecurityBoundaryMatrix {
+		c.Verify.Secrets.Enabled = true
+	}
+	if c.Verify.SecretFlowGraph {
 		c.Verify.Secrets.Enabled = true
 	}
 	if strings.TrimSpace(c.Verify.Secrets.Mode) == "" {

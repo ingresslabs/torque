@@ -22,6 +22,7 @@ type SecretScanOptions struct {
 	Stage          string
 	Surface        string
 	BoundaryMatrix bool
+	FlowGraph      bool
 	EvaluatedAt    time.Time
 }
 
@@ -44,6 +45,7 @@ type SecretScanReport struct {
 	Summary        SecretScanSummary       `json:"summary"`
 	Findings       []Finding               `json:"findings,omitempty"`
 	BoundaryMatrix *SecurityBoundaryMatrix `json:"boundaryMatrix,omitempty"`
+	FlowGraph      *SecretFlowGraph        `json:"flowGraph,omitempty"`
 	RedactionProof RedactionProof          `json:"redactionProof"`
 }
 
@@ -80,6 +82,7 @@ type secretScanState struct {
 	allowed       int
 	matchCounts   map[string]int
 	seenFindings  map[string]struct{}
+	flowEvents    []secretFlowEvent
 	evaluatedAt   time.Time
 	sourceDefault string
 }
@@ -108,6 +111,25 @@ type secretMatch struct {
 	confidence float64
 	detector   string
 	kind       string
+}
+
+type secretFlowEvent struct {
+	Kind         string
+	Stage        string
+	Source       string
+	Line         int
+	Resource     string
+	ResourceKind string
+	Subject      Subject
+	FieldPath    string
+	Location     string
+	RuleID       string
+	Detector     string
+	Preview      string
+	Fingerprint  string
+	Boundary     string
+	Surface      string
+	RawStored    bool
 }
 
 func ScanRenderedSecrets(objects []map[string]any, opts SecretScanOptions) (*SecretScanReport, error) {
@@ -278,13 +300,33 @@ func (s *secretScanState) scanCandidate(c secretCandidate) {
 	}
 	if strings.HasPrefix(value, "secret://") {
 		s.refs++
+		s.addFlowEvent("secret_reference", c, secretMatch{
+			ruleID:   "secret/reference",
+			match:    value,
+			detector: "secret_reference",
+			kind:     "reference",
+		}, "allowed", "secret://<redacted>", "")
 		return
 	}
 	if c.allowed {
-		if !c.reference {
-			s.allowed++
-			s.countAllowedMaterial(value, c)
+		if c.reference {
+			s.refs++
+			s.addFlowEvent("secret_reference", c, secretMatch{
+				ruleID:   "secret/kubernetes_reference",
+				match:    value,
+				detector: "kubernetes_secret_reference",
+				kind:     "reference",
+			}, "allowed", "<kubernetes-secret-reference>", "")
+			return
 		}
+		s.allowed++
+		s.countAllowedMaterial(value, c)
+		s.addFlowEvent("allowed_materialization", c, secretMatch{
+			ruleID:   "secret/allowed_materialization",
+			match:    value,
+			detector: "kubernetes_secret_boundary",
+			kind:     "allowed_materialization",
+		}, "allowed", "<redacted>", "")
 		return
 	}
 	candidates := []struct {
@@ -423,6 +465,7 @@ func (s *secretScanState) addFinding(c secretCandidate, match secretMatch) {
 		},
 	}
 	s.findings = append(s.findings, f)
+	s.addFlowEvent("forbidden_boundary", c, match, "blocked", f.Observed, f.Fingerprint)
 }
 
 func (s *secretScanState) report() *SecretScanReport {
@@ -448,7 +491,7 @@ func (s *secretScanState) report() *SecretScanReport {
 		}
 	}
 	sort.Slice(proofMatches, func(i, j int) bool { return proofMatches[i].RuleID < proofMatches[j].RuleID })
-	return &SecretScanReport{
+	report := &SecretScanReport{
 		Version:     "v1",
 		Tool:        "torque-secrets",
 		Mode:        s.opts.Mode,
@@ -469,6 +512,10 @@ func (s *secretScanState) report() *SecretScanReport {
 			FailedClosed: false,
 		},
 	}
+	if s.opts.FlowGraph {
+		report.FlowGraph = s.buildFlowGraph()
+	}
+	return report
 }
 
 func secretSeverity(sev secrets.Severity) Severity {

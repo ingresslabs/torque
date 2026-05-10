@@ -10,8 +10,12 @@ Implemented slice:
   JSON secret scan reports.
 - `verifier --security-profile enterprise --secrets-report ...` merges
   rendered secret-flow findings into verifier output and blocks high-risk leaks.
+- `torque security benchmark --corpus ./testdata/security --report
+  benchmark.json` publishes corpus-backed detector, redaction, flow-graph, and
+  boundary metrics.
 - `--security-evidence ./dir` exports a bundle with verifier report, secrets
-  report, redaction proof, manifest, and Markdown summary.
+  report, boundary matrix, secret flow graph, redaction proof, manifest, and
+  Markdown summary.
 
 Related docs:
 
@@ -615,9 +619,9 @@ torque-security-evidence/
   inputs.json
   secrets.report.json
   boundary.matrix.json
+  secret.flow.graph.json
   verifier.report.json
   findings.sarif
-  flow.graph.json
   redaction.proof.json
   suppressions.audit.json
   plan.summary.json
@@ -664,11 +668,12 @@ torque-security-evidence/
 Initial commands:
 
 ```bash
-# Repo/source scan.
-torque secrets scan --scope repo --report secrets.json
+# Repo/source scan with redacted flow graph.
+torque secrets scan --scope repo --report secrets.json --flow-graph
 
 # Render-aware scan.
-torque secrets scan --scope render --chart ./chart --release api -n prod --report secrets.json
+torque secrets scan --scope render --chart ./chart --release api -n prod \
+  --report secrets.json --flow-graph
 
 # Build/capture scan.
 torque secrets scan --scope build --capture build.sqlite --report build-secrets.json
@@ -689,6 +694,7 @@ Verifier additions:
 verifier --chart ./chart --release api -n prod \
   --security-profile enterprise \
   --security-boundary-matrix \
+  --secret-flow-graph \
   --secrets-report secrets.json \
   --report verify.json
 
@@ -823,9 +829,12 @@ Required metrics:
 
 ```text
 secret recall by detector family
-secret precision by corpus group
+secret precision by file type
 false positive rate by file type
+runtime cost
 redaction escape count
+secret flow graph nodes/edges
+live k3s boundary matrix pass/fail
 verifier rule recall by risk category
 finding fingerprint stability
 suppression audit correctness

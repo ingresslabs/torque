@@ -184,6 +184,7 @@ func Run(ctx context.Context, cfg *cfgpkg.Config, baseDir string, opts Options) 
 				Stage:          "render",
 				Surface:        "verifier.report",
 				BoundaryMatrix: cfg.Verify.SecurityBoundaryMatrix,
+				FlowGraph:      cfg.Verify.SecretFlowGraph,
 				EvaluatedAt:    now(),
 			})
 			if err != nil {

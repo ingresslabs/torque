@@ -186,6 +186,9 @@ func TestRootHelpSubcommandOrder(t *testing.T) {
 		"  lint",
 		"  logs",
 		"  env",
+		"  secrets",
+		"  security",
+		"  version",
 	}
 	last := -1
 	for _, needle := range wantOrder {

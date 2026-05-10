@@ -297,8 +297,9 @@ Minimal CLI workflow (sanity check before apply):
 ```bash
 torque secrets test --secret-provider vault --ref secret://vault/app/db#password
 torque secrets list --secret-provider vault --path app
-torque secrets scan --scope repo --report secrets.json --mode block
-torque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block
+torque secrets scan --scope repo --report secrets.json --mode block --flow-graph
+torque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block --flow-graph
+torque security benchmark --corpus ./testdata/security --report benchmark.json
 ```
 
 ## Regression-proof plans

@@ -99,7 +99,15 @@ var curatedExamples = map[string][]string{
 		"# Discover secret refs for a chart\ntorque secrets discover --scope chart --chart ./chart --values values/dev.yaml",
 		"# Discover secret refs for a stack\ntorque secrets discover --scope stack --config ./stacks/prod",
 		"# Scan source files for secret-like values\ntorque secrets scan --scope repo --report secrets.json --mode block",
-		"# Scan rendered manifests and allow Kubernetes Secret boundaries\ntorque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block",
+		"# Scan source files and include a redacted secret flow graph\ntorque secrets scan --scope repo --report secrets.json --mode block --flow-graph",
+		"# Scan rendered manifests and allow Kubernetes Secret boundaries\ntorque secrets scan --scope render --manifest ./rendered.yaml --report render-secrets.json --mode block --flow-graph",
+	},
+	"torque security": {
+		"# Benchmark secret detection, redaction, flow graph, and boundary evidence\ntorque security benchmark --corpus ./testdata/security --report benchmark.json",
+	},
+	"torque security benchmark": {
+		"# Publish corpus-backed security metrics\ntorque security benchmark --corpus ./testdata/security --report benchmark.json",
+		"# Include the live k3s boundary matrix probe\ntorque security benchmark --corpus ./testdata/security --report benchmark.json --live-k3s-boundary-matrix --live-confirm --kubeconfig ~/.kube/k3s.yaml",
 	},
 	"torque version": {
 		"# Print version information\ntorque version",
@@ -156,7 +164,7 @@ var curatedExamples = map[string][]string{
 	},
 	"verifier": {
 		"# Verify a chart render (inline)\nverifier --chart ./chart --release foo -n default",
-		"# Verify with evidence-first secret flow checks\nverifier --chart ./chart --release foo -n default --security-profile enterprise --security-boundary-matrix --secrets-report secrets.json --security-evidence ./torque-security-evidence --format json --report verify.json",
+		"# Verify with evidence-first secret flow checks\nverifier --chart ./chart --release foo -n default --security-profile enterprise --security-boundary-matrix --secret-flow-graph --secrets-report secrets.json --security-evidence ./torque-security-evidence --format json --report verify.json",
 		"# Verify a chart render with cluster lookups\nverifier --chart ./chart --release foo -n default --use-cluster --context my-context",
 		"# Verify a live namespace\nverifier --namespace default --context my-context",
 		"# Discover builtin rules\nverifier rules list\nverifier rules show k8s/container_is_privileged",

@@ -28,6 +28,7 @@ func newSecretsScanCommand(kubeconfig, kubeContext *string) *cobra.Command {
 	var mode string
 	var failOn string
 	var securityProfile string
+	var flowGraph bool
 	var evaluatedAt string
 
 	cmd := &cobra.Command{
@@ -59,6 +60,7 @@ func newSecretsScanCommand(kubeconfig, kubeContext *string) *cobra.Command {
 				FailOn:      verify.Severity(strings.ToLower(strings.TrimSpace(failOn))),
 				Profile:     strings.ToLower(strings.TrimSpace(securityProfile)),
 				Surface:     "torque.secrets.scan",
+				FlowGraph:   flowGraph,
 				EvaluatedAt: now,
 			}
 			var report *verify.SecretScanReport
@@ -124,6 +126,7 @@ func newSecretsScanCommand(kubeconfig, kubeContext *string) *cobra.Command {
 	cmd.Flags().StringVar(&mode, "mode", "warn", "Scan mode: warn|block|off")
 	cmd.Flags().StringVar(&failOn, "fail-on", "high", "Fail threshold: info|low|medium|high|critical")
 	cmd.Flags().StringVar(&securityProfile, "security-profile", "", "Security profile to apply (default or enterprise)")
+	cmd.Flags().BoolVar(&flowGraph, "flow-graph", false, "Add a redacted secret flow graph to the JSON report")
 	cmd.Flags().StringVar(&evaluatedAt, "evaluated-at", "", "Override evaluation time (RFC3339) for deterministic reports/tests")
 	decorateCommandHelp(cmd, "Scan Flags")
 	return cmd

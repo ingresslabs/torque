@@ -195,6 +195,7 @@ verify:
     exitOnDelta: true        # fail when new/changed findings appear
   securityProfile: enterprise
   securityBoundaryMatrix: true
+  secretFlowGraph: true
   securityEvidence: ./torque-security-evidence
   secrets:
     report: ./secrets.json

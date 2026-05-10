@@ -65,6 +65,7 @@ func TestVerifierSecurityProfile_LiveNamespaceSecretsBoundaries(t *testing.T) {
 		"--namespace", namespace,
 		"--security-profile", "enterprise",
 		"--security-boundary-matrix",
+		"--secret-flow-graph",
 		"--secrets-report", secretsReport,
 		"--security-evidence", evidenceDir,
 		"--format", "json",
@@ -83,11 +84,13 @@ func TestVerifierSecurityProfile_LiveNamespaceSecretsBoundaries(t *testing.T) {
 	secretScan := readSecurityE2ESecretsReport(t, secretsReport)
 	assertSecurityE2EFindings(t, report.Findings, secretScan.Findings)
 	assertSecurityE2EBoundaryMatrix(t, secretScan.BoundaryMatrix)
+	assertSecurityE2EFlowGraph(t, secretScan.FlowGraph)
 	for _, path := range []string{
 		verifyReport,
 		secretsReport,
 		filepath.Join(evidenceDir, "manifest.json"),
 		filepath.Join(evidenceDir, "boundary.matrix.json"),
+		filepath.Join(evidenceDir, "secret.flow.graph.json"),
 		filepath.Join(evidenceDir, "secrets.report.json"),
 		filepath.Join(evidenceDir, "verifier.report.json"),
 		filepath.Join(evidenceDir, "redaction.proof.json"),
@@ -395,6 +398,25 @@ func assertSecurityE2EBoundaryMatrix(t *testing.T, matrix *verify.SecurityBounda
 	assertSecurityE2EMatrixRow(t, matrix, "probes", "blocked", "blocked", 1)
 	assertSecurityE2EMatrixRow(t, matrix, "secretKeyRef", "allowed", "allowed", 0)
 	assertSecurityE2EMatrixRow(t, matrix, "secret volume", "allowed", "allowed", 0)
+}
+
+func assertSecurityE2EFlowGraph(t *testing.T, graph *verify.SecretFlowGraph) {
+	t.Helper()
+	if graph == nil {
+		t.Fatalf("missing secret flow graph")
+	}
+	if graph.Summary.ForbiddenFlows < 1 {
+		t.Fatalf("expected forbidden flows in graph: %#v", graph)
+	}
+	if graph.Summary.AllowedMaterializations < 1 {
+		t.Fatalf("expected allowed materializations in graph: %#v", graph)
+	}
+	if graph.Summary.SecretReferences < 1 {
+		t.Fatalf("expected secret references in graph: %#v", graph)
+	}
+	if graph.Summary.RawSecretStored {
+		t.Fatalf("flow graph marked raw secret stored: %#v", graph)
+	}
 }
 
 func assertSecurityE2EMatrixRow(t *testing.T, matrix *verify.SecurityBoundaryMatrix, surface, boundary, status string, minFindings int) {

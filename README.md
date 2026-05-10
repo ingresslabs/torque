@@ -92,11 +92,12 @@ torque repair --from ./apply-proof.json --chart ./chart \
 Security-sensitive releases can scan source or rendered manifests before review:
 
 ```bash
-torque secrets scan --scope repo --report secrets.json --mode block
+torque secrets scan --scope repo --report secrets.json --mode block --flow-graph
 verifier --manifest ./rendered.yaml --security-profile enterprise \
-  --security-boundary-matrix \
+  --security-boundary-matrix --secret-flow-graph \
   --secrets-report secrets.json --security-evidence ./torque-security-evidence \
   --format json --report verify.json
+torque security benchmark --corpus ./testdata/security --report benchmark.json
 ```
 
 ## Showcase Reports
@@ -120,7 +121,8 @@ fallback, and review-ready outputs without touching a real cluster.
 - MCP cache advisor tools for structured cache inspect, plan, and warm actions.
 - Helm release plans with Markdown, JSON, and rich HTML plan reports.
 - Verifier gates for charts, rendered manifests, and live namespaces.
-- Evidence-first secrets reports and verifier security evidence bundles.
+- Evidence-first secrets reports, secret flow graphs, benchmark corpus metrics,
+  and verifier security evidence bundles.
 - Predictive apply risk scoring and proof bundles for plan-to-rollout evidence.
 - Failure-to-fix repair plans that turn proof bundles into chart patches and PR bodies.
 - Auto rollback proof for failed applies and rollout SLO gates.
