@@ -18,8 +18,9 @@ import (
 )
 
 type ServerPlanOptions struct {
-	FieldManager string
-	Force        bool
+	FieldManager     string
+	Force            bool
+	DefaultNamespace string
 }
 
 // DetectServerSideReplaceKeys attempts a server-side apply dry-run for each object in the proposed

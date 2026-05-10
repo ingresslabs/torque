@@ -241,6 +241,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	waitCmd := newWaitCommand(&kubeconfigPath, &kubeContext)
 	revertCmd := newRevertCommand(&kubeconfigPath, &kubeContext, &logLevel)
 	repairCmd := newRepairCommand()
+	replayCmd := newReplayCommand()
 	applyCmd := newApplyCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	deleteCmd := newDeleteCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	stackCmd := newStackCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
@@ -253,6 +254,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 		analyzeCmd,
 		revertCmd,
 		repairCmd,
+		replayCmd,
 		applyCmd,
 		deleteCmd,
 		stackCmd,
@@ -278,6 +280,9 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 
   # Preview a Helm upgrade
   torque apply plan --chart ./chart --release foo
+
+  # Simulate live API behavior before applying
+  torque apply simulate --chart ./chart --release foo --out ./torque-sim-proof
 
   # Revert a release to the last known-good revision
   torque revert --release foo --namespace prod
@@ -312,7 +317,7 @@ Usage:
   {{.UseLine}}
 
 Subcommands:
-{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "list" "lint" "logs" "env" "secrets" "security" "version") }}
+{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "replay" "list" "lint" "logs" "env" "secrets" "security" "version") }}
 {{- with (indexCommand $.Commands $n) }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end }}

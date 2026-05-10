@@ -53,11 +53,19 @@ torque apply plan --chart ./chart --release foo -n default
 torque apply plan --chart ./chart --release foo -n default --github-comment --output plan.md
 
 # Attach verifier and build evidence to the PR summary
-verifier --chart ./chart --release foo -n default --format json --report verify.json
+verifier --chart ./chart --release foo -n default \
+  --security-evidence ./torque-security-evidence \
+  --format json --report verify.json
 torque build . --tag ghcr.io/acme/foo:dev --capture ./build.sqlite
 torque apply plan --chart ./chart --release foo -n default \
   --verify-report verify.json --build-capture ./build.sqlite \
   --github-comment --output plan.md
+
+# Simulate live API behavior and write a replayable proof directory
+torque apply simulate --chart ./chart --release foo -n default \
+  --security-evidence ./torque-security-evidence \
+  --out ./torque-sim-proof
+torque replay ./torque-sim-proof --lab k3s
 
 # Deploy
 torque apply --chart ./chart --release foo -n default

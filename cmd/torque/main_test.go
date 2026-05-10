@@ -182,6 +182,7 @@ func TestRootHelpSubcommandOrder(t *testing.T) {
 		"  stack",
 		"  revert",
 		"  repair",
+		"  replay",
 		"  list",
 		"  lint",
 		"  logs",

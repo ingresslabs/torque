@@ -66,10 +66,11 @@ type repairOptions struct {
 func newRepairCommand() *cobra.Command {
 	var opts repairOptions
 	cmd := &cobra.Command{
-		Use:   "repair",
-		Short: "Turn failed apply proof into a chart repair plan",
-		Long:  "Read a Torque apply proof bundle, diagnose likely rollout root cause, and optionally write PR-ready chart repair files.",
-		Args:  cobra.NoArgs,
+		Use:     "repair",
+		Aliases: []string{"fix"},
+		Short:   "Turn failed apply proof into a chart repair plan",
+		Long:    "Read a Torque apply or simulation proof bundle, diagnose likely rollout root cause, and optionally write PR-ready chart repair files.",
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(opts.SourcePath) == "" {
 				return fmt.Errorf("--from is required")
@@ -145,6 +146,9 @@ func newRepairCommand() *cobra.Command {
 
 func loadRepairProofBundle(path string) (*applyProofBundle, error) {
 	path = strings.TrimSpace(path)
+	if info, err := os.Stat(path); err == nil && info.IsDir() {
+		path = filepath.Join(path, "apply.proof.json")
+	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read --from: %w", err)
@@ -584,6 +588,30 @@ func renderRepairMarkdown(report repairReport) string {
 		fmt.Fprintf(&b, "```\n")
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+func renderRepairPatch(report repairReport, sourcePath string) string {
+	var b strings.Builder
+	for _, fix := range report.Fixes {
+		if fix.Manual || strings.TrimSpace(fix.Path) == "" {
+			continue
+		}
+		body, err := renderRepairTemplate(fix, sourcePath)
+		if err != nil || strings.TrimSpace(body) == "" {
+			continue
+		}
+		path := filepath.ToSlash(strings.TrimPrefix(filepath.Clean(fix.Path), string(filepath.Separator)))
+		fmt.Fprintf(&b, "diff --git a/%s b/%s\n", path, path)
+		fmt.Fprintf(&b, "new file mode 100644\n")
+		fmt.Fprintf(&b, "--- /dev/null\n")
+		fmt.Fprintf(&b, "+++ b/%s\n", path)
+		lines := strings.Split(strings.TrimRight(body, "\n"), "\n")
+		fmt.Fprintf(&b, "@@ -0,0 +1,%d @@\n", len(lines))
+		for _, line := range lines {
+			fmt.Fprintf(&b, "+%s\n", line)
+		}
+	}
+	return b.String()
 }
 
 func countAutoRepairFixes(fixes []repairFix) int {

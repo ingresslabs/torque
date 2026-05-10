@@ -55,6 +55,9 @@ verifier --chart ./chart --release api -n prod \
 torque apply plan --chart ./chart --release api -n prod \
   --verify-report verify.json --build-capture ./build.sqlite \
   --github-comment --output plan.md
+torque apply simulate --chart ./chart --release api -n prod \
+  --security-evidence ./torque-security-evidence \
+  --out ./torque-sim-proof
 torque apply --chart ./chart --release api -n prod \
   --predict --proof-bundle ./apply-proof.json \
   --capture ./apply.sqlite --yes
@@ -70,6 +73,21 @@ torque apply --chart ./chart --release api -n prod \
   --predict --proof-bundle ./apply-proof.json \
   --capture ./apply.sqlite --yes
 ```
+
+Apply-sensitive releases can run the Live Apply Twin first: render the release,
+ask the Kubernetes API server for server-side apply dry-run behavior, attach
+security evidence, and write a replayable proof directory before prod changes:
+
+```bash
+torque apply simulate --chart ./chart --release api -n prod \
+  --slo ./slo.yaml \
+  --security-evidence ./torque-security-evidence \
+  --out ./torque-sim-proof
+torque replay ./torque-sim-proof --lab k3s
+```
+
+See [`docs/apply-simulate.md`](docs/apply-simulate.md) for the proof bundle
+contract.
 
 Rollback-sensitive releases can ask Torque to keep proof when Helm fails or a
 post-apply SLO gate is violated:
@@ -87,6 +105,7 @@ Failed releases can turn that proof into a repair plan and PR-ready patch:
 ```bash
 torque repair --from ./apply-proof.json --chart ./chart \
   --branch fix/api-rollout --apply --pr-body ./repair-pr.md --yes
+torque fix --from ./torque-sim-proof --chart ./chart
 ```
 
 Security-sensitive releases can scan source or rendered manifests before review:
@@ -123,6 +142,7 @@ fallback, and review-ready outputs without touching a real cluster.
 - BuildKit cache import/export, including first-class S3 cache flags for `build` and `ship`.
 - MCP cache advisor tools for structured cache inspect, plan, and warm actions.
 - Helm release plans with Markdown, JSON, and rich HTML plan reports.
+- Live Apply Twin simulation with server-side dry-run proof, replay validation, and repair artifacts.
 - Verifier gates for charts, rendered manifests, and live namespaces.
 - Evidence-first secrets reports, source-to-live secret flow graphs, benchmark
   corpus metrics, and verifier security evidence bundles.

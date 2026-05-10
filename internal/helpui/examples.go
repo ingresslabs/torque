@@ -70,6 +70,11 @@ var curatedExamples = map[string][]string{
 		"# Compare against a saved baseline\ntorque apply plan --chart ./chart --release foo -n default --compare-to ./plan.json",
 		"# Write a baseline snapshot\ntorque apply plan --chart ./chart --release foo -n default --baseline ./plan.json",
 	},
+	"torque apply simulate": {
+		"# Simulate a Helm apply and write a proof bundle\ntorque apply simulate --chart ./chart --release foo -n default --out ./torque-sim-proof",
+		"# Attach security evidence and SLO gates\ntorque apply simulate --chart ./chart --release foo -n default --security-evidence ./torque-security-evidence --slo ./slo.yaml --out ./torque-sim-proof",
+		"# Fail CI when the API dry-run or quota proof blocks the release\ntorque apply simulate --chart ./chart --release foo -n default --out ./torque-sim-proof --fail-on-blocked",
+	},
 	"torque apply": {
 		"# Deploy a chart\ntorque apply --chart ./chart --release foo -n default",
 		"# Run the deploy viewer\ntorque apply --chart ./chart --release foo -n default --ui",
@@ -87,7 +92,13 @@ var curatedExamples = map[string][]string{
 	},
 	"torque repair": {
 		"# Diagnose a failed apply proof bundle\ntorque repair --from ./apply-proof.json --chart ./chart",
+		"# Diagnose a simulation proof bundle through the fix alias\ntorque fix --from ./torque-sim-proof --chart ./chart",
 		"# Write chart repair files and a PR body\ntorque repair --from ./apply-proof.json --chart ./chart --branch fix/foo-rollout --apply --pr-body ./repair-pr.md --yes",
+	},
+	"torque replay": {
+		"# Validate a simulation proof bundle in the k3s lab profile\ntorque replay ./torque-sim-proof --lab k3s",
+		"# Emit replay validation as JSON\ntorque replay ./torque-sim-proof --lab k3s --format json",
+		"# Fail CI when the replayed proof is blocked\ntorque replay ./torque-sim-proof --lab k3s --fail-on-blocked",
 	},
 	"torque env": {
 		"# Show env var reference (machine-readable)\ntorque env --format json",

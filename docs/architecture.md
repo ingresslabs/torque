@@ -13,7 +13,7 @@ This repo is a single-module Go CLI with an optional companion agent.
 - `init`
 - `build`
 - `explain`
-- `apply` (and `apply plan`)
+- `apply` (including `apply plan` and `apply simulate`)
 - `delete`
 - `stack`
 - `revert`
@@ -81,7 +81,7 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 ### `internal/deploy`
 
 - Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).
-- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.
+- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `ServerDryRunReport`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.
 - Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.
 
 ### `internal/deployplan`

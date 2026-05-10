@@ -12,6 +12,7 @@ import "github.com/spf13/cobra"
 func newApplyCommand(kubeconfig *string, kubeContext *string, logLevel *string, remoteAgent *string) *cobra.Command {
 	cmd := newDeployApplyCommand(nil, kubeconfig, kubeContext, logLevel, remoteAgent, "Apply Flags")
 	cmd.AddCommand(newDeployPlanCommand(nil, kubeconfig, kubeContext, "Apply Plan Flags"))
+	cmd.AddCommand(newApplySimulateCommand(nil, kubeconfig, kubeContext, "Apply Simulation Flags"))
 	cmd.Example = `  # Apply a chart with prod values
   torque apply --chart ./charts/web --release web-prod --namespace prod -f values/prod.yaml`
 	return cmd

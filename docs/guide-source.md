@@ -54,6 +54,12 @@ go install github.com/ingresslabs/torque/cmd/torque@latest
     torque apply plan --chart ./chart --release my-app -n default --visualize
     ```
 
+3.  **Simulate live API behavior**:
+    ```bash
+    torque apply simulate --chart ./chart --release my-app -n default --out ./torque-sim-proof
+    torque replay ./torque-sim-proof --lab k3s
+    ```
+
 ---
 
 # Core Concepts
