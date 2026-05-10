@@ -15,13 +15,14 @@ import (
 )
 
 type SecretScanOptions struct {
-	Mode        Mode
-	FailOn      Severity
-	Profile     string
-	Source      string
-	Stage       string
-	Surface     string
-	EvaluatedAt time.Time
+	Mode           Mode
+	FailOn         Severity
+	Profile        string
+	Source         string
+	Stage          string
+	Surface        string
+	BoundaryMatrix bool
+	EvaluatedAt    time.Time
 }
 
 type SecretTextInput struct {
@@ -31,18 +32,19 @@ type SecretTextInput struct {
 }
 
 type SecretScanReport struct {
-	Version        string            `json:"version"`
-	Tool           string            `json:"tool"`
-	Mode           Mode              `json:"mode"`
-	FailOn         Severity          `json:"failOn,omitempty"`
-	Profile        string            `json:"profile,omitempty"`
-	Passed         bool              `json:"passed"`
-	Blocked        bool              `json:"blocked"`
-	EvaluatedAt    time.Time         `json:"evaluatedAt"`
-	Source         string            `json:"source,omitempty"`
-	Summary        SecretScanSummary `json:"summary"`
-	Findings       []Finding         `json:"findings,omitempty"`
-	RedactionProof RedactionProof    `json:"redactionProof"`
+	Version        string                  `json:"version"`
+	Tool           string                  `json:"tool"`
+	Mode           Mode                    `json:"mode"`
+	FailOn         Severity                `json:"failOn,omitempty"`
+	Profile        string                  `json:"profile,omitempty"`
+	Passed         bool                    `json:"passed"`
+	Blocked        bool                    `json:"blocked"`
+	EvaluatedAt    time.Time               `json:"evaluatedAt"`
+	Source         string                  `json:"source,omitempty"`
+	Summary        SecretScanSummary       `json:"summary"`
+	Findings       []Finding               `json:"findings,omitempty"`
+	BoundaryMatrix *SecurityBoundaryMatrix `json:"boundaryMatrix,omitempty"`
+	RedactionProof RedactionProof          `json:"redactionProof"`
 }
 
 type SecretScanSummary struct {
@@ -93,6 +95,7 @@ type secretCandidate struct {
 	resource   string
 	kind       string
 	allowed    bool
+	reference  bool
 	decoded    bool
 	sourceLine int
 }
@@ -113,7 +116,11 @@ func ScanRenderedSecrets(objects []map[string]any, opts SecretScanOptions) (*Sec
 		return nil, err
 	}
 	if state.opts.Mode == ModeOff {
-		return state.report(), nil
+		report := state.report()
+		if opts.BoundaryMatrix {
+			report.BoundaryMatrix = BuildSecurityBoundaryMatrix(objects, report, opts)
+		}
+		return report, nil
 	}
 	for _, obj := range objects {
 		if obj == nil {
@@ -129,7 +136,11 @@ func ScanRenderedSecrets(objects []map[string]any, opts SecretScanOptions) (*Sec
 			kind:     kind,
 		})
 	}
-	return state.report(), nil
+	report := state.report()
+	if opts.BoundaryMatrix {
+		report.BoundaryMatrix = BuildSecurityBoundaryMatrix(objects, report, opts)
+	}
+	return report, nil
 }
 
 func ScanTextSecrets(inputs []SecretTextInput, opts SecretScanOptions) (*SecretScanReport, error) {
@@ -252,7 +263,8 @@ func (s *secretScanState) walkObject(value any, path []string, base secretCandid
 		c.key = lastPathKey(path)
 		c.fieldPath = fieldPath
 		c.location = fieldPath
-		c.allowed = isAllowedSecretMaterial(base.kind, path)
+		c.reference = isAllowedSecretReferencePath(path)
+		c.allowed = c.reference || isAllowedSecretMaterial(base.kind, path)
 		s.scanCandidate(c)
 	default:
 		// Scalars other than strings are not secret material.
@@ -269,8 +281,10 @@ func (s *secretScanState) scanCandidate(c secretCandidate) {
 		return
 	}
 	if c.allowed {
-		s.allowed++
-		s.countAllowedMaterial(value, c)
+		if !c.reference {
+			s.allowed++
+			s.countAllowedMaterial(value, c)
+		}
 		return
 	}
 	candidates := []struct {
@@ -467,14 +481,27 @@ func secretSeverity(sev secrets.Severity) Severity {
 }
 
 func isAllowedSecretMaterial(kind string, path []string) bool {
-	if !strings.EqualFold(strings.TrimSpace(kind), "Secret") {
+	if strings.EqualFold(strings.TrimSpace(kind), "Secret") && len(path) >= 2 {
+		first := strings.TrimSpace(path[0])
+		return first == "data" || first == "stringData"
+	}
+	return false
+}
+
+func isAllowedSecretReferencePath(path []string) bool {
+	joined := strings.ToLower(strings.Join(path, "."))
+	switch {
+	case strings.Contains(joined, "secretkeyref"):
+		return true
+	case strings.Contains(joined, "secretref"):
+		return true
+	case strings.Contains(joined, "volumes.") && strings.Contains(joined, ".secret."):
+		return true
+	case strings.Contains(joined, "projected.sources") && strings.Contains(joined, ".secret."):
+		return true
+	default:
 		return false
 	}
-	if len(path) < 2 {
-		return false
-	}
-	first := strings.TrimSpace(path[0])
-	return first == "data" || first == "stringData"
 }
 
 func decodeMaybeBase64(value string) (string, bool) {

@@ -50,9 +50,9 @@ func TestVerifierSecurityProfile_LiveNamespaceSecretsBoundaries(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		cleanupSecurityE2E(t, kubeconfig, ctxName, "-n", namespace, "delete", "secret/allowed-secret", "configmap/blocked-config", "pod/env-leak", "--ignore-not-found=true", "--wait=true", "--timeout=60s")
+		cleanupSecurityE2EResources(t, kubeconfig, ctxName, namespace)
 	})
-	cleanupSecurityE2E(t, kubeconfig, ctxName, "-n", namespace, "delete", "secret/allowed-secret", "configmap/blocked-config", "pod/env-leak", "--ignore-not-found=true", "--wait=true", "--timeout=60s")
+	cleanupSecurityE2EResources(t, kubeconfig, ctxName, namespace)
 	applyLiveSecurityFixture(t, kubeconfig, ctxName, namespace, rawSecret)
 
 	cmd := newRootCommand()
@@ -64,6 +64,7 @@ func TestVerifierSecurityProfile_LiveNamespaceSecretsBoundaries(t *testing.T) {
 		"--kubeconfig", kubeconfig,
 		"--namespace", namespace,
 		"--security-profile", "enterprise",
+		"--security-boundary-matrix",
 		"--secrets-report", secretsReport,
 		"--security-evidence", evidenceDir,
 		"--format", "json",
@@ -81,10 +82,12 @@ func TestVerifierSecurityProfile_LiveNamespaceSecretsBoundaries(t *testing.T) {
 	report := readSecurityE2EVerifyReport(t, verifyReport)
 	secretScan := readSecurityE2ESecretsReport(t, secretsReport)
 	assertSecurityE2EFindings(t, report.Findings, secretScan.Findings)
+	assertSecurityE2EBoundaryMatrix(t, secretScan.BoundaryMatrix)
 	for _, path := range []string{
 		verifyReport,
 		secretsReport,
 		filepath.Join(evidenceDir, "manifest.json"),
+		filepath.Join(evidenceDir, "boundary.matrix.json"),
 		filepath.Join(evidenceDir, "secrets.report.json"),
 		filepath.Join(evidenceDir, "verifier.report.json"),
 		filepath.Join(evidenceDir, "redaction.proof.json"),
@@ -129,9 +132,134 @@ func resolveSecurityE2EKubeconfig(t *testing.T) string {
 
 func applyLiveSecurityFixture(t *testing.T, kubeconfig, ctxName, namespace, rawSecret string) {
 	t.Helper()
-	kubectl(t, kubeconfig, ctxName, "-n", namespace, "create", "secret", "generic", "allowed-secret", "--from-literal=apiKey="+rawSecret)
-	kubectl(t, kubeconfig, ctxName, "-n", namespace, "create", "configmap", "blocked-config", "--from-literal=apiKey="+rawSecret)
-	kubectl(t, kubeconfig, ctxName, "-n", namespace, "run", "env-leak", "--image=registry.k8s.io/pause:3.9", "--restart=Never", "--env=API_KEY="+rawSecret)
+	manifest := fmt.Sprintf(`
+apiVersion: v1
+kind: Secret
+metadata:
+  name: allowed-secret
+  namespace: %[1]s
+stringData:
+  apiKey: %[2]s
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blocked-config
+  namespace: %[1]s
+data:
+  apiKey: %[2]s
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: env-leak
+  namespace: %[1]s
+  labels:
+    torque.dev/leak: %[2]s
+  annotations:
+    torque.dev/leak: %[2]s
+spec:
+  restartPolicy: Never
+  containers:
+    - name: env-leak
+      image: registry.k8s.io/pause:3.9
+      command: ["/pause", "%[2]s"]
+      args: ["%[2]s"]
+      env:
+        - name: API_KEY
+          value: %[2]s
+      livenessProbe:
+        exec:
+          command: ["/pause", "%[2]s"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ref-ok
+  namespace: %[1]s
+spec:
+  restartPolicy: Never
+  containers:
+    - name: ref-ok
+      image: registry.k8s.io/pause:3.9
+      env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: allowed-secret
+              key: apiKey
+      volumeMounts:
+        - name: allowed-secret
+          mountPath: /var/run/allowed-secret
+          readOnly: true
+  volumes:
+    - name: allowed-secret
+      secret:
+        secretName: allowed-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-leak
+  namespace: %[1]s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploy-leak
+  template:
+    metadata:
+      labels:
+        app: deploy-leak
+    spec:
+      containers:
+        - name: deploy-leak
+          image: registry.k8s.io/pause:3.9
+          env:
+            - name: API_KEY
+              value: %[2]s
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-leak
+  namespace: %[1]s
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: job-leak
+          image: registry.k8s.io/pause:3.9
+          env:
+            - name: API_KEY
+              value: %[2]s
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cron-leak
+  namespace: %[1]s
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cron-leak
+              image: registry.k8s.io/pause:3.9
+              env:
+                - name: API_KEY
+                  value: %[2]s
+`, namespace, rawSecret)
+	cmd := exec.Command("kubectl", kubectlArgs(kubeconfig, ctxName, "create", "-f", "-")...)
+	cmd.Stdin = strings.NewReader(manifest)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("kubectl create security fixture: %v\n%s", err, out)
+	}
 }
 
 func applySecurityE2ENamespace(t *testing.T, kubeconfig, ctxName, namespace string) {
@@ -168,6 +296,19 @@ func cleanupSecurityE2E(t *testing.T, kubeconfig, ctxName string, args ...string
 	if err != nil {
 		t.Errorf("kubectl cleanup %s: %v\n%s", strings.Join(args, " "), err, out)
 	}
+}
+
+func cleanupSecurityE2EResources(t *testing.T, kubeconfig, ctxName, namespace string) {
+	t.Helper()
+	cleanupSecurityE2E(t, kubeconfig, ctxName, "-n", namespace, "delete",
+		"secret/allowed-secret",
+		"configmap/blocked-config",
+		"pod/env-leak",
+		"pod/ref-ok",
+		"deployment/deploy-leak",
+		"job/job-leak",
+		"cronjob/cron-leak",
+		"--ignore-not-found=true", "--wait=true", "--timeout=60s")
 }
 
 func kubectlArgs(kubeconfig, ctxName string, args ...string) []string {
@@ -234,6 +375,49 @@ func assertSecurityE2EFindings(t *testing.T, verifierFindings, secretFindings []
 	if secretLeak {
 		t.Fatalf("Secret object should be an allowed materialization, got finding: %#v", all)
 	}
+}
+
+func assertSecurityE2EBoundaryMatrix(t *testing.T, matrix *verify.SecurityBoundaryMatrix) {
+	t.Helper()
+	if matrix == nil {
+		t.Fatalf("missing security boundary matrix")
+	}
+	if !matrix.Passed {
+		t.Fatalf("security boundary matrix should pass allowed/blocked expectations: %#v", matrix)
+	}
+	assertSecurityE2EMatrixRow(t, matrix, "Secret.data", "allowed", "allowed", 0)
+	assertSecurityE2EMatrixRow(t, matrix, "ConfigMap.data", "blocked", "blocked", 1)
+	assertSecurityE2EMatrixRow(t, matrix, "metadata.annotations", "blocked", "blocked", 1)
+	assertSecurityE2EMatrixRow(t, matrix, "metadata.labels", "blocked", "blocked", 1)
+	assertSecurityE2EMatrixRow(t, matrix, "env.value", "blocked", "blocked", 4)
+	assertSecurityE2EMatrixRow(t, matrix, "command", "blocked", "blocked", 1)
+	assertSecurityE2EMatrixRow(t, matrix, "args", "blocked", "blocked", 1)
+	assertSecurityE2EMatrixRow(t, matrix, "probes", "blocked", "blocked", 1)
+	assertSecurityE2EMatrixRow(t, matrix, "secretKeyRef", "allowed", "allowed", 0)
+	assertSecurityE2EMatrixRow(t, matrix, "secret volume", "allowed", "allowed", 0)
+}
+
+func assertSecurityE2EMatrixRow(t *testing.T, matrix *verify.SecurityBoundaryMatrix, surface, boundary, status string, minFindings int) {
+	t.Helper()
+	for _, row := range matrix.Rows {
+		if row.Surface != surface {
+			continue
+		}
+		if !row.Present {
+			t.Fatalf("%s present=false row=%#v", surface, row)
+		}
+		if row.Boundary != boundary {
+			t.Fatalf("%s boundary=%q, want %q row=%#v", surface, row.Boundary, boundary, row)
+		}
+		if row.Status != status {
+			t.Fatalf("%s status=%q, want %q row=%#v", surface, row.Status, status, row)
+		}
+		if row.FindingCount < minFindings {
+			t.Fatalf("%s findingCount=%d, want >=%d row=%#v", surface, row.FindingCount, minFindings, row)
+		}
+		return
+	}
+	t.Fatalf("missing matrix row %s in %#v", surface, matrix.Rows)
 }
 
 func assertSecurityE2ENoRawSecret(t *testing.T, path, rawSecret string) {

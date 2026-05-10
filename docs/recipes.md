@@ -101,6 +101,7 @@ verifier --chart ./chart --release foo -n default --format json --report verify.
 # Verify with evidence-first secret flow checks and a redaction proof bundle.
 verifier --chart ./chart --release foo -n default \
   --security-profile enterprise \
+  --security-boundary-matrix \
   --secrets-report secrets.json \
   --security-evidence ./torque-security-evidence \
   --format json --report verify.json

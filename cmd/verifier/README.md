@@ -16,6 +16,7 @@ verifier --manifest ./rendered.yaml
 verifier --namespace default --context my-context
 verifier --chart ./chart --release my-app -n prod \
   --security-profile enterprise \
+  --security-boundary-matrix \
   --secrets-report secrets.json \
   --security-evidence ./torque-security-evidence \
   --format json --report verify.json

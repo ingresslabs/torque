@@ -49,6 +49,7 @@ go install github.com/ingresslabs/torque/cmd/verifier@latest
 torque build . --tag ghcr.io/acme/api:dev --capture ./build.sqlite
 verifier --chart ./chart --release api -n prod \
   --security-profile enterprise --secrets-report secrets.json \
+  --security-boundary-matrix \
   --security-evidence ./torque-security-evidence \
   --format json --report verify.json
 torque apply plan --chart ./chart --release api -n prod \
@@ -93,6 +94,7 @@ Security-sensitive releases can scan source or rendered manifests before review:
 ```bash
 torque secrets scan --scope repo --report secrets.json --mode block
 verifier --manifest ./rendered.yaml --security-profile enterprise \
+  --security-boundary-matrix \
   --secrets-report secrets.json --security-evidence ./torque-security-evidence \
   --format json --report verify.json
 ```

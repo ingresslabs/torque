@@ -182,10 +182,11 @@ secret-like values without writing raw values to reports.
 ## verifier security evidence
 Merge secret-flow findings into verifier output and write a review bundle.
 
-**Usage**: `verifier --chart ./chart --release api -n prod --security-profile enterprise --secrets-report secrets.json --security-evidence ./torque-security-evidence`
+**Usage**: `verifier --chart ./chart --release api -n prod --security-profile enterprise --security-boundary-matrix --secrets-report secrets.json --security-evidence ./torque-security-evidence`
 - `--security-profile enterprise`: Enable blocking evidence-first secret checks.
+- `--security-boundary-matrix`: Add a Secret/ConfigMap/env/log-facing boundary proof to the secrets report and evidence bundle.
 - `--secrets-report secrets.json`: Write the redacted secret scan report.
-- `--security-evidence ./dir`: Export manifest, verifier report, secrets report, redaction proof, and Markdown summary.
+- `--security-evidence ./dir`: Export manifest, verifier report, secrets report, boundary matrix, redaction proof, and Markdown summary.
 
 ## torque stack
 Manage complex multi-component releases.

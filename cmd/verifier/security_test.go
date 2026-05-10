@@ -45,6 +45,7 @@ data:
 	cmd.SetArgs([]string{
 		"--manifest", manifest,
 		"--security-profile", "enterprise",
+		"--security-boundary-matrix",
 		"--secrets-report", secretsReport,
 		"--security-evidence", evidenceDir,
 		"--mode", "warn",
@@ -55,7 +56,7 @@ data:
 	if err == nil || !strings.Contains(err.Error(), "verify blocked") {
 		t.Fatalf("expected secret gate to block, err=%v stdout=%s stderr=%s", err, stdout.String(), stderr.String())
 	}
-	for _, path := range []string{verifyReport, secretsReport, filepath.Join(evidenceDir, "manifest.json"), filepath.Join(evidenceDir, "redaction.proof.json")} {
+	for _, path := range []string{verifyReport, secretsReport, filepath.Join(evidenceDir, "manifest.json"), filepath.Join(evidenceDir, "boundary.matrix.json"), filepath.Join(evidenceDir, "redaction.proof.json")} {
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatalf("read %s: %v", path, err)

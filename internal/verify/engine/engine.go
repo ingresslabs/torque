@@ -177,13 +177,14 @@ func Run(ctx context.Context, cfg *cfgpkg.Config, baseDir string, opts Options) 
 		if err := timer.Track("secrets", func() error {
 			var err error
 			secretReport, err = verify.ScanRenderedSecrets(objs, verify.SecretScanOptions{
-				Mode:        verify.Mode(strings.ToLower(strings.TrimSpace(cfg.Verify.Secrets.Mode))),
-				FailOn:      verify.Severity(strings.ToLower(strings.TrimSpace(cfg.Verify.Secrets.FailOn))),
-				Profile:     strings.ToLower(strings.TrimSpace(cfg.Verify.SecurityProfile)),
-				Source:      targetLabel,
-				Stage:       "render",
-				Surface:     "verifier.report",
-				EvaluatedAt: now(),
+				Mode:           verify.Mode(strings.ToLower(strings.TrimSpace(cfg.Verify.Secrets.Mode))),
+				FailOn:         verify.Severity(strings.ToLower(strings.TrimSpace(cfg.Verify.Secrets.FailOn))),
+				Profile:        strings.ToLower(strings.TrimSpace(cfg.Verify.SecurityProfile)),
+				Source:         targetLabel,
+				Stage:          "render",
+				Surface:        "verifier.report",
+				BoundaryMatrix: cfg.Verify.SecurityBoundaryMatrix,
+				EvaluatedAt:    now(),
 			})
 			if err != nil {
 				return err

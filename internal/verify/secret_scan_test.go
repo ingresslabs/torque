@@ -102,6 +102,88 @@ spec:
 	}
 }
 
+func TestScanRenderedSecretsBuildsBoundaryMatrix(t *testing.T) {
+	secretData := base64.StdEncoding.EncodeToString([]byte(syntheticAWSAccessKey))
+	objects, err := DecodeK8SYAML(`
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: prod
+data:
+  awsAccessKey: ` + secretData + `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: prod
+data:
+  awsAccessKey: AKIA1234567890ABCDEF
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+  annotations:
+    torque.dev/leak: AKIA1234567890ABCDEF
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: nginx:1.27
+          env:
+            - name: API_TOKEN
+              value: AKIA1234567890ABCDEF
+            - name: SAFE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: awsAccessKey
+          volumeMounts:
+            - name: app-secret
+              mountPath: /var/run/app-secret
+      volumes:
+        - name: app-secret
+          secret:
+            secretName: app-secret
+`)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	report, err := ScanRenderedSecrets(objects, SecretScanOptions{
+		Mode:           ModeBlock,
+		FailOn:         SeverityHigh,
+		Profile:        "enterprise",
+		Source:         "fixture",
+		BoundaryMatrix: true,
+		EvaluatedAt:    time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("scan: %v", err)
+	}
+	if report.BoundaryMatrix == nil {
+		t.Fatalf("missing boundary matrix")
+	}
+	assertBoundaryRow(t, report.BoundaryMatrix, "Secret.data", "allowed", "allowed", 0)
+	assertBoundaryRow(t, report.BoundaryMatrix, "ConfigMap.data", "blocked", "blocked", 1)
+	assertBoundaryRow(t, report.BoundaryMatrix, "metadata.annotations", "blocked", "blocked", 1)
+	assertBoundaryRow(t, report.BoundaryMatrix, "env.value", "blocked", "blocked", 1)
+	assertBoundaryRow(t, report.BoundaryMatrix, "secretKeyRef", "allowed", "allowed", 0)
+	assertBoundaryRow(t, report.BoundaryMatrix, "secret volume", "allowed", "allowed", 0)
+	if !report.BoundaryMatrix.Passed {
+		t.Fatalf("boundary matrix should pass allowed/blocked expectations: %#v", report.BoundaryMatrix)
+	}
+}
+
 func TestScanTextSecretsRedactsReport(t *testing.T) {
 	report, err := ScanTextSecrets([]SecretTextInput{{
 		Path:    "values/prod.yaml",
@@ -121,4 +203,27 @@ func TestScanTextSecretsRedactsReport(t *testing.T) {
 	if strings.Contains(string(raw), "ghp_1234567890abcdefghijklmnopqr") {
 		t.Fatalf("text report leaked raw token: %s", raw)
 	}
+}
+
+func assertBoundaryRow(t *testing.T, matrix *SecurityBoundaryMatrix, surface string, boundary string, status string, minFindings int) {
+	t.Helper()
+	for _, row := range matrix.Rows {
+		if row.Surface != surface {
+			continue
+		}
+		if !row.Present {
+			t.Fatalf("%s present=false, row=%#v", surface, row)
+		}
+		if row.Boundary != boundary {
+			t.Fatalf("%s boundary=%q, want %q", surface, row.Boundary, boundary)
+		}
+		if row.Status != status {
+			t.Fatalf("%s status=%q, want %q row=%#v", surface, row.Status, status, row)
+		}
+		if row.FindingCount < minFindings {
+			t.Fatalf("%s findings=%d, want >=%d row=%#v", surface, row.FindingCount, minFindings, row)
+		}
+		return
+	}
+	t.Fatalf("missing boundary row %s in %#v", surface, matrix.Rows)
 }

@@ -156,7 +156,7 @@ var curatedExamples = map[string][]string{
 	},
 	"verifier": {
 		"# Verify a chart render (inline)\nverifier --chart ./chart --release foo -n default",
-		"# Verify with evidence-first secret flow checks\nverifier --chart ./chart --release foo -n default --security-profile enterprise --secrets-report secrets.json --security-evidence ./torque-security-evidence --format json --report verify.json",
+		"# Verify with evidence-first secret flow checks\nverifier --chart ./chart --release foo -n default --security-profile enterprise --security-boundary-matrix --secrets-report secrets.json --security-evidence ./torque-security-evidence --format json --report verify.json",
 		"# Verify a chart render with cluster lookups\nverifier --chart ./chart --release foo -n default --use-cluster --context my-context",
 		"# Verify a live namespace\nverifier --namespace default --context my-context",
 		"# Discover builtin rules\nverifier rules list\nverifier rules show k8s/container_is_privileged",

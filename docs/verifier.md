@@ -26,6 +26,7 @@ verifier rules list
 ```bash
 verifier --chart ./chart --release api -n prod \
   --security-profile enterprise \
+  --security-boundary-matrix \
   --secrets-report secrets.json \
   --security-evidence ./torque-security-evidence \
   --format json --report verify.json
@@ -35,7 +36,16 @@ The enterprise security profile scans rendered Kubernetes objects for
 secret-like values outside approved Secret boundaries, merges redacted
 `secret_flow` findings into the verifier report, writes a separate secrets
 report, and exports a bundle with `manifest.json`, `secrets.report.json`,
-`verifier.report.json`, `redaction.proof.json`, and `reports/security.md`.
+`verifier.report.json`, `boundary.matrix.json` when requested,
+`redaction.proof.json`, and `reports/security.md`.
+
+Add `--security-boundary-matrix` when you want the secrets report and evidence
+bundle to include a row-by-row proof of where secret material is allowed or
+blocked. The matrix marks Kubernetes `Secret.data`/`stringData`, `secretKeyRef`,
+and secret volume references as allowed boundaries, and tracks blocked leak
+surfaces such as `ConfigMap.data`, metadata labels/annotations, env values,
+commands, args, and probe fields. Evidence bundles also write
+`boundary.matrix.json`.
 
 The older `verify` binary remains available for existing CI scripts, but new docs and examples use `verifier`.
 

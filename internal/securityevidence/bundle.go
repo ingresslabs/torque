@@ -71,6 +71,11 @@ func WriteBundle(opts BundleOptions, verifierReport *verify.Report, secretsRepor
 		if err := writeJSON(filepath.Join(dir, "secrets.report.json"), secretsReport); err != nil {
 			return err
 		}
+		if secretsReport.BoundaryMatrix != nil {
+			if err := writeJSON(filepath.Join(dir, "boundary.matrix.json"), secretsReport.BoundaryMatrix); err != nil {
+				return err
+			}
+		}
 		if err := writeJSON(filepath.Join(dir, "redaction.proof.json"), secretsReport.RedactionProof); err != nil {
 			return err
 		}
@@ -107,6 +112,14 @@ func renderMarkdown(manifest BundleManifest, verifierReport *verify.Report, secr
 		fmt.Fprintf(&b, "\n## Secret Findings\n\n")
 		for _, f := range secretsReport.Findings {
 			fmt.Fprintf(&b, "- `%s` `%s` %s (%s)\n", f.Severity, f.RuleID, f.Message, firstNonEmpty(f.ResourceKey, f.Location, f.Path))
+		}
+	}
+	if secretsReport != nil && secretsReport.BoundaryMatrix != nil {
+		fmt.Fprintf(&b, "\n## Security Boundary Matrix\n\n")
+		fmt.Fprintf(&b, "| Surface | Boundary | Status | Findings |\n")
+		fmt.Fprintf(&b, "| --- | --- | --- | ---: |\n")
+		for _, row := range secretsReport.BoundaryMatrix.Rows {
+			fmt.Fprintf(&b, "| `%s` | `%s` | `%s` | `%d` |\n", row.Surface, row.Boundary, row.Status, row.FindingCount)
 		}
 	}
 	if verifierReport != nil && len(verifierReport.Findings) > 0 {

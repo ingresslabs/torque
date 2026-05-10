@@ -87,6 +87,7 @@ func newVerifyCommand(kubeconfigPath *string, kubeContext *string, logLevel *str
 	var securityProfile string
 	var secretsReport string
 	var securityEvidence string
+	var securityBoundaryMatrix bool
 
 	cmd := &cobra.Command{
 		Use:   "verify [config.yaml]",
@@ -182,6 +183,7 @@ Shortcut flags (no YAML):
 				cfg.Verify.SecurityProfile = strings.TrimSpace(securityProfile)
 				cfg.Verify.Secrets.Report = strings.TrimSpace(secretsReport)
 				cfg.Verify.SecurityEvidence = strings.TrimSpace(securityEvidence)
+				cfg.Verify.SecurityBoundaryMatrix = securityBoundaryMatrix
 				cfg.ResolvePaths(baseDir)
 			}
 
@@ -199,6 +201,9 @@ Shortcut flags (no YAML):
 			}
 			if cmd.Flags().Changed("security-evidence") {
 				cfg.Verify.SecurityEvidence = cfgpkg.ResolveRelPath(baseDir, securityEvidence)
+			}
+			if cmd.Flags().Changed("security-boundary-matrix") {
+				cfg.Verify.SecurityBoundaryMatrix = securityBoundaryMatrix
 			}
 			if err := cfg.Validate(baseDir); err != nil {
 				return err
@@ -323,6 +328,7 @@ Shortcut flags (no YAML):
 	cmd.Flags().StringVar(&securityProfile, "security-profile", "", "Security profile to enable evidence-first checks (default or enterprise)")
 	cmd.Flags().StringVar(&secretsReport, "secrets-report", "", "Write evidence-first secrets scan report JSON to this path")
 	cmd.Flags().StringVar(&securityEvidence, "security-evidence", "", "Write a security evidence bundle directory")
+	cmd.Flags().BoolVar(&securityBoundaryMatrix, "security-boundary-matrix", false, "Add a Secret/ConfigMap/env/log-facing boundary matrix to the secrets report and evidence bundle")
 	cmd.Flags().BoolVar(&openReport, "open", false, "Open the report after success (HTML file reports only)")
 	cmd.Flags().StringVar(&evaluatedAt, "evaluated-at", "", "Override evaluation time (RFC3339) for deterministic reports/tests")
 

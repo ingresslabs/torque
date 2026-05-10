@@ -614,6 +614,7 @@ torque-security-evidence/
   manifest.json
   inputs.json
   secrets.report.json
+  boundary.matrix.json
   verifier.report.json
   findings.sarif
   flow.graph.json
@@ -687,6 +688,7 @@ Verifier additions:
 ```bash
 verifier --chart ./chart --release api -n prod \
   --security-profile enterprise \
+  --security-boundary-matrix \
   --secrets-report secrets.json \
   --report verify.json
 

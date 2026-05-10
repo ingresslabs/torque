@@ -193,6 +193,11 @@ verify:
     write: ./baseline.json   # write a JSON baseline snapshot
     read: ./baseline.json    # compare against baseline on next run
     exitOnDelta: true        # fail when new/changed findings appear
+  securityProfile: enterprise
+  securityBoundaryMatrix: true
+  securityEvidence: ./torque-security-evidence
+  secrets:
+    report: ./secrets.json
 
 output:
   format: table      # table|json|sarif|html|md
