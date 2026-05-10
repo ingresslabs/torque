@@ -334,16 +334,8 @@
           0 22px 58px rgba(0, 0, 0, 0.26);
       }
 
-      .blog-label {
-        color: var(--muted-strong);
-        font: 0.72rem/1 var(--font-mono);
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
       .blog-entry h2 {
-        margin: 12px 0 0;
+        margin: 0;
         color: #ffffff;
         font-size: clamp(2rem, 4.8vw, 4.3rem);
         line-height: 0.96;
@@ -351,30 +343,15 @@
         letter-spacing: 0;
       }
 
+      .blog-entry h2 a {
+        color: inherit;
+      }
+
       .blog-entry p {
         margin: 0;
         color: var(--muted);
         font-size: clamp(1rem, 1.45vw, 1.18rem);
         line-height: 1.62;
-      }
-
-      .blog-entry a {
-        justify-self: start;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 22px;
-        padding: 12px 14px;
-        border: 1px solid rgba(237, 241, 245, 0.28);
-        border-radius: 8px;
-        background:
-          linear-gradient(180deg, rgba(237, 241, 245, 0.14), rgba(184, 189, 196, 0.04)),
-          rgba(16, 16, 20, 0.78);
-        color: var(--text);
-        font: 0.76rem/1 var(--font-mono);
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
       }
 
       .demo {
@@ -1053,8 +1030,7 @@
 
           <article class="blog-entry" aria-labelledby="blog-mcp-title">
             <div>
-              <div class="blog-label">Engineering note</div>
-              <h2 id="blog-mcp-title">One Torque talking to another.</h2>
+              <h2 id="blog-mcp-title"><a href="./blog-mcp-s3-cache.html">One Torque talking to another.</a></h2>
             </div>
             <div>
               <p>
@@ -1062,14 +1038,12 @@
                 a shorter field note on agent-driven delivery, the symbolic
                 remote bridge, and the S3 BuildKit cache advisor path.
               </p>
-              <a href="./blog-mcp-s3-cache.html">Read the showcase</a>
             </div>
           </article>
 
           <article class="blog-entry" aria-labelledby="blog-atlassian-title">
             <div>
-              <div class="blog-label">Field note</div>
-              <h2 id="blog-atlassian-title">Atlassian Data Center as a Torque stack.</h2>
+              <h2 id="blog-atlassian-title"><a href="./blog-atlassian-torque-case-study.html">Atlassian Data Center as a Torque stack.</a></h2>
             </div>
             <div>
               <p>
@@ -1077,7 +1051,6 @@
                 through Torque stack orchestration, secret:// references,
                 verifier gates, Helmer plans, and custom image builds.
               </p>
-              <a href="./blog-atlassian-torque-case-study.html">Read the case study</a>
             </div>
           </article>
 

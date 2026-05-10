@@ -191,7 +191,6 @@
         background: rgba(237, 241, 245, 0.055);
       }
 
-      .flow-panel,
       .evidence-panel {
         display: grid;
         gap: 18px;
@@ -204,7 +203,6 @@
           rgba(10, 10, 12, 0.94);
       }
 
-      .flow-panel h2,
       .evidence-panel h2 {
         margin: 0;
         color: #ffffff;
@@ -212,34 +210,12 @@
         line-height: 1.12;
       }
 
-      .flow-grid {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .flow-step,
       .evidence-list a {
         min-width: 0;
         padding: 12px 13px;
         border: 1px solid rgba(237, 241, 245, 0.14);
         border-radius: 7px;
         background: rgba(237, 241, 245, 0.045);
-      }
-
-      .flow-step strong {
-        display: block;
-        color: #ffffff;
-        font-size: 0.96rem;
-        line-height: 1.2;
-      }
-
-      .flow-step span {
-        display: block;
-        margin-top: 6px;
-        color: var(--muted);
-        font: 0.7rem/1.35 var(--font-mono);
-        overflow-wrap: anywhere;
       }
 
       details {
@@ -268,6 +244,26 @@
         color: #f3f5f7;
         font: 0.82rem/1.35 var(--font-mono);
         border-bottom: 0;
+      }
+
+      .preface-figure {
+        display: grid;
+        gap: 10px;
+        margin: clamp(4px, 2vw, 14px) 0 clamp(18px, 4vw, 34px);
+      }
+
+      .preface-figure img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid rgba(237, 241, 245, 0.14);
+        border-radius: 8px;
+        background: #0f1012;
+      }
+
+      .preface-figure figcaption {
+        color: var(--muted);
+        font: 0.76rem/1.35 var(--font-mono);
       }
 
       .logs-examples {
@@ -340,7 +336,6 @@
       }
 
       @media (max-width: 820px) {
-        .flow-grid,
         .evidence-list {
           grid-template-columns: minmax(0, 1fr);
         }
@@ -419,37 +414,16 @@
         <article class="article-body" aria-label="Article">
           <p>Torque cuts DevOps tool sprawl and restores development velocity for agentic delivery flows.</p>
 
+          <figure class="preface-figure">
+            <img src="./assets/blog/atlassian-devops-tooling.png" alt="Complex DevOps tooling represented as a Rube Goldberg machine" loading="lazy" />
+            <figcaption>DevOps tooling</figcaption>
+          </figure>
+
           <p>The starting point was intentionally ordinary: the public Atlassian Data Center Helm charts, a pair of Linux hosts, and a need to prove that a real multi-application stack could be shipped without falling back to a hand-written runbook. The target stack was not a toy. It included Jira, Confluence, Bitbucket, Bamboo, Crowd, a Bamboo agent, PostgreSQL backing databases, and shared storage for the products that need it. That mix is useful because it behaves like enterprise software usually behaves: stateful services, chart defaults, long startup times, product setup screens, secret material, persistent volumes, and several places where a deployment tool has to show its work.</p>
 
           <p>The first pass was direct. I installed k3s across the two hosts, prepared NFS-backed shared storage, pulled the Atlassian charts from <code>atlassian/data-center-helm-charts</code>, and used Torque to apply each release. That step mattered because it kept the baseline boring. Before turning the setup into a stack, I wanted to know the charts rendered, the services came up, the NodePorts were reachable, and the product pods could get to their databases. Torque was already useful there because the apply path gave me a consistent release loop and verifier output instead of a collection of one-off Helm commands.</p>
 
           <p>After the first successful deploy, I converted the release commands into a Torque stack. The stack made the dependency order explicit: storage first, prerequisite databases and Kubernetes Secrets next, application releases after that, and the Bamboo agent last. This is where Torque becomes more than a wrapper around Helm. The stack file gives the whole system a shape that can be reviewed, replayed, resumed, and debugged. If a downstream release fails, the operator does not need to reconstruct which values file or namespace was used. The stack has that context.</p>
-
-          <figure class="flow-panel" aria-label="Atlassian Torque delivery flow">
-            <h2>Delivery flow</h2>
-            <div class="flow-grid">
-              <div class="flow-step">
-                <strong>Helm charts</strong>
-                <span>Atlassian upstream source</span>
-              </div>
-              <div class="flow-step">
-                <strong>Torque stack</strong>
-                <span>DAG, namespaces, values</span>
-              </div>
-              <div class="flow-step">
-                <strong>Secrets</strong>
-                <span>secret:// provider refs</span>
-              </div>
-              <div class="flow-step">
-                <strong>Verifier</strong>
-                <span>block high risk findings</span>
-              </div>
-              <div class="flow-step">
-                <strong>Images</strong>
-                <span>Torque build and OCI import</span>
-              </div>
-            </div>
-          </figure>
 
           <p>The next problem was secrets. Plaintext database passwords in values files are exactly the kind of shortcut that becomes permanent if nobody removes it early. I added a local Torque secret provider and changed the prerequisite values to use <code>secret://local/...</code> references for the database passwords and Bamboo agent security token. One practical lesson came out of that work: secret resolution belongs in the supplied values path, not buried in a chart default file that the deploy tool does not own. Moving the references into the explicit values file made the behavior obvious, and the generated Kubernetes Secrets were then checked to confirm that the cluster received resolved values instead of literal <code>secret://</code> strings.</p>
 

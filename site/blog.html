@@ -120,28 +120,6 @@
         padding: 8px 0 66px;
       }
 
-      .hero {
-        display: grid;
-        gap: 18px;
-        max-width: 900px;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: clamp(3.25rem, 8vw, 7.1rem);
-        line-height: 0.91;
-        font-weight: 780;
-        letter-spacing: 0;
-      }
-
-      .lede {
-        margin: 0;
-        max-width: 760px;
-        color: var(--muted);
-        font-size: clamp(1.06rem, 1.55vw, 1.28rem);
-        line-height: 1.55;
-      }
-
       .posts {
         display: grid;
         gap: 18px;
@@ -150,22 +128,13 @@
 
       .post {
         display: grid;
-        grid-template-columns: minmax(0, 0.45fr) minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: minmax(0, 1fr);
         padding: 20px 0;
         border-top: 1px solid rgba(237, 241, 245, 0.12);
       }
 
       .post:last-child {
         border-bottom: 1px solid rgba(237, 241, 245, 0.12);
-      }
-
-      .label {
-        color: var(--muted-strong);
-        font: 0.72rem/1 var(--font-mono);
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
       }
 
       .post h2 {
@@ -175,19 +144,16 @@
         line-height: 1.08;
       }
 
+      .post h2 a {
+        color: inherit;
+        border-bottom: 0;
+      }
+
       .post p {
         margin: 10px 0 0;
         color: #d7dbe0;
         font-size: clamp(1rem, 1.35vw, 1.12rem);
         line-height: 1.65;
-      }
-
-      .post a {
-        display: inline-block;
-        margin-top: 14px;
-        color: var(--text);
-        border-bottom: 1px solid rgba(237, 241, 245, 0.36);
-        font: 0.82rem/1.35 var(--font-mono);
       }
 
       footer {
@@ -239,27 +205,18 @@
       </header>
 
       <main>
-        <section class="hero" aria-labelledby="title">
-          <h1 id="title">Torque Blog</h1>
-          <p class="lede">Engineering notes and case studies from real build, verify, plan, apply, and debugging workflows.</p>
-        </section>
-
         <section class="posts" aria-label="Blog posts">
           <article class="post">
-            <div class="label">Field note</div>
             <div>
-              <h2>Atlassian Data Center As A Torque Stack</h2>
+              <h2><a href="./blog-atlassian-torque-case-study.html">Atlassian Data Center As A Torque Stack</a></h2>
               <p>Deploy Atlassian Data Center charts with Torque, convert the release commands into a stack, add secret:// references, generate HTML verifier and Helmer evidence, build custom images, and debug the live rollout with torque logs.</p>
-              <a href="./blog-atlassian-torque-case-study.html">Read the case study</a>
             </div>
           </article>
 
           <article class="post">
-            <div class="label">Engineering note</div>
             <div>
-              <h2>One Torque Talking To Another</h2>
+              <h2><a href="./blog-mcp-s3-cache.html">One Torque Talking To Another</a></h2>
               <p>A practical pattern for agent-driven delivery through the MCP remote bridge, systemd daemon install path, and S3 BuildKit cache advisor workflow.</p>
-              <a href="./blog-mcp-s3-cache.html">Read the engineering note</a>
             </div>
           </article>
         </section>
