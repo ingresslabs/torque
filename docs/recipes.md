@@ -83,6 +83,10 @@ torque apply --chart ./chart --release foo -n default \
   --auto-rollback --slo ./slo.yaml \
   --predict --proof-bundle ./apply-proof.json \
   --capture ./apply.sqlite --yes
+
+# Turn a failed proof bundle into a repair branch and PR body
+torque repair --from ./apply-proof.json --chart ./chart \
+  --branch fix/foo-rollout --apply --pr-body ./repair-pr.md --yes
 ```
 
 ## Build → verify → plan → apply
@@ -104,6 +108,7 @@ torque apply --chart ./chart --release foo -n default \
   --require-verified verify.json \
   --predict --proof-bundle ./apply-proof.json \
   --capture ./apply.sqlite --yes
+torque repair --from ./apply-proof.json --chart ./chart --pr-body ./repair-pr.md
 torque explain ./apply.sqlite --format markdown
 ```
 

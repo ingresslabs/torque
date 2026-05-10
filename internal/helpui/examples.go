@@ -85,6 +85,10 @@ var curatedExamples = map[string][]string{
 	"torque revert": {
 		"# Revert a release to the last known-good revision\ntorque revert --release foo -n default",
 	},
+	"torque repair": {
+		"# Diagnose a failed apply proof bundle\ntorque repair --from ./apply-proof.json --chart ./chart",
+		"# Write chart repair files and a PR body\ntorque repair --from ./apply-proof.json --chart ./chart --branch fix/foo-rollout --apply --pr-body ./repair-pr.md --yes",
+	},
 	"torque env": {
 		"# Show env var reference (machine-readable)\ntorque env --format json",
 	},

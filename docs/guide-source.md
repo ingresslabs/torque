@@ -160,6 +160,14 @@ Apply a manifest or helm chart with instant log streaming.
 - `--predict --proof-bundle ./apply-proof.json`: Score rollout risk before apply and write a JSON bundle with plan, prediction, history, resource status, and final outcome.
 - `--auto-rollback --slo ./slo.yaml`: Roll back failed applies or violated rollout SLO gates and write rollback proof.
 
+## torque repair
+Turn a failed apply proof bundle into a repair plan, optional chart patch, and PR body.
+
+**Usage**: `torque repair --from ./apply-proof.json --chart ./chart [flags]`
+- `--apply`: Write safe generated repair templates into the chart.
+- `--branch fix/api-rollout`: Create/switch to a repair branch before writing files when the chart is in a clean git worktree.
+- `--pr-body ./repair-pr.md`: Write a Markdown PR body with root cause, evidence, patch plan, and validation commands.
+
 ## torque stack
 Manage complex multi-component releases.
 

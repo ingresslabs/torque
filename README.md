@@ -78,6 +78,13 @@ torque apply --chart ./chart --release api -n prod \
   --capture ./apply.sqlite --yes
 ```
 
+Failed releases can turn that proof into a repair plan and PR-ready patch:
+
+```bash
+torque repair --from ./apply-proof.json --chart ./chart \
+  --branch fix/api-rollout --apply --pr-body ./repair-pr.md --yes
+```
+
 ## Showcase Reports
 
 Generated from the intentionally incomplete `testdata/charts/verify-findings`
@@ -100,6 +107,7 @@ fallback, and review-ready outputs without touching a real cluster.
 - Helm release plans with Markdown, JSON, and rich HTML plan reports.
 - Verifier gates for charts, rendered manifests, and live namespaces.
 - Predictive apply risk scoring and proof bundles for plan-to-rollout evidence.
+- Failure-to-fix repair plans that turn proof bundles into chart patches and PR bodies.
 - Auto rollback proof for failed applies and rollout SLO gates.
 - Dependency-ordered stack planning and apply runs.
 - Portable SQLite evidence for builds, deploys, logs, and stack runs.

@@ -181,6 +181,7 @@ func TestRootHelpSubcommandOrder(t *testing.T) {
 		"  delete",
 		"  stack",
 		"  revert",
+		"  repair",
 		"  list",
 		"  lint",
 		"  logs",
