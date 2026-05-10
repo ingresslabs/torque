@@ -810,6 +810,9 @@ profiles:
 ## Benchmark And Evaluation
 
 Claims must be backed by a repeatable corpus under `testdata/security/`.
+The detailed data rules, fixture schema, detector-family requirements, and
+release gates are defined in
+[Security Benchmark Corpus Spec](security-corpus-spec.md).
 
 Corpus groups:
 

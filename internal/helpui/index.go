@@ -236,6 +236,17 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
+	if md := strings.TrimSpace(torquedocs.SecurityCorpusSpecMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:security-corpus-spec",
+			Kind:     "doc",
+			Title:    "Security benchmark corpus spec",
+			Subtitle: "Synthetic true/false secret fixtures, metrics, and release gates",
+			Content:  md,
+			Tags:     []string{"doc", "secrets", "security", "benchmark", "corpus", "detectors", "redaction", "evidence"},
+		})
+	}
+
 	if md := strings.TrimSpace(torquedocs.RecipesMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:recipes",

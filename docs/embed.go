@@ -44,4 +44,7 @@ var (
 
 	//go:embed secrets-verifier-evidence-spec.md
 	SecretsVerifierEvidenceSpecMD string
+
+	//go:embed security-corpus-spec.md
+	SecurityCorpusSpecMD string
 )

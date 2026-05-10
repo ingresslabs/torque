@@ -71,5 +71,7 @@ The older `verify` binary remains available for existing CI scripts, but new doc
 
 For the next-generation security direction, see
 [Evidence-First Secrets And Verifier Spec](secrets-verifier-evidence-spec.md).
+For corpus data rules and detector quality gates, see
+[Security Benchmark Corpus Spec](security-corpus-spec.md).
 
 ![Verifier report](assets/verifier/verify.png)

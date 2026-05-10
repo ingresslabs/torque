@@ -100,6 +100,9 @@ verifier --manifest ./rendered.yaml --security-profile enterprise \
 torque security benchmark --corpus ./testdata/security --report benchmark.json
 ```
 
+Detector-quality claims are grounded in the synthetic corpus rules in
+[`docs/security-corpus-spec.md`](docs/security-corpus-spec.md).
+
 ## Showcase Reports
 
 Generated from the intentionally incomplete `testdata/charts/verify-findings`
