@@ -150,5 +150,6 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 - UI design system (HTML/CSS surfaces): `DESIGN.md`
 - gRPC agent API: `docs/grpc-agent.md`
 - MCP server design: `docs/mcp-server-spec.md`
+- Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`
 - S3 BuildKit cache: `docs/s3-build-cache.md`
 - Generated package dependency map: `docs/deps.md` (refresh with `make deps`)

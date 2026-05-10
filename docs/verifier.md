@@ -23,4 +23,7 @@ verifier rules list
 
 The older `verify` binary remains available for existing CI scripts, but new docs and examples use `verifier`.
 
+For the next-generation security direction, see
+[Evidence-First Secrets And Verifier Spec](secrets-verifier-evidence-spec.md).
+
 ![Verifier report](assets/verifier/verify.png)

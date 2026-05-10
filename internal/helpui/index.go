@@ -225,6 +225,17 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
+	if md := strings.TrimSpace(torquedocs.SecretsVerifierEvidenceSpecMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:secrets-verifier-evidence-spec",
+			Kind:     "doc",
+			Title:    "Secrets and verifier evidence spec",
+			Subtitle: "Evidence-first secret detection, redaction, verifier rules, and suppressions",
+			Content:  md,
+			Tags:     []string{"doc", "secrets", "verifier", "verify", "redaction", "evidence", "security", "policy"},
+		})
+	}
+
 	if md := strings.TrimSpace(torquedocs.RecipesMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:recipes",

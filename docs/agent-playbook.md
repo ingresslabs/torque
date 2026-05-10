@@ -91,6 +91,7 @@ git diff --exit-code
 
 - gRPC agent API (torque-agent): `docs/grpc-agent.md`
 - MCP server spec (agent-facing tools/resources/prompts): `docs/mcp-server-spec.md`
+- Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`
 - Enterprise agent operations: `docs/enterprise-agent-operations.md`
 - S3 BuildKit cache: `docs/s3-build-cache.md`
 - Dependency map (generated): `docs/deps.md` (refresh via `make deps`)
