@@ -54,6 +54,9 @@ var (
 	//go:embed contract.md
 	ContractMD string
 
+	//go:embed proof-graph.md
+	ProofGraphMD string
+
 	//go:embed secrets-verifier-evidence-spec.md
 	SecretsVerifierEvidenceSpecMD string
 

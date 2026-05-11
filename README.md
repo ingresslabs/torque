@@ -62,6 +62,9 @@ torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json
 torque apply --chart ./chart --release api -n prod \
   --predict --proof-bundle ./apply-proof.json \
   --capture ./apply.sqlite --yes
+torque proof graph ./apply-proof.json \
+  --attach drift-proof.json --out proof.graph.json --html proof.html
+torque proof verify proof.graph.json
 torque incident capture --release api -n prod --since 1h --out incident.torque
 torque incident replay incident.torque --lab k3s --out incident-replay-proof/
 torque contract synthesize --from incident-replay-proof/ \
@@ -162,6 +165,23 @@ torque repair --from ./apply-proof.json --chart ./chart \
 torque fix --from ./torque-sim-proof --chart ./chart
 ```
 
+Release-sensitive workflows can turn those proof files into a signed graph for
+review and CI verification:
+
+```bash
+torque stack keygen --out .torque/keys/proof-ed25519.json
+torque proof graph ./apply-proof.json \
+  --attach drift-proof.json \
+  --attach repair-pr.md \
+  --out proof.graph.json \
+  --html proof.html \
+  --key .torque/keys/proof-ed25519.json
+torque proof verify proof.graph.json --require-signature
+torque proof diff previous-proof.graph.json proof.graph.json
+```
+
+See [`docs/proof-graph.md`](docs/proof-graph.md) for the graph contract.
+
 Security-sensitive releases can scan source or rendered manifests before review:
 
 ```bash
@@ -205,6 +225,7 @@ fallback, and review-ready outputs without touching a real cluster.
   corpus metrics, and verifier security evidence bundles.
 - Predictive apply risk scoring and proof bundles for plan-to-rollout evidence.
 - Failure-to-fix repair plans that turn proof bundles into chart patches and PR bodies.
+- Signed release proof graphs that link build, verify, dry-run, drift, rollout, rollback, and repair evidence.
 - Auto rollback proof for failed applies and rollout SLO gates.
 - Dependency-ordered stack planning and apply runs.
 - Portable SQLite evidence for builds, deploys, logs, and stack runs.

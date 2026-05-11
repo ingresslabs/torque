@@ -23,6 +23,7 @@ This repo is a single-module Go CLI with an optional companion agent.
 - `env`
 - `guardian`
 - `incident`
+- `proof`
 - `secrets`
 - `version`
 
@@ -116,6 +117,12 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 - Key surfaces: `incident capture`, `incident replay`, `incident explain`, `incident pr`.
 - Invariants: Incident commands do not mutate clusters; captures must redact secret-like strings and omit Kubernetes Secret `data`/`stringData`; replay writes portable proof files only.
 
+### Release Proof Graph
+
+- Purpose: top-level `torque proof` command for building, signing, verifying, and diffing release evidence graphs.
+- Key surfaces: `proof graph`, `proof verify`, `proof diff`.
+- Invariants: proof graphs store artifact paths, hashes, statuses, image digests, and optional ed25519 signatures; they do not inline raw SQLite captures, logs, manifests, or secret values.
+
 ### `internal/ui`
 
 - Purpose: terminal UX primitives (deploy console, spinner).
@@ -171,5 +178,6 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 - gRPC agent API: `docs/grpc-agent.md`
 - MCP server design: `docs/mcp-server-spec.md`
 - Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`
+- Release proof graph contract: `docs/proof-graph.md`
 - S3 BuildKit cache: `docs/s3-build-cache.md`
 - Generated package dependency map: `docs/deps.md` (refresh with `make deps`)

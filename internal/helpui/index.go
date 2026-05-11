@@ -269,6 +269,17 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 		})
 	}
 
+	if md := strings.TrimSpace(torquedocs.ProofGraphMD); md != "" {
+		entries = append(entries, Entry{
+			ID:       "doc:proof-graph",
+			Kind:     "doc",
+			Title:    "Release Proof Graph",
+			Subtitle: "Signed release graph for build, verify, dry-run, drift, rollout, rollback, and repair evidence",
+			Content:  md,
+			Tags:     []string{"doc", "proof", "graph", "signature", "verify", "diff", "evidence", "release"},
+		})
+	}
+
 	if md := strings.TrimSpace(torquedocs.SecretsVerifierEvidenceSpecMD); md != "" {
 		entries = append(entries, Entry{
 			ID:       "doc:secrets-verifier-evidence-spec",
