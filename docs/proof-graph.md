@@ -114,6 +114,62 @@ Text output is intentionally pasteable:
 release=v1.0.8 commit=<commit> graph=<graph-sha256> verified=true artifacts=22 checked=14 signed=true
 ```
 
+## Agent-Safe Operations
+
+`torque agent` lets AI and automation callers prove they are allowed to perform
+mutating Torque operations before they call the underlying workflow:
+
+```bash
+torque agent policy check agent-request.json \
+  --proof proof.graph.json \
+  --allow apply \
+  --require-gate \
+  --out agent-policy.json
+
+torque agent run agent-request.json \
+  --proof proof.graph.json \
+  --allow apply \
+  --require-gate \
+  --out agent-run.json
+```
+
+Request files can include `actor`, `operation`, `command`, `release`,
+`namespace`, `proof`, and `reason`. Mutating operations such as `apply`,
+`delete`, `ship`, `repair`, and stack writes require an explicit `--allow`
+entry and a passing proof gate. `agent run` is intentionally non-mutating; it
+returns a signed-off authorization record for the caller to attach to the
+change path.
+
+## Release Score
+
+`torque release score` converts a signed proof graph and gate result into a
+compact readiness score for CI, PRs, and release notes:
+
+```bash
+torque release score proof.graph.json \
+  --out release-score.json \
+  --fail-below 90
+```
+
+Scores start at 100 and subtract penalties for failed graph verification,
+missing signatures, missing required artifacts, unpinned images, blocked
+verifier/SLO evidence, missing rollback proof, or missing repair PR evidence.
+
+## Release Flight Recorder
+
+`torque flight` records the proof graph as a portable release timeline that can
+be replayed or explained without a cluster:
+
+```bash
+torque flight record proof.graph.json --out release.flight.torque
+torque flight replay release.flight.torque
+torque flight explain release.flight.torque
+```
+
+The flight file stores the graph digest, score, grade, release metadata, and an
+ordered timeline across source, build, render, verify, dry-run, runtime,
+rollout, SLO, rollback, repair, and extra evidence phases.
+
 ## Boole E2E
 
 The repository includes a manual remote E2E for release proof graph hardening:
@@ -125,9 +181,11 @@ scripts/e2e-proof-graph-boole.sh
 The script builds or reuses a Linux amd64 `torque` binary, copies it to Boole,
 recreates a full proof graph fixture, verifies signature and file hashes, checks
 HTML output, diffs previous/current graphs, runs `proof gate`, signs a release
-attestation, proves tamper detection by modifying verifier evidence, then
-repeats graph/verify/diff/gate/attest for 100 iterations by default. It prints
-a single compact JSON line suitable for CI and release notes.
+attestation, checks `agent policy` and `agent run`, scores the release, records
+and replays the release flight, proves tamper detection by modifying verifier
+evidence, then repeats graph/verify/diff/gate/attest/agent/score/flight for 100
+iterations by default. It prints a single compact JSON line suitable for CI and
+release notes.
 
 GitHub Actions exposes the same run as the manual **Proof Graph E2E** workflow.
 

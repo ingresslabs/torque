@@ -18,7 +18,8 @@ scripts/e2e-proof-graph-boole.sh
 
 Record the compact JSON output in the release notes or PR. The output includes
 the source commit, binary SHA256, graph SHA256, signed attestation SHA256,
-artifact counts, gate checks, diff counts, and tamper-failure confirmation.
+artifact counts, gate checks, agent policy checks, release score, flight event
+count, diff counts, and tamper-failure confirmation.
 
 ## Verify Checksums
 

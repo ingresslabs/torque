@@ -15,6 +15,7 @@
         "# Simulate live API behavior before applying\n  torque apply simulate --chart ./chart --release foo --out ./torque-sim-proof",
         "# Revert a release to the last known-good revision\n  torque revert --release foo --namespace prod",
         "# Turn failed apply proof into a repair plan\n  torque repair --from ./apply-proof.json --chart ./chart",
+        "# Build a signed release proof graph\n  torque proof graph ./apply-proof.json --out proof.graph.json --html proof.html --key .torque/stack/keys/ed25519.json",
         "# Benchmark security detection with evidence\n  torque security benchmark --corpus ./testdata/security --report benchmark.json",
         "# Prove runtime drift from a simulation proof\n  torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json",
         "# Synthesize and test runtime recurrence contracts\n  torque contract synthesize --from incident-replay-proof --guardian drift-proof.json --out torque-contract.yaml",
@@ -29,6 +30,79 @@
       ],
       "tags": [
         "command"
+      ]
+    },
+    {
+      "id": "cmd:torque agent",
+      "kind": "command",
+      "title": "torque agent",
+      "subtitle": "Authorize agent operations with proof-backed policy",
+      "content": "Authorize AI or automation agent operations only when the request is explicitly allowed and the referenced proof graph satisfies the release gate.\n\nUsage:\n  torque agent",
+      "examples": [
+        "# Check whether an agent may run a mutating operation\ntorque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate",
+        "# Write a proof-backed authorization record\ntorque agent run agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-run.json"
+      ],
+      "tags": [
+        "command",
+        "agent",
+        "policy",
+        "proof",
+        "gate",
+        "authorization"
+      ]
+    },
+    {
+      "id": "cmd:torque agent policy",
+      "kind": "command",
+      "title": "torque agent policy",
+      "subtitle": "Evaluate agent operation policy",
+      "content": "Evaluate proof-backed policy for agent operations before any mutating Torque action is allowed.\n\nUsage:\n  torque agent policy",
+      "examples": [
+        "# Evaluate proof-backed operation policy\ntorque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-policy.json"
+      ],
+      "tags": [
+        "command",
+        "agent",
+        "policy",
+        "proof",
+        "gate"
+      ]
+    },
+    {
+      "id": "cmd:torque agent policy check",
+      "kind": "command",
+      "title": "torque agent policy check",
+      "subtitle": "Check whether an agent request is allowed by proof policy",
+      "content": "Check an agent request JSON against an explicit allow-list and a signed proof graph release gate.\n\nUsage:\n  torque agent policy check <request.json> [flags]\n\nFlags:\n      --allow stringArray   Allowed operation name (repeatable or comma-separated)\n      --format string       Output format: text or json (default \"text\")\n      --out string          Write JSON report to this path\n      --policy string       Optional proof gate policy file\n      --proof string        Signed proof graph required for mutating operations\n      --pub string          Optional trusted ed25519 public/private key JSON for graph\n                            verification\n      --require-gate        Require proof gate success before allowing the operation\n                            (default true)",
+      "examples": [
+        "# Authorize an apply request only when the release gate passes\ntorque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate --format json",
+        "# Use a custom release policy for agent authorization\ntorque agent policy check agent-request.json --proof proof.graph.json --policy release-policy.yaml --allow apply --require-gate"
+      ],
+      "tags": [
+        "command",
+        "agent",
+        "policy",
+        "proof",
+        "gate",
+        "authorization"
+      ]
+    },
+    {
+      "id": "cmd:torque agent run",
+      "kind": "command",
+      "title": "torque agent run",
+      "subtitle": "Authorize an agent run with proof-backed policy",
+      "content": "Authorize an agent run with proof-backed policy and return a run record. This command is intentionally non-mutating; it records authorization for the caller to use before invoking a write operation.\n\nUsage:\n  torque agent run [request.json] [flags]\n\nFlags:\n      --actor string        Actor identity to record when no request file is supplied\n      --allow stringArray   Allowed operation name (repeatable or comma-separated)\n      --command string      Command string to record when no request file is supplied\n      --format string       Output format: text or json (default \"text\")\n      --operation string    Requested operation when no request file is supplied\n      --out string          Write JSON report to this path\n      --policy string       Optional proof gate policy file\n      --proof string        Signed proof graph required for mutating operations\n      --pub string          Optional trusted ed25519 public/private key JSON for graph\n                            verification\n      --require-gate        Require proof gate success before allowing the operation\n                            (default true)",
+      "examples": [
+        "# Produce a non-mutating authorization record for the caller\ntorque agent run agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-run.json",
+        "# Build the request from flags when no request file exists\ntorque agent run --actor codex --operation apply --command 'torque apply --chart ./chart --release api -n prod' --proof proof.graph.json --allow apply --require-gate"
+      ],
+      "tags": [
+        "command",
+        "agent",
+        "run",
+        "proof",
+        "authorization"
       ]
     },
     {
@@ -338,6 +412,76 @@
       ]
     },
     {
+      "id": "cmd:torque flight",
+      "kind": "command",
+      "title": "torque flight",
+      "subtitle": "Record and replay release flight evidence",
+      "content": "Record a release flight from a proof graph, replay the portable timeline, and explain the release path without mutating a cluster.\n\nUsage:\n  torque flight",
+      "examples": [
+        "# Record, replay, and explain a release flight\ntorque flight record proof.graph.json --out release.flight.torque && torque flight replay release.flight.torque && torque flight explain release.flight.torque"
+      ],
+      "tags": [
+        "command",
+        "flight",
+        "recorder",
+        "timeline",
+        "proof",
+        "release"
+      ]
+    },
+    {
+      "id": "cmd:torque flight explain",
+      "kind": "command",
+      "title": "torque flight explain",
+      "subtitle": "Explain a release flight timeline",
+      "content": "Explain a recorded release flight as a compact timeline summary for reviews and incident follow-up.\n\nUsage:\n  torque flight explain <flight.torque> [flags]\n\nFlags:\n      --format string   Output format: text or json (default \"text\")",
+      "examples": [
+        "# Summarize the evidence phases in a recorded release flight\ntorque flight explain release.flight.torque"
+      ],
+      "tags": [
+        "command",
+        "flight",
+        "explain",
+        "timeline",
+        "proof"
+      ]
+    },
+    {
+      "id": "cmd:torque flight record",
+      "kind": "command",
+      "title": "torque flight record",
+      "subtitle": "Record a portable release flight from a proof graph",
+      "content": "Record a portable release flight timeline from a proof graph, release gate result, score, and evidence artifact order.\n\nUsage:\n  torque flight record <proof-graph> [flags]\n\nFlags:\n      --format string   Output format: text or json (default \"text\")\n      --out string      Write release flight JSON to this path\n      --policy string   Optional proof gate policy file\n      --pub string      Optional trusted ed25519 public/private key JSON for graph\n                        verification",
+      "examples": [
+        "# Record a portable release timeline from the proof graph\ntorque flight record proof.graph.json --out release.flight.torque",
+        "# Record a flight with a custom release gate policy\ntorque flight record proof.graph.json --policy release-policy.yaml --out release.flight.torque --format json"
+      ],
+      "tags": [
+        "command",
+        "flight",
+        "record",
+        "timeline",
+        "proof"
+      ]
+    },
+    {
+      "id": "cmd:torque flight replay",
+      "kind": "command",
+      "title": "torque flight replay",
+      "subtitle": "Replay and validate a release flight",
+      "content": "Replay and validate that a release flight contains a graph digest, score, and ordered evidence timeline.\n\nUsage:\n  torque flight replay <flight.torque> [flags]\n\nFlags:\n      --format string   Output format: text or json (default \"text\")",
+      "examples": [
+        "# Validate that a release flight is replayable\ntorque flight replay release.flight.torque --format json"
+      ],
+      "tags": [
+        "command",
+        "flight",
+        "replay",
+        "timeline",
+        "proof"
+      ]
+    },
+    {
       "id": "cmd:torque guardian",
       "kind": "command",
       "title": "torque guardian",
@@ -639,6 +783,153 @@
       "tags": [
         "command",
         "internal/tailer"
+      ]
+    },
+    {
+      "id": "cmd:torque proof",
+      "kind": "command",
+      "title": "torque proof",
+      "subtitle": "Build, verify, and diff release proof graphs",
+      "content": "Build a signed release proof graph from Torque proof bundles, verify graph integrity, and diff proof evidence across releases.\n\nUsage:\n  torque proof",
+      "examples": [
+        "# Build a release proof graph and browser report\ntorque proof graph ./apply-proof.json --out proof.graph.json --html proof.html",
+        "# Sign a proof graph with an ed25519 key\ntorque proof graph ./apply-proof.json --out proof.graph.json --key .torque/stack/keys/ed25519.json",
+        "# Verify a signed graph in CI\ntorque proof verify proof.graph.json --require-signature",
+        "# Block promotion when release evidence is incomplete\ntorque proof gate proof.graph.json --out proof.gate.json",
+        "# Sign a compact release verdict for PRs and release notes\ntorque proof attest proof.graph.json --release v1.0.8 --key .torque/stack/keys/ed25519.json --out release.attestation.json"
+      ],
+      "tags": [
+        "command",
+        "proof",
+        "graph",
+        "signature",
+        "evidence"
+      ]
+    },
+    {
+      "id": "cmd:torque proof attest",
+      "kind": "command",
+      "title": "torque proof attest",
+      "subtitle": "Sign a compact release verdict from a verified proof graph",
+      "content": "Verify a proof graph, then write a signed release attestation that records the release, commit, graph digest, verification result, and artifact counts for PRs and release notes.\n\nUsage:\n  torque proof attest <proof-graph> [flags]\n\nFlags:\n      --format string       Output format: text or json (default \"text\")\n      --key string          Sign attestation with an ed25519 key JSON file from torque\n                            stack keygen\n      --out string          Write signed attestation JSON to this path\n      --pub string          Optional trusted ed25519 public/private key JSON for graph\n                            verification\n      --release string      Release name or tag to record in the attestation\n      --require-signature   Require the input proof graph to be signed (default true)\n      --strict-files        Fail graph verification when any referenced file is missing",
+      "examples": [
+        "# Sign a pasteable release verdict\ntorque proof attest proof.graph.json --release v1.0.8 --key .torque/stack/keys/ed25519.json --out release.attestation.json",
+        "# Emit the signed verdict as JSON for CI\ntorque proof attest proof.graph.json --release v1.0.8 --key .torque/stack/keys/ed25519.json --format json"
+      ],
+      "tags": [
+        "command",
+        "proof",
+        "attest",
+        "signature",
+        "release"
+      ]
+    },
+    {
+      "id": "cmd:torque proof diff",
+      "kind": "command",
+      "title": "torque proof diff",
+      "subtitle": "Diff two release proof graphs",
+      "content": "Compare two saved proof graphs or proof sources and report added, removed, and changed evidence artifacts.\n\nUsage:\n  torque proof diff <old-proof> <new-proof> [flags]\n\nFlags:\n      --format string   Output format: text or json (default \"text\")",
+      "examples": [
+        "# Compare evidence between two releases\ntorque proof diff previous-proof.graph.json current-proof.graph.json",
+        "# Emit diff as JSON for CI\ntorque proof diff previous-proof.graph.json current-proof.graph.json --format json"
+      ],
+      "tags": [
+        "command",
+        "proof",
+        "diff",
+        "evidence"
+      ]
+    },
+    {
+      "id": "cmd:torque proof gate",
+      "kind": "command",
+      "title": "torque proof gate",
+      "subtitle": "Evaluate a release policy against a proof graph",
+      "content": "Block release promotion when proof is unsigned, hashes drift, required evidence is missing, images are unpinned, verifier evidence blocks, SLO failure lacks rollback proof, or repair PR evidence is absent.\n\nUsage:\n  torque proof gate <proof-graph> [flags]\n\nFlags:\n      --format string   Output format: text or json (default \"text\")\n      --out string      Write gate report JSON to this path\n      --policy string   YAML or JSON release policy (defaults to the built-in release gate)\n      --pub string      Optional trusted ed25519 public/private key JSON for graph\n                        verification",
+      "examples": [
+        "# Evaluate the built-in release gate\ntorque proof gate proof.graph.json --out proof.gate.json",
+        "# Use a custom release policy and emit JSON\ntorque proof gate proof.graph.json --policy release-policy.yaml --format json"
+      ],
+      "tags": [
+        "command",
+        "proof",
+        "gate",
+        "policy",
+        "release"
+      ]
+    },
+    {
+      "id": "cmd:torque proof graph",
+      "kind": "command",
+      "title": "torque proof graph",
+      "subtitle": "Build a release proof graph from a Torque proof bundle",
+      "content": "Build a release proof graph by hashing and linking apply proof, build capture, verifier report, dry-run, drift, rollout, SLO, rollback, and repair evidence. Use --key to sign the graph with an ed25519 key from torque stack keygen.\n\nUsage:\n  torque proof graph <proof-source> [flags]\n\nFlags:\n      --attach stringArray   Attach additional evidence files or directories (repeatable)\n      --format string        Output format: text or json (default \"text\")\n      --html string          Write a browser-readable proof graph report to this path\n      --key string           Sign graph with an ed25519 key JSON file from torque\n                             stack keygen\n      --out string           Write proof graph JSON to this path",
+      "examples": [
+        "# Link apply proof, Guardian drift, and repair evidence\ntorque proof graph ./apply-proof.json --attach drift-proof.json --attach repair-pr.md --out proof.graph.json --html proof.html",
+        "# Sign the graph using a key generated by torque stack keygen\ntorque proof graph ./torque-sim-proof --out proof.graph.json --key .torque/stack/keys/ed25519.json"
+      ],
+      "tags": [
+        "command",
+        "proof",
+        "graph",
+        "release",
+        "html",
+        "signature"
+      ]
+    },
+    {
+      "id": "cmd:torque proof verify",
+      "kind": "command",
+      "title": "torque proof verify",
+      "subtitle": "Verify proof graph hashes and signatures",
+      "content": "Verify a saved proof graph JSON, or build and verify a graph directly from a Torque proof source. Signed graphs are checked with their embedded public key unless --pub is provided.\n\nUsage:\n  torque proof verify <proof-source-or-graph> [flags]\n\nFlags:\n      --format string       Output format: text or json (default \"text\")\n      --pub string          Optional trusted ed25519 public/private key JSON;\n                            overrides embedded public key\n      --require-signature   Fail when the proof graph is unsigned\n      --strict-files        Fail when any referenced file is missing, even if it was\n                            optional",
+      "examples": [
+        "# Verify hashes and the embedded signature\ntorque proof verify proof.graph.json --require-signature",
+        "# Verify with an explicit trusted public key\ntorque proof verify proof.graph.json --pub .torque/stack/keys/ed25519.json --require-signature"
+      ],
+      "tags": [
+        "command",
+        "proof",
+        "verify",
+        "signature",
+        "hash"
+      ]
+    },
+    {
+      "id": "cmd:torque release",
+      "kind": "command",
+      "title": "torque release",
+      "subtitle": "Evaluate release readiness from proof evidence",
+      "content": "Evaluate release readiness from signed proof graphs, release gates, and evidence coverage.\n\nUsage:\n  torque release",
+      "examples": [
+        "# Score release readiness from proof evidence\ntorque release score proof.graph.json --out release-score.json"
+      ],
+      "tags": [
+        "command",
+        "release",
+        "score",
+        "proof",
+        "gate"
+      ]
+    },
+    {
+      "id": "cmd:torque release score",
+      "kind": "command",
+      "title": "torque release score",
+      "subtitle": "Score release readiness from a proof graph",
+      "content": "Score release readiness from a signed proof graph and release gate checks. The score is designed for PRs, release notes, and agent policy decisions.\n\nUsage:\n  torque release score <proof-graph> [flags]\n\nFlags:\n      --fail-below int   Exit non-zero when score is below this value\n      --format string    Output format: text or json (default \"text\")\n      --out string       Write score JSON to this path\n      --policy string    Optional proof gate policy file\n      --pub string       Optional trusted ed25519 public/private key JSON for graph\n                         verification",
+      "examples": [
+        "# Fail CI when a release score is below the promotion threshold\ntorque release score proof.graph.json --fail-below 90",
+        "# Score with an explicit trusted proof key\ntorque release score proof.graph.json --pub .torque/stack/keys/ed25519.json --out release-score.json --format json"
+      ],
+      "tags": [
+        "command",
+        "release",
+        "score",
+        "readiness",
+        "proof",
+        "gate"
       ]
     },
     {
@@ -1130,7 +1421,7 @@
       "kind": "doc",
       "title": "Architecture",
       "subtitle": "Repo layout and core packages",
-      "content": "# TORQUE Architecture (Current)\n\nThis repo is a single-module Go CLI with an optional companion agent.\n\n## Layout\n- `cmd/torque`: end-user CLI (Cobra) and CLI-only helpers.\n- `cmd/torque-agent`: gRPC agent used by `--remote-agent` / `--mirror-bus`.\n- `internal/*`: non-exported libraries used by the CLI/agent (tailing, deploy/apply, UI mirroring, BuildKit workflows, config/feature flags).\n- `pkg/*`: reusable non-`internal` packages (BuildKit/Compose/registry helpers and generated API stubs under `pkg/api/torque/api/v1`).\n- `testdata/*`: fixtures and golden files.\n\n## Main Commands (wired today)\n- `init`\n- `build`\n- `explain`\n- `apply` (including `apply plan` and `apply simulate`)\n- `delete`\n- `stack`\n- `revert`\n- `list`\n- `lint`\n- `logs`\n- `env`\n- `guardian`\n- `incident`\n- `secrets`\n- `version`\n\nThe root command wiring lives in `cmd/torque/main.go`.\n\nLegacy/experimental commands (`analyze`, `up`, `wait`) remain callable for compatibility but are hidden from the focused CLI surface.\n\n## Companion Binaries\n- `verifier`: standalone policy verifier. The older `verify` binary remains as a compatibility shim for existing CI scripts.\n- `torque-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.\n\n## Internal Package Map (Purpose, Key Types, Invariants)\n\nThis section is intentionally short and repetitive: AI agents do best with a stable \u201cmap\u201d of where responsibilities live, which symbols are entrypoints, and what must not change.\n\n### `internal/config`\n\n- Purpose: shared CLI/config-layer options (flags + config binding + validation).\n- Key types: `Options` (`AddFlags`, `BindFlags`, `Validate`).\n- Invariants: CLI packages should call into `Options` rather than re-parsing env/config ad-hoc.\n\n### `internal/featureflags`\n\n- Purpose: register and resolve feature flags consistently.\n- Key types: `Definition`, `Flags` (`Enabled`, `EnabledNames`), `Name`, `Stage`.\n- Invariants: flag names stay kebab-cased; toggles flow via context/config/env (don\u2019t introduce new toggle mechanisms).\n\n### `internal/logging`\n\n- Purpose: structured logging configuration and shared logger helpers.\n- Key entrypoints: `internal/logging/logger.go` (logger construction/config).\n- Invariants: avoid global loggers; pass loggers/context through call chains.\n\n### `internal/grpcutil`\n\n- Purpose: gRPC dial/wiring helpers for local/remote agent connections.\n- Key entrypoints: `internal/grpcutil/dial.go`.\n- Invariants: keep connection/security defaults centralized here (avoid duplicating dial options in commands).\n\n### `internal/api/convert`\n\n- Purpose: translate between internal runtime structs and protobuf API types (`pkg/api/torque/api/v1`).\n- Key types: `BuildConfig`, `DeployApplyConfig`, `DeployDestroyConfig`.\n- Invariants: conversion is one-way \u201cboundary glue\u201d; don\u2019t leak protobuf types into core packages.\n\n### `internal/kube`\n\n- Purpose: Kubernetes client helpers used by tailing/deploy.\n- Key types: `Client` (`Exec`).\n- Invariants: Kubernetes API calls accept `context.Context` and are cancellable.\n\n### `internal/tailer`\n\n- Purpose: stream logs (pods/nodes) and feed observers (terminal, UI).\n- Key types: `Tailer` (`Run`), `LogRecord`, `LogObserver`, `Option`.\n- Invariants: tailing is streaming and cancellation-driven; observers must tolerate bursts and duplicates.\n\n### `internal/deploy`\n\n- Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).\n- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `ServerDryRunReport`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.\n- Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.\n\n### `internal/deployplan`\n\n- Purpose: shared apply-plan rendering helpers for `torque apply plan`.\n- Key types: `ResourceKey`, `ManifestDoc`, `QuotaReport`, `QuotaHeadroom`.\n- Invariants: manifest parsing, graph node IDs, manifest blob/diff rendering, and quota/headroom calculations stay here rather than being copied into command packages.\n\n### `internal/secretstore`\n\n- Purpose: resolve `secret://` references in deploy-time values using pluggable providers.\n- Key types: `Resolver`, `Config`, `Provider`.\n- Invariants: never log secret values; audit references only.\n\n### `internal/securityevidence`\n\n- Purpose: write security evidence bundles that connect verifier findings, secret-flow scan reports, and redaction proof artifacts.\n- Key types: `BundleManifest`, `BundleOptions`.\n- Invariants: bundle artifacts contain redacted previews and counts only; raw secret values must not be stored.\n\n### Guardian Runtime Proof\n\n- Purpose: top-level `torque guardian` command for observe-only runtime proof.\n- Key surfaces: `guardian install`, `guardian report`, `guardian diff`, `guardian pr`.\n- Invariants: Guardian is observe-only; installed RBAC grants only `get`, `list`, and `watch`; drift, event, and secret-boundary evidence must redact secret-like strings.\n\n### Incident Replay Proof\n\n- Purpose: top-level `torque incident` command for observe-only incident capture, replay, explanation, and PR artifacts.\n- Key surfaces: `incident capture`, `incident replay`, `incident explain`, `incident pr`.\n- Invariants: Incident commands do not mutate clusters; captures must redact secret-like strings and omit Kubernetes Secret `data`/`stringData`; replay writes portable proof files only.\n\n### `internal/ui`\n\n- Purpose: terminal UX primitives (deploy console, spinner).\n- Key types: `DeployConsole` + `DeployConsoleOptions`, `DeployMetadata`.\n- Invariants: UI code should consume observer/event interfaces rather than reaching into core packages.\n\n### `internal/caststream`\n\n- Purpose: \u201cUI mirror\u201d server (HTTP/WebSocket) that streams logs/build/deploy events to the browser.\n- Key types: `Server` (`Run`, `ObserveLog`, `HandleDeployEvent`), `Mode`, `Option`.\n- Invariants: server is a pure observer of streaming events; it must not own core business logic.\n\n### `internal/mirrorbus`\n\n- Purpose: publish log streams onto the gRPC \u201cmirror bus\u201d for remote viewers.\n- Key types: `Publisher` (`ObserveLog`, `Close`).\n- Invariants: publisher must remain non-blocking and safe to close at any point.\n\n### `internal/dockerconfig`\n\n- Purpose: Docker auth/config resolution used during builds and remote operations.\n- Key entrypoints: `internal/dockerconfig/dockerconfig.go`.\n- Invariants: never log credentials; keep file paths/config parsing centralized.\n\n### `internal/csvutil` / `internal/castutil`\n\n- Purpose: small utilities for CSV/cast formatting used across workflows.\n- Invariants: keep these packages dependency-light and free of side effects.\n\n### `internal/workflows/buildsvc`\n\n- Purpose: BuildKit-based image build workflow orchestration (including sandbox support and progress observers).\n- Key types: `service.Run(ctx, opts) (*Result, error)`, `Result`, `Dependencies`, `Streams`, `BuildMode`.\n- Invariants: build is streaming + cancellable; sandbox policy is selected/configured centrally (don\u2019t fork policy logic in commands).\n- Notes: progress observers emit cache diagnostics and a post-build \u201ccache intelligence\u201d report (input diffs, cache key/graph diffs, slow steps, and OCI layer size rollups when an OCI layout is produced). First-class S3 cache options are normalized here before they become BuildKit `cache-from`/`cache-to` entries.\n\n### `internal/agent`\n\n- Purpose: gRPC server implementation for the remote agent.\n- Key types: `Server` (`Run`), per-service handlers (`LogServer`, `BuildServer`, `DeployServer`, `MirrorServer`, `StackServer`).\n- Invariants: agent handlers forward events via existing observer interfaces (don\u2019t duplicate deploy/build logic inside the agent).\n\n### `internal/mcpserver`\n\n- Purpose: MCP adapter for agent-facing Torque workflows over stdio/HTTP, with optional remote gRPC bridge mode.\n- Key entrypoints: `Server` tool/resource/prompt handlers, session store, root/path policy checks.\n- Invariants: MCP handlers validate schemas and enforce MCP roots, then delegate to local Torque commands or existing `torque-agent` gRPC services; never log or return remote tokens.\n\n## Agent-Facing Docs\n\n- Golden paths + validation commands: `docs/agent-playbook.md`\n- UI design system (HTML/CSS surfaces): `DESIGN.md`\n- gRPC agent API: `docs/grpc-agent.md`\n- MCP server design: `docs/mcp-server-spec.md`\n- Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`\n- S3 BuildKit cache: `docs/s3-build-cache.md`\n- Generated package dependency map: `docs/deps.md` (refresh with `make deps`)",
+      "content": "# TORQUE Architecture (Current)\n\nThis repo is a single-module Go CLI with an optional companion agent.\n\n## Layout\n- `cmd/torque`: end-user CLI (Cobra) and CLI-only helpers.\n- `cmd/torque-agent`: gRPC agent used by `--remote-agent` / `--mirror-bus`.\n- `internal/*`: non-exported libraries used by the CLI/agent (tailing, deploy/apply, UI mirroring, BuildKit workflows, config/feature flags).\n- `pkg/*`: reusable non-`internal` packages (BuildKit/Compose/registry helpers and generated API stubs under `pkg/api/torque/api/v1`).\n- `testdata/*`: fixtures and golden files.\n\n## Main Commands (wired today)\n- `init`\n- `build`\n- `explain`\n- `apply` (including `apply plan` and `apply simulate`)\n- `delete`\n- `stack`\n- `revert`\n- `list`\n- `lint`\n- `logs`\n- `env`\n- `guardian`\n- `incident`\n- `proof`\n- `secrets`\n- `version`\n\nThe root command wiring lives in `cmd/torque/main.go`.\n\nLegacy/experimental commands (`analyze`, `up`, `wait`) remain callable for compatibility but are hidden from the focused CLI surface.\n\n## Companion Binaries\n- `verifier`: standalone policy verifier. The older `verify` binary remains as a compatibility shim for existing CI scripts.\n- `torque-package`: chart archive helper built from `cmd/package`; the old standalone name `package` is no longer used in repo build/package outputs.\n\n## Internal Package Map (Purpose, Key Types, Invariants)\n\nThis section is intentionally short and repetitive: AI agents do best with a stable \u201cmap\u201d of where responsibilities live, which symbols are entrypoints, and what must not change.\n\n### `internal/config`\n\n- Purpose: shared CLI/config-layer options (flags + config binding + validation).\n- Key types: `Options` (`AddFlags`, `BindFlags`, `Validate`).\n- Invariants: CLI packages should call into `Options` rather than re-parsing env/config ad-hoc.\n\n### `internal/featureflags`\n\n- Purpose: register and resolve feature flags consistently.\n- Key types: `Definition`, `Flags` (`Enabled`, `EnabledNames`), `Name`, `Stage`.\n- Invariants: flag names stay kebab-cased; toggles flow via context/config/env (don\u2019t introduce new toggle mechanisms).\n\n### `internal/logging`\n\n- Purpose: structured logging configuration and shared logger helpers.\n- Key entrypoints: `internal/logging/logger.go` (logger construction/config).\n- Invariants: avoid global loggers; pass loggers/context through call chains.\n\n### `internal/grpcutil`\n\n- Purpose: gRPC dial/wiring helpers for local/remote agent connections.\n- Key entrypoints: `internal/grpcutil/dial.go`.\n- Invariants: keep connection/security defaults centralized here (avoid duplicating dial options in commands).\n\n### `internal/api/convert`\n\n- Purpose: translate between internal runtime structs and protobuf API types (`pkg/api/torque/api/v1`).\n- Key types: `BuildConfig`, `DeployApplyConfig`, `DeployDestroyConfig`.\n- Invariants: conversion is one-way \u201cboundary glue\u201d; don\u2019t leak protobuf types into core packages.\n\n### `internal/kube`\n\n- Purpose: Kubernetes client helpers used by tailing/deploy.\n- Key types: `Client` (`Exec`).\n- Invariants: Kubernetes API calls accept `context.Context` and are cancellable.\n\n### `internal/tailer`\n\n- Purpose: stream logs (pods/nodes) and feed observers (terminal, UI).\n- Key types: `Tailer` (`Run`), `LogRecord`, `LogObserver`, `Option`.\n- Invariants: tailing is streaming and cancellation-driven; observers must tolerate bursts and duplicates.\n\n### `internal/deploy`\n\n- Purpose: Helm apply/delete orchestration and progress/event streaming to observers (TTY + UI).\n- Key types: `InstallOptions`/`InstallResult`, `TemplateOptions`/`TemplateResult`, `ServerDryRunReport`, `StreamBroadcaster`, `StreamEvent`, `ResourceTracker`, `ResourceStatus`.\n- Invariants: observers are optional and must not block the core deploy loop; events should remain stable for UI consumers.\n\n### `internal/deployplan`\n\n- Purpose: shared apply-plan rendering helpers for `torque apply plan`.\n- Key types: `ResourceKey`, `ManifestDoc`, `QuotaReport`, `QuotaHeadroom`.\n- Invariants: manifest parsing, graph node IDs, manifest blob/diff rendering, and quota/headroom calculations stay here rather than being copied into command packages.\n\n### `internal/secretstore`\n\n- Purpose: resolve `secret://` references in deploy-time values using pluggable providers.\n- Key types: `Resolver`, `Config`, `Provider`.\n- Invariants: never log secret values; audit references only.\n\n### `internal/securityevidence`\n\n- Purpose: write security evidence bundles that connect verifier findings, secret-flow scan reports, and redaction proof artifacts.\n- Key types: `BundleManifest`, `BundleOptions`.\n- Invariants: bundle artifacts contain redacted previews and counts only; raw secret values must not be stored.\n\n### Guardian Runtime Proof\n\n- Purpose: top-level `torque guardian` command for observe-only runtime proof.\n- Key surfaces: `guardian install`, `guardian report`, `guardian diff`, `guardian pr`.\n- Invariants: Guardian is observe-only; installed RBAC grants only `get`, `list`, and `watch`; drift, event, and secret-boundary evidence must redact secret-like strings.\n\n### Incident Replay Proof\n\n- Purpose: top-level `torque incident` command for observe-only incident capture, replay, explanation, and PR artifacts.\n- Key surfaces: `incident capture`, `incident replay`, `incident explain`, `incident pr`.\n- Invariants: Incident commands do not mutate clusters; captures must redact secret-like strings and omit Kubernetes Secret `data`/`stringData`; replay writes portable proof files only.\n\n### Release Proof Graph\n\n- Purpose: top-level `torque proof` command for building, signing, verifying, and diffing release evidence graphs.\n- Key surfaces: `proof graph`, `proof verify`, `proof diff`, `proof gate`, `proof attest`.\n- Invariants: proof graphs store artifact paths, hashes, statuses, image digests, and optional ed25519 signatures; gates evaluate policy against verified graph evidence; attestations sign compact release verdicts; proof outputs do not inline raw SQLite captures, logs, manifests, or secret values.\n\n### Agent-Safe Operations\n\n- Purpose: top-level `torque agent` command for proof-backed authorization of AI and automation operations.\n- Key surfaces: `agent policy check`, `agent run`.\n- Invariants: mutating operations require explicit allow-list permission and a passing proof gate; request release and namespace must match proof metadata when both are present; `agent run` is non-mutating and writes an authorization record only.\n\n### Release Score\n\n- Purpose: top-level `torque release` command for scoring release readiness from proof graph and gate evidence.\n- Key surfaces: `release score`.\n- Invariants: scores are derived from verified graph evidence and failed gate checks; `--fail-below` is the CI/release guard path; score output must remain machine-readable for PRs and release notes.\n\n### Release Flight Recorder\n\n- Purpose: top-level `torque flight` command for turning a proof graph into a portable release timeline.\n- Key surfaces: `flight record`, `flight replay`, `flight explain`.\n- Invariants: flight files are read-only evidence artifacts; replay validates timeline shape and graph digest; explain summarizes evidence phases without touching a cluster.\n\n### `internal/ui`\n\n- Purpose: terminal UX primitives (deploy console, spinner).\n- Key types: `DeployConsole` + `DeployConsoleOptions`, `DeployMetadata`.\n- Invariants: UI code should consume observer/event interfaces rather than reaching into core packages.\n\n### `internal/caststream`\n\n- Purpose: \u201cUI mirror\u201d server (HTTP/WebSocket) that streams logs/build/deploy events to the browser.\n- Key types: `Server` (`Run`, `ObserveLog`, `HandleDeployEvent`), `Mode`, `Option`.\n- Invariants: server is a pure observer of streaming events; it must not own core business logic.\n\n### `internal/mirrorbus`\n\n- Purpose: publish log streams onto the gRPC \u201cmirror bus\u201d for remote viewers.\n- Key types: `Publisher` (`ObserveLog`, `Close`).\n- Invariants: publisher must remain non-blocking and safe to close at any point.\n\n### `internal/dockerconfig`\n\n- Purpose: Docker auth/config resolution used during builds and remote operations.\n- Key entrypoints: `internal/dockerconfig/dockerconfig.go`.\n- Invariants: never log credentials; keep file paths/config parsing centralized.\n\n### `internal/csvutil` / `internal/castutil`\n\n- Purpose: small utilities for CSV/cast formatting used across workflows.\n- Invariants: keep these packages dependency-light and free of side effects.\n\n### `internal/workflows/buildsvc`\n\n- Purpose: BuildKit-based image build workflow orchestration (including sandbox support and progress observers).\n- Key types: `service.Run(ctx, opts) (*Result, error)`, `Result`, `Dependencies`, `Streams`, `BuildMode`.\n- Invariants: build is streaming + cancellable; sandbox policy is selected/configured centrally (don\u2019t fork policy logic in commands).\n- Notes: progress observers emit cache diagnostics and a post-build \u201ccache intelligence\u201d report (input diffs, cache key/graph diffs, slow steps, and OCI layer size rollups when an OCI layout is produced). First-class S3 cache options are normalized here before they become BuildKit `cache-from`/`cache-to` entries.\n\n### `internal/agent`\n\n- Purpose: gRPC server implementation for the remote agent.\n- Key types: `Server` (`Run`), per-service handlers (`LogServer`, `BuildServer`, `DeployServer`, `MirrorServer`, `StackServer`).\n- Invariants: agent handlers forward events via existing observer interfaces (don\u2019t duplicate deploy/build logic inside the agent).\n\n### `internal/mcpserver`\n\n- Purpose: MCP adapter for agent-facing Torque workflows over stdio/HTTP, with optional remote gRPC bridge mode.\n- Key entrypoints: `Server` tool/resource/prompt handlers, session store, root/path policy checks.\n- Invariants: MCP handlers validate schemas and enforce MCP roots, then delegate to local Torque commands or existing `torque-agent` gRPC services; never log or return remote tokens.\n\n## Agent-Facing Docs\n\n- Golden paths + validation commands: `docs/agent-playbook.md`\n- UI design system (HTML/CSS surfaces): `DESIGN.md`\n- gRPC agent API: `docs/grpc-agent.md`\n- MCP server design: `docs/mcp-server-spec.md`\n- Evidence-first secrets and verifier spec: `docs/secrets-verifier-evidence-spec.md`\n- Release proof graph contract: `docs/proof-graph.md`\n- S3 BuildKit cache: `docs/s3-build-cache.md`\n- Generated package dependency map: `docs/deps.md` (refresh with `make deps`)",
       "tags": [
         "doc",
         "internals",
@@ -1223,7 +1514,7 @@
       "kind": "doc",
       "title": "Enterprise Agent Operations",
       "subtitle": "mTLS-first remote bridge, evidence requirements, and scenario matrix",
-      "content": "# Enterprise Agent Operations\n\nThis is the operating baseline for Torque deployments where agents can build,\nship, or inspect Kubernetes releases through MCP and `torque-agent`.\n\n## Policy Baseline\n\nTreat every `torque-agent` as a privileged execution boundary. The agent does\nnot replace Kubernetes RBAC, registry IAM, BuildKit policy, or MCP write\nconfirmation; it concentrates those controls behind one auditable endpoint.\n\n| Mode | Required controls | Intended use |\n| --- | --- | --- |\n| Local dev | loopback bind, short-lived token, local kubecontext | single-developer testing |\n| Team remote | TLS, bearer token, scoped kubeconfig, mirror store, retention limits | shared remote builder/cluster |\n| Enterprise | mTLS, bearer token as second factor, namespace/context allowlists in MCP config, scoped Kubernetes RBAC, durable mirror store, evidence required for writes | production-like agent automation |\n\nDo not expose plaintext gRPC or the HTTP mirror gateway on a public interface.\nIf HTTP access is needed, put it behind an authenticated TLS proxy and keep the\nsame bearer token checks enabled.\n\n## Secure MCP Server Posture\n\nA secure MCP server should stay boring and narrow. Prefer stdio for local agent\nhosts. If HTTP is needed, bind it to loopback, require bearer auth, validate\nbrowser origins, cap request sizes, enforce tool timeouts, and put any public\naccess behind a real TLS proxy. Do not turn MCP into a generic shell or direct\nKubernetes tunnel; keep it as a typed contract with small tools, bounded inputs,\nredacted outputs, and clear write gates.\n\nThe target posture is MCP over stdio or authenticated loopback HTTP, remote\ngRPC over mTLS, writes disabled unless explicitly enabled, secrets never\ncrossing MCP, and every action replayable from evidence.\n\n## mTLS-First Remote Bridge\n\nRun the remote endpoint with client certificate verification, a scoped\nkubeconfig, and durable MirrorService evidence:\n\n```bash\nexport TORQUE_REMOTE_TOKEN=\"$(openssl rand -hex 32)\"\n\ntorque-agent \\\n  -listen 0.0.0.0:7443 \\\n  -token \"$TORQUE_REMOTE_TOKEN\" \\\n  -kubeconfig /etc/torque/prod-reader-writer.kubeconfig \\\n  -context prod \\\n  -tls-cert /etc/torque/tls/agent.crt \\\n  -tls-key /etc/torque/tls/agent.key \\\n  -tls-client-ca /etc/torque/tls/client-ca.crt \\\n  -mirror-store /var/lib/torque/agent/mirror.sqlite \\\n  -mirror-max-sessions 500 \\\n  -mirror-max-frames 20000 \\\n  -mirror-max-bytes 5000000000\n```\n\nFor a Linux host where loopback MCP is enough, use the systemd installer and\nthen add TLS/proxying only at the network boundary:\n\n```bash\ncurl -fsSL https://ingresslabs.github.io/torque/install.sh | sh -s -- --mode systemd-daemon\nsudo systemctl status torque-agent.service torque-mcp.service\n. /etc/torque/agent.env\ncurl -fsS -H \"authorization: Bearer $TORQUE_MCP_TOKEN\" \\\n  -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}' \\\n  http://127.0.0.1:7331/mcp\n```\n\nConnect the MCP bridge with the same TLS material and keep the token out of\nargv when launched by an agent host:\n\n```bash\nexport TORQUE_REMOTE_TOKEN=\"<from secret manager>\"\nexport TORQUE_REMOTE_TLS=1\nexport TORQUE_REMOTE_TLS_CA=/etc/torque/tls/ca.crt\nexport TORQUE_REMOTE_TLS_CLIENT_CERT=/etc/torque/tls/client.crt\nexport TORQUE_REMOTE_TLS_CLIENT_KEY=/etc/torque/tls/client.key\nexport TORQUE_REMOTE_TLS_SERVER_NAME=torque-agent.prod.internal\n\ntorque-mcp --stdio \\\n  --remote-agent torque-agent.prod.internal:7443 \\\n  --enable-write\n```\n\nThe direct CLI uses the same transport controls:\n\n```bash\ntorque \\\n  --remote-agent torque-agent.prod.internal:7443 \\\n  --remote-token \"$TORQUE_REMOTE_TOKEN\" \\\n  --remote-tls \\\n  --remote-tls-ca /etc/torque/tls/ca.crt \\\n  --remote-tls-client-cert /etc/torque/tls/client.crt \\\n  --remote-tls-client-key /etc/torque/tls/client.key \\\n  --remote-tls-server-name torque-agent.prod.internal \\\n  stack status --config ./stacks/prod --follow\n```\n\n## Evidence Requirements\n\nEvery mutating agent action should produce or link evidence before it is\nconsidered complete:\n\n- `torque.build.run`: build capture or MirrorService session, image digest, cache summary, policy/secrets report when enabled.\n- `torque.cache.inspect` / `torque.cache.plan`: normalized cache imports/exports, S3 manifest name, changed-path impact classes, and warm target list.\n- `torque.cache.warm`: MirrorService session, remote `BuildService.RunBuild` result, and normalized cache export target.\n- `torque.ship.run`: evidence directory, build capture, verifier report, plan output, apply capture, explain report.\n- `torque.apply.run` / `torque.delete.run`: capture DB, plan digest or delete selection, release/namespace metadata.\n- `torque.stack.apply` / `torque.stack.delete`: stack run ID, frozen plan, run status, MirrorService replay.\n- S3 cache validation: BuildKit S3 import/export lines, cache object prefix, cleanup record for disposable buckets/builders.\n\nMCP responses should return compact summaries plus resource links. Large logs,\ncaptures, and mirror frames stay behind `torque://...` resources or exported\nartifacts so agents do not need to scrape terminal output.\n\n## Scenario Matrix\n\nThe published regression matrix is\n`testdata/mcp/dag-build-scenarios.yaml`. It contains sixteen scenarios that\ncover remote MCP, gRPC, build, ship, stack, S3 cache, microVM, mirror replay,\nwrite confirmation, and token redaction paths.\n\n| Scenario | Shape | Main proof |\n| --- | --- | --- |\n| `remote-ship-core-fanout` | fanout | cache inspect/plan/warm, MCP build, and ship through remote Build/Deploy/Stack services |\n| `compose-diamond-promotion` | diamond | Compose build fan-in with verifier and mirror frames |\n| `stack-progressive-large-dag` | layered | remote StackService plan/apply/status over a larger graph |\n| `multi-namespace-delete-threshold` | multi-root | delete confirmation and threshold policy |\n| `secret-provider-build-and-ship` | chain | secret references stay redacted through build and ship |\n| `mcp-http-origin-remote-stack` | ingress | HTTP MCP origin and token checks |\n| `mirror-session-replay-build-to-apply` | event-bus | replayable Build/Deploy/Stack sessions |\n| `microvm-mcp-smoke-before-deploy` | preflight | static MCP binary boots and advertises tools in microVMs |\n| `fanin-verifier-gate` | fanin | verifier gate blocks stack apply until all digests are present |\n| `rollback-delete-after-failed-ship` | rollback | failed ship evidence drives selective stack delete |\n\n`TestMCPDAGBuildScenarioCatalog` keeps the matrix executable enough to be\nuseful: it checks scenario count, unique IDs, acyclic edges, required MCP calls,\nremote gRPC coverage, write confirmation coverage, and remote token redaction.",
+      "content": "# Enterprise Agent Operations\n\nThis is the operating baseline for Torque deployments where agents can build,\nship, or inspect Kubernetes releases through MCP and `torque-agent`.\n\n## Policy Baseline\n\nTreat every `torque-agent` as a privileged execution boundary. The agent does\nnot replace Kubernetes RBAC, registry IAM, BuildKit policy, or MCP write\nconfirmation; it concentrates those controls behind one auditable endpoint.\n\n| Mode | Required controls | Intended use |\n| --- | --- | --- |\n| Local dev | loopback bind, short-lived token, local kubecontext | single-developer testing |\n| Team remote | TLS, bearer token, scoped kubeconfig, mirror store, retention limits | shared remote builder/cluster |\n| Enterprise | mTLS, bearer token as second factor, namespace/context allowlists in MCP config, scoped Kubernetes RBAC, durable mirror store, evidence required for writes | production-like agent automation |\n\nDo not expose plaintext gRPC or the HTTP mirror gateway on a public interface.\nIf HTTP access is needed, put it behind an authenticated TLS proxy and keep the\nsame bearer token checks enabled.\n\n## Secure MCP Server Posture\n\nA secure MCP server should stay boring and narrow. Prefer stdio for local agent\nhosts. If HTTP is needed, bind it to loopback, require bearer auth, validate\nbrowser origins, cap request sizes, enforce tool timeouts, and put any public\naccess behind a real TLS proxy. Do not turn MCP into a generic shell or direct\nKubernetes tunnel; keep it as a typed contract with small tools, bounded inputs,\nredacted outputs, and clear write gates.\n\nThe target posture is MCP over stdio or authenticated loopback HTTP, remote\ngRPC over mTLS, writes disabled unless explicitly enabled, secrets never\ncrossing MCP, and every action replayable from evidence.\n\nFor direct CLI-driven agents, use `torque agent` as the proof-backed permission\nboundary before a mutating action is invoked:\n\n```bash\ntorque agent policy check agent-request.json \\\n  --proof proof.graph.json \\\n  --allow apply \\\n  --require-gate\n\ntorque agent run agent-request.json \\\n  --proof proof.graph.json \\\n  --allow apply \\\n  --require-gate \\\n  --out agent-run.json\n```\n\nThe policy check requires explicit operation permission plus a passing release\ngate. `agent run` writes an authorization record and does not mutate the\ncluster itself.\n\n## mTLS-First Remote Bridge\n\nRun the remote endpoint with client certificate verification, a scoped\nkubeconfig, and durable MirrorService evidence:\n\n```bash\nexport TORQUE_REMOTE_TOKEN=\"$(openssl rand -hex 32)\"\n\ntorque-agent \\\n  -listen 0.0.0.0:7443 \\\n  -token \"$TORQUE_REMOTE_TOKEN\" \\\n  -kubeconfig /etc/torque/prod-reader-writer.kubeconfig \\\n  -context prod \\\n  -tls-cert /etc/torque/tls/agent.crt \\\n  -tls-key /etc/torque/tls/agent.key \\\n  -tls-client-ca /etc/torque/tls/client-ca.crt \\\n  -mirror-store /var/lib/torque/agent/mirror.sqlite \\\n  -mirror-max-sessions 500 \\\n  -mirror-max-frames 20000 \\\n  -mirror-max-bytes 5000000000\n```\n\nFor a Linux host where loopback MCP is enough, use the systemd installer and\nthen add TLS/proxying only at the network boundary:\n\n```bash\ncurl -fsSL https://ingresslabs.github.io/torque/install.sh | sh -s -- --mode systemd-daemon\nsudo systemctl status torque-agent.service torque-mcp.service\n. /etc/torque/agent.env\ncurl -fsS -H \"authorization: Bearer $TORQUE_MCP_TOKEN\" \\\n  -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}' \\\n  http://127.0.0.1:7331/mcp\n```\n\nConnect the MCP bridge with the same TLS material and keep the token out of\nargv when launched by an agent host:\n\n```bash\nexport TORQUE_REMOTE_TOKEN=\"<from secret manager>\"\nexport TORQUE_REMOTE_TLS=1\nexport TORQUE_REMOTE_TLS_CA=/etc/torque/tls/ca.crt\nexport TORQUE_REMOTE_TLS_CLIENT_CERT=/etc/torque/tls/client.crt\nexport TORQUE_REMOTE_TLS_CLIENT_KEY=/etc/torque/tls/client.key\nexport TORQUE_REMOTE_TLS_SERVER_NAME=torque-agent.prod.internal\n\ntorque-mcp --stdio \\\n  --remote-agent torque-agent.prod.internal:7443 \\\n  --enable-write\n```\n\nThe direct CLI uses the same transport controls:\n\n```bash\ntorque \\\n  --remote-agent torque-agent.prod.internal:7443 \\\n  --remote-token \"$TORQUE_REMOTE_TOKEN\" \\\n  --remote-tls \\\n  --remote-tls-ca /etc/torque/tls/ca.crt \\\n  --remote-tls-client-cert /etc/torque/tls/client.crt \\\n  --remote-tls-client-key /etc/torque/tls/client.key \\\n  --remote-tls-server-name torque-agent.prod.internal \\\n  stack status --config ./stacks/prod --follow\n```\n\n## Evidence Requirements\n\nEvery mutating agent action should produce or link evidence before it is\nconsidered complete:\n\n- `torque.build.run`: build capture or MirrorService session, image digest, cache summary, policy/secrets report when enabled.\n- `torque.cache.inspect` / `torque.cache.plan`: normalized cache imports/exports, S3 manifest name, changed-path impact classes, and warm target list.\n- `torque.cache.warm`: MirrorService session, remote `BuildService.RunBuild` result, and normalized cache export target.\n- `torque.ship.run`: evidence directory, build capture, verifier report, plan output, apply capture, explain report.\n- `torque.apply.run` / `torque.delete.run`: capture DB, plan digest or delete selection, release/namespace metadata.\n- `torque.stack.apply` / `torque.stack.delete`: stack run ID, frozen plan, run status, MirrorService replay.\n- CLI agent writes: `agent-policy.json`, `agent-run.json`, release proof graph, release score, and release flight when a proof gate is required.\n- S3 cache validation: BuildKit S3 import/export lines, cache object prefix, cleanup record for disposable buckets/builders.\n\nMCP responses should return compact summaries plus resource links. Large logs,\ncaptures, and mirror frames stay behind `torque://...` resources or exported\nartifacts so agents do not need to scrape terminal output.\n\n## Scenario Matrix\n\nThe published regression matrix is\n`testdata/mcp/dag-build-scenarios.yaml`. It contains sixteen scenarios that\ncover remote MCP, gRPC, build, ship, stack, S3 cache, microVM, mirror replay,\nwrite confirmation, and token redaction paths.\n\n| Scenario | Shape | Main proof |\n| --- | --- | --- |\n| `remote-ship-core-fanout` | fanout | cache inspect/plan/warm, MCP build, and ship through remote Build/Deploy/Stack services |\n| `compose-diamond-promotion` | diamond | Compose build fan-in with verifier and mirror frames |\n| `stack-progressive-large-dag` | layered | remote StackService plan/apply/status over a larger graph |\n| `multi-namespace-delete-threshold` | multi-root | delete confirmation and threshold policy |\n| `secret-provider-build-and-ship` | chain | secret references stay redacted through build and ship |\n| `mcp-http-origin-remote-stack` | ingress | HTTP MCP origin and token checks |\n| `mirror-session-replay-build-to-apply` | event-bus | replayable Build/Deploy/Stack sessions |\n| `microvm-mcp-smoke-before-deploy` | preflight | static MCP binary boots and advertises tools in microVMs |\n| `fanin-verifier-gate` | fanin | verifier gate blocks stack apply until all digests are present |\n| `rollback-delete-after-failed-ship` | rollback | failed ship evidence drives selective stack delete |\n\n`TestMCPDAGBuildScenarioCatalog` keeps the matrix executable enough to be\nuseful: it checks scenario count, unique IDs, acyclic edges, required MCP calls,\nremote gRPC coverage, write confirmation coverage, and remote token redaction.",
       "tags": [
         "doc",
         "enterprise",
@@ -1262,6 +1553,28 @@
         "recipes",
         "examples",
         "onboarding"
+      ]
+    },
+    {
+      "id": "doc:proof-graph",
+      "kind": "doc",
+      "title": "Release Proof Graph",
+      "subtitle": "Signed release graph, gate, attest, agent policy, score, and flight recorder evidence",
+      "content": "# Release Proof Graph\n\n`torque proof` turns existing Torque evidence into one reviewable graph:\ncommit, image digest, BuildKit capture, verifier findings, Helm render,\nserver-side dry-run, runtime drift, rollout capture, SLO outcome, rollback, and\nrepair artifacts.\n\n```bash\ntorque proof graph ./apply-proof.json \\\n  --attach drift-proof.json \\\n  --attach repair-pr.md \\\n  --out proof.graph.json \\\n  --html proof.html\n```\n\nSign the graph with the same ed25519 key format used by `torque stack keygen`:\n\n```bash\ntorque stack keygen --out .torque/keys/proof-ed25519.json\ntorque proof graph ./apply-proof.json \\\n  --out proof.graph.json \\\n  --html proof.html \\\n  --key .torque/keys/proof-ed25519.json\n```\n\n## Verify\n\n`proof verify` checks graph signatures and re-hashes every referenced file that\nwas present when the graph was built:\n\n```bash\ntorque proof verify proof.graph.json --require-signature\ntorque proof verify proof.graph.json \\\n  --pub .torque/keys/proof-ed25519.json \\\n  --require-signature \\\n  --format json\n```\n\nYou can also point verification directly at a proof source. Torque builds the\ngraph in memory and verifies the reachable file hashes:\n\n```bash\ntorque proof verify ./torque-sim-proof\ntorque proof verify ./apply-proof.json\n```\n\n## Diff\n\nCompare two graphs or proof sources before a release is promoted:\n\n```bash\ntorque proof diff previous-proof.graph.json current-proof.graph.json\ntorque proof diff previous-proof.graph.json current-proof.graph.json --format json\n```\n\nThe diff reports added, removed, and changed evidence artifacts, plus release\nstatus changes such as `succeeded` to `failed`.\n\n## Gate\n\n`proof gate` evaluates a release policy against a signed graph. The built-in\nrelease gate blocks promotion when the graph is unsigned, referenced files no\nlonger match their recorded hashes, required release evidence is absent, images\nare unpinned, verifier evidence blocks, an SLO failure lacks rollback proof, or\nrepair PR evidence is missing:\n\n```bash\ntorque proof gate proof.graph.json --out proof.gate.json\ntorque proof gate proof.graph.json \\\n  --policy release-policy.yaml \\\n  --format json\n```\n\nPolicy files can tune the defaults:\n\n```yaml\nrequireSignature: true\nstrictFiles: true\nfailOnUnpinnedImages: true\nfailOnVerifierBlocked: true\nrequireRollbackOnBlocked: true\nrequireRollbackOnSLO: true\nrequireRepairPR: true\nrequiredArtifacts:\n  - image-digest\n  - helm-render\n  - verifier-report\n  - build-capture\n  - sbom\n  - supply-chain-provenance\n  - server-dry-run\n  - runtime-drift\n  - rollout-events\n  - logs-capture\n  - slo-outcome\n  - repair-pr\n```\n\n## Attest\n\n`proof attest` verifies a signed graph and signs a compact release verdict for\nPR descriptions, release notes, or change-management records:\n\n```bash\ntorque proof attest proof.graph.json \\\n  --release v1.0.8 \\\n  --key .torque/keys/proof-ed25519.json \\\n  --out release.attestation.json\n```\n\nText output is intentionally pasteable:\n\n```text\nrelease=v1.0.8 commit=<commit> graph=<graph-sha256> verified=true artifacts=22 checked=14 signed=true\n```\n\n## Agent-Safe Operations\n\n`torque agent` lets AI and automation callers prove they are allowed to perform\nmutating Torque operations before they call the underlying workflow:\n\n```bash\ntorque agent policy check agent-request.json \\\n  --proof proof.graph.json \\\n  --allow apply \\\n  --require-gate \\\n  --out agent-policy.json\n\ntorque agent run agent-request.json \\\n  --proof proof.graph.json \\\n  --allow apply \\\n  --require-gate \\\n  --out agent-run.json\n```\n\nRequest files can include `actor`, `operation`, `command`, `release`,\n`namespace`, `proof`, and `reason`. Mutating operations such as `apply`,\n`delete`, `ship`, `repair`, and stack writes require an explicit `--allow`\nentry and a passing proof gate. `agent run` is intentionally non-mutating; it\nreturns a signed-off authorization record for the caller to attach to the\nchange path.\n\n## Release Score\n\n`torque release score` converts a signed proof graph and gate result into a\ncompact readiness score for CI, PRs, and release notes:\n\n```bash\ntorque release score proof.graph.json \\\n  --out release-score.json \\\n  --fail-below 90\n```\n\nScores start at 100 and subtract penalties for failed graph verification,\nmissing signatures, missing required artifacts, unpinned images, blocked\nverifier/SLO evidence, missing rollback proof, or missing repair PR evidence.\n\n## Release Flight Recorder\n\n`torque flight` records the proof graph as a portable release timeline that can\nbe replayed or explained without a cluster:\n\n```bash\ntorque flight record proof.graph.json --out release.flight.torque\ntorque flight replay release.flight.torque\ntorque flight explain release.flight.torque\n```\n\nThe flight file stores the graph digest, score, grade, release metadata, and an\nordered timeline across source, build, render, verify, dry-run, runtime,\nrollout, SLO, rollback, repair, and extra evidence phases.\n\n## Boole E2E\n\nThe repository includes a manual remote E2E for release proof graph hardening:\n\n```bash\nscripts/e2e-proof-graph-boole.sh\n```\n\nThe script builds or reuses a Linux amd64 `torque` binary, copies it to Boole,\nrecreates a full proof graph fixture, verifies signature and file hashes, checks\nHTML output, diffs previous/current graphs, runs `proof gate`, signs a release\nattestation, checks `agent policy` and `agent run`, scores the release, records\nand replays the release flight, proves tamper detection by modifying verifier\nevidence, then repeats graph/verify/diff/gate/attest/agent/score/flight for 100\niterations by default. It prints a single compact JSON line suitable for CI and\nrelease notes.\n\nGitHub Actions exposes the same run as the manual **Proof Graph E2E** workflow.\n\n## Supported Inputs\n\n- `torque apply --proof-bundle` JSON;\n- `torque apply simulate --out` proof directories;\n- Guardian drift and runtime proof JSON;\n- Incident replay proof JSON;\n- Runtime Contract proof JSON;\n- extra files or directories supplied through repeated `--attach` flags.\n\nThe graph JSON is intentionally file-first. It stores paths, SHA256 hashes,\nartifact types, status, image digests, and an optional ed25519 signature. It\ndoes not copy raw logs, manifests, secret values, or SQLite capture contents\ninto the graph.",
+      "tags": [
+        "doc",
+        "proof",
+        "graph",
+        "signature",
+        "verify",
+        "diff",
+        "gate",
+        "attest",
+        "agent",
+        "score",
+        "flight",
+        "evidence",
+        "release"
       ]
     },
     {
@@ -2001,10 +2314,28 @@
       ]
     },
     {
+      "id": "flag:actor",
+      "kind": "flag",
+      "title": "--actor",
+      "content": "Actor identity to record when no request file is supplied",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:all",
       "kind": "flag",
       "title": "--all",
       "content": "Include internal/legacy variables\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:allow",
+      "kind": "flag",
+      "title": "--allow",
+      "content": "Allowed operation name (repeatable or comma-separated)\n\nDefault: []\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -2068,6 +2399,15 @@
       "kind": "flag",
       "title": "--atomic",
       "content": "Rollback changes if the upgrade fails\n\nDefault: true\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:attach",
+      "kind": "flag",
+      "title": "--attach",
+      "content": "Attach additional evidence files or directories (repeatable)\n\nDefault: []",
       "tags": [
         "flag"
       ]
@@ -2373,7 +2713,7 @@
       "id": "flag:command",
       "kind": "flag",
       "title": "--command",
-      "content": "Command the plan is intended for: apply|delete\n\nDefault: apply",
+      "content": "Command string to record when no request file is supplied\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -2667,6 +3007,15 @@
       ]
     },
     {
+      "id": "flag:fail-below",
+      "kind": "flag",
+      "title": "--fail-below",
+      "content": "Exit non-zero when score is below this value",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:fail-mode",
       "kind": "flag",
       "title": "--fail-mode",
@@ -2733,7 +3082,7 @@
       "id": "flag:format",
       "kind": "flag",
       "title": "--format",
-      "content": "Output format: table, json, yaml\n\nDefault: table\n\nAvailable on: 22 commands",
+      "content": "Output format: table, json, yaml\n\nDefault: table\n\nAvailable on: 33 commands",
       "tags": [
         "flag"
       ]
@@ -2838,6 +3187,15 @@
       ]
     },
     {
+      "id": "flag:html",
+      "kind": "flag",
+      "title": "--html",
+      "content": "Write a browser-readable proof graph report to this path",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:include-crds",
       "kind": "flag",
       "title": "--include-crds",
@@ -2913,7 +3271,7 @@
       "id": "flag:key",
       "kind": "flag",
       "title": "--key",
-      "content": "Secret key (optional when not using --ref)\n\nAvailable on: 2 commands",
+      "content": "Sign attestation with an ed25519 key JSON file from torque stack keygen\n\nAvailable on: 4 commands",
       "tags": [
         "flag"
       ]
@@ -3252,10 +3610,19 @@
       ]
     },
     {
+      "id": "flag:operation",
+      "kind": "flag",
+      "title": "--operation",
+      "content": "Requested operation when no request file is supplied",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
       "id": "flag:out",
       "kind": "flag",
       "title": "--out",
-      "content": "Proof bundle directory (default: ./torque-sim-proof-<release>-<timestamp>)\n\nAvailable on: 14 commands",
+      "content": "Write JSON report to this path\n\nAvailable on: 21 commands",
       "tags": [
         "flag"
       ]
@@ -3363,7 +3730,7 @@
       "id": "flag:policy",
       "kind": "flag",
       "title": "--policy",
-      "content": "Policy bundle path or https URL to evaluate before/after build (OPA/Rego).",
+      "content": "Policy bundle path or https URL to evaluate before/after build (OPA/Rego).\n\nAvailable on: 6 commands",
       "tags": [
         "flag"
       ]
@@ -3435,7 +3802,7 @@
       "id": "flag:proof",
       "kind": "flag",
       "title": "--proof",
-      "content": "RuntimeContract proof JSON from torque contract test",
+      "content": "Signed proof graph required for mutating operations\n\nAvailable on: 3 commands",
       "tags": [
         "flag"
       ]
@@ -3462,7 +3829,7 @@
       "id": "flag:pub",
       "kind": "flag",
       "title": "--pub",
-      "content": "Optional trusted public key (ed25519 key JSON); overrides embedded public key",
+      "content": "Optional trusted ed25519 public/private key JSON for graph verification\n\nAvailable on: 8 commands",
       "tags": [
         "flag"
       ]
@@ -3507,7 +3874,7 @@
       "id": "flag:release",
       "kind": "flag",
       "title": "--release",
-      "content": "Helm release name\n\nAvailable on: 8 commands",
+      "content": "Helm release name\n\nAvailable on: 9 commands",
       "tags": [
         "flag"
       ]
@@ -3616,6 +3983,24 @@
       "kind": "flag",
       "title": "--report",
       "content": "Write JSON report to this path\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:require-gate",
+      "kind": "flag",
+      "title": "--require-gate",
+      "content": "Require proof gate success before allowing the operation\n\nDefault: true\n\nAvailable on: 2 commands",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:require-signature",
+      "kind": "flag",
+      "title": "--require-signature",
+      "content": "Require the input proof graph to be signed\n\nDefault: true\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]
@@ -4084,6 +4469,15 @@
       "kind": "flag",
       "title": "--strict",
       "content": "Fail on lint warnings",
+      "tags": [
+        "flag"
+      ]
+    },
+    {
+      "id": "flag:strict-files",
+      "kind": "flag",
+      "title": "--strict-files",
+      "content": "Fail graph verification when any referenced file is missing\n\nAvailable on: 2 commands",
       "tags": [
         "flag"
       ]

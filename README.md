@@ -65,6 +65,11 @@ torque apply --chart ./chart --release api -n prod \
 torque proof graph ./apply-proof.json \
   --attach drift-proof.json --out proof.graph.json --html proof.html
 torque proof verify proof.graph.json
+torque proof gate proof.graph.json --out proof.gate.json
+torque release score proof.graph.json --out release-score.json
+torque flight record proof.graph.json --out release.flight.torque
+torque agent policy check agent-request.json \
+  --proof proof.graph.json --allow apply --require-gate
 torque incident capture --release api -n prod --since 1h --out incident.torque
 torque incident replay incident.torque --lab k3s --out incident-replay-proof/
 torque contract synthesize --from incident-replay-proof/ \
@@ -183,6 +188,16 @@ torque proof attest proof.graph.json \
   --release v1.0.8 \
   --key .torque/keys/proof-ed25519.json \
   --out release.attestation.json
+torque release score proof.graph.json --out release-score.json
+torque flight record proof.graph.json --out release.flight.torque
+torque flight replay release.flight.torque
+torque flight explain release.flight.torque
+torque agent policy check agent-request.json \
+  --proof proof.graph.json --allow apply --require-gate \
+  --out agent-policy.json
+torque agent run agent-request.json \
+  --proof proof.graph.json --allow apply --require-gate \
+  --out agent-run.json
 ```
 
 See [`docs/proof-graph.md`](docs/proof-graph.md) for the graph contract.
@@ -231,6 +246,9 @@ fallback, and review-ready outputs without touching a real cluster.
 - Predictive apply risk scoring and proof bundles for plan-to-rollout evidence.
 - Failure-to-fix repair plans that turn proof bundles into chart patches and PR bodies.
 - Signed release proof graphs that link build, verify, dry-run, drift, rollout, rollback, and repair evidence.
+- Proof-backed agent authorization for mutating operations.
+- Release readiness scoring from signed proof graphs and release gates.
+- Release Flight Recorder timelines that replay and explain release evidence.
 - Auto rollback proof for failed applies and rollout SLO gates.
 - Dependency-ordered stack planning and apply runs.
 - Portable SQLite evidence for builds, deploys, logs, and stack runs.

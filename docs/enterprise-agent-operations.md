@@ -32,6 +32,26 @@ The target posture is MCP over stdio or authenticated loopback HTTP, remote
 gRPC over mTLS, writes disabled unless explicitly enabled, secrets never
 crossing MCP, and every action replayable from evidence.
 
+For direct CLI-driven agents, use `torque agent` as the proof-backed permission
+boundary before a mutating action is invoked:
+
+```bash
+torque agent policy check agent-request.json \
+  --proof proof.graph.json \
+  --allow apply \
+  --require-gate
+
+torque agent run agent-request.json \
+  --proof proof.graph.json \
+  --allow apply \
+  --require-gate \
+  --out agent-run.json
+```
+
+The policy check requires explicit operation permission plus a passing release
+gate. `agent run` writes an authorization record and does not mutate the
+cluster itself.
+
 ## mTLS-First Remote Bridge
 
 Run the remote endpoint with client certificate verification, a scoped
@@ -107,6 +127,7 @@ considered complete:
 - `torque.ship.run`: evidence directory, build capture, verifier report, plan output, apply capture, explain report.
 - `torque.apply.run` / `torque.delete.run`: capture DB, plan digest or delete selection, release/namespace metadata.
 - `torque.stack.apply` / `torque.stack.delete`: stack run ID, frozen plan, run status, MirrorService replay.
+- CLI agent writes: `agent-policy.json`, `agent-run.json`, release proof graph, release score, and release flight when a proof gate is required.
 - S3 cache validation: BuildKit S3 import/export lines, cache object prefix, cleanup record for disposable buckets/builders.
 
 MCP responses should return compact summaries plus resource links. Large logs,

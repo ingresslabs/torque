@@ -156,6 +156,17 @@ cat > apply-proof.json <<'JSON'
 }
 JSON
 sed -e 's/sha256:current/sha256:previous/g' -e 's/rendered-current/rendered-previous/g' apply-proof.json > previous-apply-proof.json
+cat > agent-request.json <<'JSON'
+{
+  "version": "v1",
+  "actor": "codex-e2e",
+  "operation": "apply",
+  "command": ["torque", "apply", "--chart", "./chart", "--release", "api", "--namespace", "prod"],
+  "release": "api",
+  "namespace": "prod",
+  "reason": "proof-backed release exercise"
+}
+JSON
 
 "$torque" stack keygen --out .torque/keys/proof-ed25519.json >/dev/null
 attach=(--attach drift-proof.json --attach runtime-events.json --attach evidence/server-dry-run.json --attach evidence/rollout-logs.sqlite --attach evidence/sbom.cdx.json --attach evidence/provenance.intoto.jsonl --attach fixes/pr.md)
@@ -177,6 +188,18 @@ jq -e '.changed == true and (.summary.added >= 1 or .summary.removed >= 1 or .su
 jq -e '.passed == true and .summary.failed == 0' gate.json >/dev/null
 "$torque" proof attest proof.graph.json --release "e2e-$SOURCE_COMMIT" --key .torque/keys/proof-ed25519.json --out release.attestation.json --format json >/dev/null
 jq -e '.verified == true and .signature.algorithm == "ed25519" and .artifacts >= 10' release.attestation.json >/dev/null
+"$torque" agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-policy.json --format json >/dev/null
+jq -e '.allowed == true and .gate.passed == true' agent-policy.json >/dev/null
+"$torque" agent run agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-run.json --format json >/dev/null
+jq -e '.authorized == true and .executed == false' agent-run.json >/dev/null
+"$torque" release score proof.graph.json --out release-score.json --format json >/dev/null
+jq -e '.score >= 80 and .gatePassed == true and .verified == true' release-score.json >/dev/null
+"$torque" flight record proof.graph.json --out release.flight.torque --format json >/dev/null
+jq -e '.apiVersion == "torque.dev/release-flight/v1" and (.timeline | length) >= 10 and .score >= 80' release.flight.torque >/dev/null
+"$torque" flight replay release.flight.torque --format json > flight-replay.json
+jq -e '.passed == true and .events >= 10' flight-replay.json >/dev/null
+"$torque" flight explain release.flight.torque --format json > flight-explain.json
+jq -e '.summary != "" and (.phases | length) >= 5' flight-explain.json >/dev/null
 
 cp evidence/verifier.report.json evidence/verifier.report.json.bak
 printf '{"passed":false,"status":"failed","tampered":true}\n' > evidence/verifier.report.json
@@ -196,6 +219,12 @@ for i in $(seq 1 "$RUNS"); do
   diff="runs/diff-${i}.json"
   gate="runs/gate-${i}.json"
   attest="runs/attest-${i}.json"
+  agent_policy="runs/agent-policy-${i}.json"
+  agent_run="runs/agent-run-${i}.json"
+  score="runs/release-score-${i}.json"
+  flight="runs/release-${i}.flight.torque"
+  flight_replay="runs/flight-replay-${i}.json"
+  flight_explain="runs/flight-explain-${i}.json"
   "$torque" proof graph ./apply-proof.json "${attach[@]}" --out "$graph" --html "$html" --key .torque/keys/proof-ed25519.json >/dev/null
   "$torque" proof verify "$graph" --require-signature --format json > "$verify"
   jq -e '.passed == true and .signature.verified == true and ((.artifacts.failed // 0) == 0)' "$verify" >/dev/null
@@ -205,6 +234,18 @@ for i in $(seq 1 "$RUNS"); do
   jq -e '.passed == true' "$gate" >/dev/null
   "$torque" proof attest "$graph" --release "e2e-$SOURCE_COMMIT" --key .torque/keys/proof-ed25519.json --format json > "$attest"
   jq -e '.verified == true and .signature.algorithm == "ed25519"' "$attest" >/dev/null
+  "$torque" agent policy check agent-request.json --proof "$graph" --allow apply --require-gate --format json > "$agent_policy"
+  jq -e '.allowed == true and .gate.passed == true' "$agent_policy" >/dev/null
+  "$torque" agent run agent-request.json --proof "$graph" --allow apply --require-gate --format json > "$agent_run"
+  jq -e '.authorized == true and .executed == false' "$agent_run" >/dev/null
+  "$torque" release score "$graph" --format json > "$score"
+  jq -e '.score >= 80 and .gatePassed == true' "$score" >/dev/null
+  "$torque" flight record "$graph" --out "$flight" --format json >/dev/null
+  jq -e '(.timeline | length) >= 10 and .score >= 80' "$flight" >/dev/null
+  "$torque" flight replay "$flight" --format json > "$flight_replay"
+  jq -e '.passed == true' "$flight_replay" >/dev/null
+  "$torque" flight explain "$flight" --format json > "$flight_explain"
+  jq -e '.summary != ""' "$flight_explain" >/dev/null
   grep -q "Torque Proof Graph" "$html"
   if [ $((i % 20)) -eq 0 ]; then
     echo "loop ${i}/${RUNS} ok" >&2
@@ -224,8 +265,11 @@ jq -cn \
   --argjson artifacts "$(jq '.artifacts | length' proof.graph.json)" \
   --argjson checked "$(jq '.artifacts.checked' verify.json)" \
   --argjson gateChecks "$(jq '.summary.checks' gate.json)" \
+  --argjson agentChecks "$(jq '.checks | length' agent-policy.json)" \
+  --argjson releaseScore "$(jq '.score' release-score.json)" \
+  --argjson flightEvents "$(jq '.timeline | length' release.flight.torque)" \
   --argjson diffAdded "$(jq '.summary.added' diff.json)" \
   --argjson diffRemoved "$(jq '.summary.removed' diff.json)" \
   --argjson diffChanged "$(jq '.summary.changed' diff.json)" \
-  '{ok:true,host:$host,sourceCommit:$sourceCommit,fixtureCommit:$fixtureCommit,binarySha256:$binarySha256,runs:$runs,seconds:$seconds,artifacts:$artifacts,checkedFiles:$checked,gateChecks:$gateChecks,diff:{added:$diffAdded,removed:$diffRemoved,changed:$diffChanged},graphSha256:$graphSha256,attestationSha256:$attestationSha256,tamperFailureVerified:true}'
+  '{ok:true,host:$host,sourceCommit:$sourceCommit,fixtureCommit:$fixtureCommit,binarySha256:$binarySha256,runs:$runs,seconds:$seconds,artifacts:$artifacts,checkedFiles:$checked,gateChecks:$gateChecks,agentChecks:$agentChecks,releaseScore:$releaseScore,flightEvents:$flightEvents,diff:{added:$diffAdded,removed:$diffRemoved,changed:$diffChanged},graphSha256:$graphSha256,attestationSha256:$attestationSha256,tamperFailureVerified:true}'
 REMOTE
