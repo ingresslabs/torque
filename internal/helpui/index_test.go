@@ -149,6 +149,7 @@ func TestBuildIndex_IncludesAgentAndCacheDocs(t *testing.T) {
 		"doc:guardian":                    "observe-only runtime proof",
 		"doc:incident":                    "incident time machine",
 		"doc:contract":                    "recurrence rules",
+		"doc:proof-graph":                 "torque proof graph",
 	}
 	for id, content := range want {
 		found := false

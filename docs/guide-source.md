@@ -149,9 +149,13 @@ torque apply plan --chart ./chart --release api -n prod --visualize
 torque apply --chart ./chart --release api -n prod \
   --predict --proof-bundle ./apply-proof.json \
   --capture ./apply.sqlite --ui
-tar -czf torque-evidence.tgz ./apply.sqlite ./apply-proof.json
+torque proof graph ./apply-proof.json \
+  --out proof.graph.json \
+  --html proof.html
+torque proof verify proof.graph.json
+tar -czf torque-evidence.tgz ./apply.sqlite ./apply-proof.json ./proof.graph.json ./proof.html
 ```
-The workflow keeps the plan artifact, predictive risk score, rollback confidence, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, and command inputs together as durable evidence.
+The workflow keeps the plan artifact, predictive risk score, rollback confidence, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, command inputs, and proof graph together as durable evidence.
 
 # Advanced Features
 
@@ -188,6 +192,19 @@ Turn a failed apply proof bundle into a repair plan, optional chart patch, and P
 - `--apply`: Write safe generated repair templates into the chart.
 - `--branch fix/api-rollout`: Create/switch to a repair branch before writing files when the chart is in a clean git worktree.
 - `--pr-body ./repair-pr.md`: Write a Markdown PR body with root cause, evidence, patch plan, and validation commands.
+
+## torque proof
+Build, verify, and diff release proof graphs.
+
+**Usage**: `torque proof graph ./apply-proof.json [flags]`
+- `--out proof.graph.json`: Write the graph JSON artifact.
+- `--html proof.html`: Write a browser-readable report.
+- `--key .torque/keys/proof-ed25519.json`: Sign with an ed25519 key from `torque stack keygen`.
+- `--attach drift-proof.json`: Attach extra proof evidence such as Guardian drift, logs, SBOM, provenance, SLO, or repair artifacts.
+
+**Verify**: `torque proof verify proof.graph.json --require-signature`
+
+**Diff**: `torque proof diff previous-proof.graph.json current-proof.graph.json`
 
 ## torque secrets scan
 Scan source files, rendered manifests, build inputs, or text artifacts for

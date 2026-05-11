@@ -245,6 +245,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	revertCmd := newRevertCommand(&kubeconfigPath, &kubeContext, &logLevel)
 	repairCmd := newRepairCommand()
 	replayCmd := newReplayCommand()
+	proofCmd := newProofCommand()
 	applyCmd := newApplyCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	deleteCmd := newDeleteCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	stackCmd := newStackCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
@@ -258,6 +259,7 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 		revertCmd,
 		repairCmd,
 		replayCmd,
+		proofCmd,
 		applyCmd,
 		deleteCmd,
 		stackCmd,
@@ -296,6 +298,9 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
   # Turn failed apply proof into a repair plan
   torque repair --from ./apply-proof.json --chart ./chart
 
+  # Build a signed release proof graph
+  torque proof graph ./apply-proof.json --out proof.graph.json --html proof.html --key .torque/stack/keys/ed25519.json
+
   # Benchmark security detection with evidence
   torque security benchmark --corpus ./testdata/security --report benchmark.json
 
@@ -332,7 +337,7 @@ Usage:
   {{.UseLine}}
 
 Subcommands:
-{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "replay" "list" "lint" "logs" "env" "contract" "guardian" "incident" "secrets" "security" "version") }}
+{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "replay" "proof" "list" "lint" "logs" "env" "contract" "guardian" "incident" "secrets" "security" "version") }}
 {{- with (indexCommand $.Commands $n) }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end }}
