@@ -132,8 +132,14 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 ### Release Score
 
 - Purpose: top-level `torque release` command for scoring release readiness from proof graph and gate evidence.
-- Key surfaces: `release score`, `release autopilot`.
+- Key surfaces: `release score`, `release autopilot`, `release promote`.
 - Invariants: scores are derived from verified graph evidence and failed gate checks; `--fail-below` is the CI/release guard path; score output must remain machine-readable for PRs and release notes.
+
+### Progressive Promotion
+
+- Purpose: proof-backed canary and blue/green promotion decisions.
+- Key surfaces: `release promote --strategy canary`, `release promote --strategy blue-green`.
+- Invariants: promotion evaluates gate, score, flight, SLO/smoke evidence, and agent authorization before writing traffic-provider state; default provider is non-mutating evidence mode; `--execute` requires `--yes` and currently uses the deterministic file provider for E2E.
 
 ### Release Autopilot
 

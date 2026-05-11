@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           scripts/e2e-proof-graph-boole.sh | tee proof-graph-e2e.json
-          jq -e '.ok == true and .runs == (env.RUNS | tonumber) and .tamperFailureVerified == true and .agentChecks >= 1 and .releaseScore >= 80 and .flightEvents >= 10 and .autopilotPassed == true' proof-graph-e2e.json >/dev/null
+          jq -e '.ok == true and .runs == (env.RUNS | tonumber) and .tamperFailureVerified == true and .agentChecks >= 1 and .releaseScore >= 80 and .flightEvents >= 10 and .autopilotPassed == true and .canaryPromotionPassed == true and .blueGreenPromotionPassed == true' proof-graph-e2e.json >/dev/null
 
       - name: Upload proof graph E2E result
         uses: actions/upload-artifact@v4

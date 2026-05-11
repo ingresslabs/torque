@@ -76,6 +76,9 @@ JSONL
 cat > evidence/server-dry-run.json <<'JSON'
 {"version":"v1","status":"passed","dryRun":true,"summary":{"total":1,"failed":0},"results":[{"resource":{"version":"apps/v1","kind":"Deployment","namespace":"prod","name":"api"},"operation":"server-side-apply","status":"passed","dryRun":true}]}
 JSON
+cat > evidence/smoke.json <<'JSON'
+{"passed":true,"status":"passed","checks":["http","migration","readiness"],"summary":{"failed":0}}
+JSON
 cat > drift-proof.json <<'JSON'
 {"version":"v1","tool":"torque-guardian","generatedAt":"2026-05-11T18:00:00Z","source":"./torque-sim-proof","release":"api","namespace":"prod","chart":"./chart","renderedManifestSha256":"sha256:rendered-current","clusterHost":"boole","status":"passed","blocked":false,"summary":{"resources":1,"unchanged":1,"changed":0,"missing":0,"fetchErrors":0,"managedFieldOwners":0,"runtimeBoundaryFindings":0,"warningEvents":0,"aftercareIssues":0},"predictedVsLive":{"version":"v1","passed":true},"managedFields":{"version":"v1"},"driftTimeline":{"version":"v1"},"eventsTimeline":{"version":"v1"},"runtimeSecretBoundary":{"version":"v1","passed":true},"rolloutAftercare":{"version":"v1","passed":true}}
 JSON
@@ -202,6 +205,10 @@ jq -e '.passed == true and .events >= 10' flight-replay.json >/dev/null
 jq -e '.summary != "" and (.phases | length) >= 5' flight-explain.json >/dev/null
 "$torque" release autopilot proof.graph.json --key .torque/keys/proof-ed25519.json --allow apply --fail-below 80 --out-dir autopilot --format json > release-autopilot.json
 jq -e '.passed == true and .gate.passed == true and .score.score >= 80 and .replay.passed == true and .agentPolicy.allowed == true and .attestation.verified == true' release-autopilot.json >/dev/null
+"$torque" release promote proof.graph.json --strategy canary --steps 5,25,50,100 --analysis-window 1m --slo evidence/slo.yaml --rollback-on-fail --key .torque/keys/proof-ed25519.json --fail-below 80 --out-dir promote-canary --format json > release-promote-canary.json
+jq -e '.passed == true and .strategy == "canary" and .gate.passed == true and .score.score >= 80 and .canary.steps[-1].traffic.canary == 100 and .agentPolicy.allowed == true and .attestation.verified == true' release-promote-canary.json >/dev/null
+"$torque" release promote proof.graph.json --strategy blue-green --preview --smoke evidence/smoke.json --switch-traffic --provider file --state-out blue-green-traffic-state.json --execute --yes --key .torque/keys/proof-ed25519.json --fail-below 80 --out-dir promote-blue-green --format json > release-promote-blue-green.json
+jq -e '.passed == true and .strategy == "blue-green" and .gate.passed == true and .score.score >= 80 and .blueGreen.phases[-1].traffic.green == 100 and .providerState.applied == true and .agentPolicy.allowed == true and .attestation.verified == true' release-promote-blue-green.json >/dev/null
 
 cp evidence/verifier.report.json evidence/verifier.report.json.bak
 printf '{"passed":false,"status":"failed","tampered":true}\n' > evidence/verifier.report.json
@@ -229,6 +236,11 @@ for i in $(seq 1 "$RUNS"); do
   flight_explain="runs/flight-explain-${i}.json"
   autopilot="runs/release-autopilot-${i}.json"
   autopilot_dir="runs/autopilot-${i}"
+  promote_canary="runs/release-promote-canary-${i}.json"
+  promote_canary_dir="runs/promote-canary-${i}"
+  promote_bluegreen="runs/release-promote-blue-green-${i}.json"
+  promote_bluegreen_dir="runs/promote-blue-green-${i}"
+  promote_bluegreen_state="runs/blue-green-traffic-state-${i}.json"
   "$torque" proof graph ./apply-proof.json "${attach[@]}" --out "$graph" --html "$html" --key .torque/keys/proof-ed25519.json >/dev/null
   "$torque" proof verify "$graph" --require-signature --format json > "$verify"
   jq -e '.passed == true and .signature.verified == true and ((.artifacts.failed // 0) == 0)' "$verify" >/dev/null
@@ -252,6 +264,10 @@ for i in $(seq 1 "$RUNS"); do
   jq -e '.summary != ""' "$flight_explain" >/dev/null
   "$torque" release autopilot "$graph" --key .torque/keys/proof-ed25519.json --allow apply --fail-below 80 --out-dir "$autopilot_dir" --format json > "$autopilot"
   jq -e '.passed == true and .gate.passed == true and .score.score >= 80 and .replay.passed == true and .agentPolicy.allowed == true and .attestation.verified == true' "$autopilot" >/dev/null
+  "$torque" release promote "$graph" --strategy canary --steps 5,25,50,100 --analysis-window 1m --slo evidence/slo.yaml --rollback-on-fail --key .torque/keys/proof-ed25519.json --fail-below 80 --out-dir "$promote_canary_dir" --format json > "$promote_canary"
+  jq -e '.passed == true and .strategy == "canary" and .gate.passed == true and .score.score >= 80 and .canary.steps[-1].traffic.canary == 100 and .agentPolicy.allowed == true and .attestation.verified == true' "$promote_canary" >/dev/null
+  "$torque" release promote "$graph" --strategy blue-green --preview --smoke evidence/smoke.json --switch-traffic --provider file --state-out "$promote_bluegreen_state" --execute --yes --key .torque/keys/proof-ed25519.json --fail-below 80 --out-dir "$promote_bluegreen_dir" --format json > "$promote_bluegreen"
+  jq -e '.passed == true and .strategy == "blue-green" and .gate.passed == true and .score.score >= 80 and .blueGreen.phases[-1].traffic.green == 100 and .providerState.applied == true and .agentPolicy.allowed == true and .attestation.verified == true' "$promote_bluegreen" >/dev/null
   grep -q "Torque Proof Graph" "$html"
   if [ $((i % 20)) -eq 0 ]; then
     echo "loop ${i}/${RUNS} ok" >&2
@@ -275,8 +291,12 @@ jq -cn \
   --argjson releaseScore "$(jq '.score' release-score.json)" \
   --argjson flightEvents "$(jq '.timeline | length' release.flight.torque)" \
   --argjson autopilotPassed "$(jq '.passed' release-autopilot.json)" \
+  --argjson canaryPromotionPassed "$(jq '.passed' release-promote-canary.json)" \
+  --argjson blueGreenPromotionPassed "$(jq '.passed' release-promote-blue-green.json)" \
+  --argjson canarySteps "$(jq '.canary.steps | length' release-promote-canary.json)" \
+  --argjson blueGreenPhases "$(jq '.blueGreen.phases | length' release-promote-blue-green.json)" \
   --argjson diffAdded "$(jq '.summary.added' diff.json)" \
   --argjson diffRemoved "$(jq '.summary.removed' diff.json)" \
   --argjson diffChanged "$(jq '.summary.changed' diff.json)" \
-  '{ok:true,host:$host,sourceCommit:$sourceCommit,fixtureCommit:$fixtureCommit,binarySha256:$binarySha256,runs:$runs,seconds:$seconds,artifacts:$artifacts,checkedFiles:$checked,gateChecks:$gateChecks,agentChecks:$agentChecks,releaseScore:$releaseScore,flightEvents:$flightEvents,autopilotPassed:$autopilotPassed,diff:{added:$diffAdded,removed:$diffRemoved,changed:$diffChanged},graphSha256:$graphSha256,attestationSha256:$attestationSha256,tamperFailureVerified:true}'
+  '{ok:true,host:$host,sourceCommit:$sourceCommit,fixtureCommit:$fixtureCommit,binarySha256:$binarySha256,runs:$runs,seconds:$seconds,artifacts:$artifacts,checkedFiles:$checked,gateChecks:$gateChecks,agentChecks:$agentChecks,releaseScore:$releaseScore,flightEvents:$flightEvents,autopilotPassed:$autopilotPassed,canaryPromotionPassed:$canaryPromotionPassed,blueGreenPromotionPassed:$blueGreenPromotionPassed,canarySteps:$canarySteps,blueGreenPhases:$blueGreenPhases,diff:{added:$diffAdded,removed:$diffRemoved,changed:$diffChanged},graphSha256:$graphSha256,attestationSha256:$attestationSha256,tamperFailureVerified:true}'
 REMOTE

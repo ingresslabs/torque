@@ -311,7 +311,7 @@ func releaseFlightPhase(typ string) string {
 		return "dry-run"
 	case "runtime-drift", "rollout-events":
 		return "runtime"
-	case "rollout-capture", "logs-capture", "rollout-state", "rollout-prediction":
+	case "rollout-capture", "logs-capture", "rollout-state", "rollout-prediction", "release-promotion", "traffic-shift", "smoke-test":
 		return "rollout"
 	case "slo-outcome":
 		return "slo"

@@ -144,11 +144,18 @@ var curatedExamples = map[string][]string{
 	},
 	"torque release": {
 		"# Run the proof-backed release autopilot over existing evidence\ntorque release autopilot proof.graph.json --key .torque/stack/keys/ed25519.json --out-dir release-autopilot",
+		"# Promote through a proof-backed canary ladder\ntorque release promote proof.graph.json --strategy canary --steps 5,25,50,100 --slo slo.yaml --rollback-on-fail",
+		"# Promote through proof-backed blue/green preview and switch\ntorque release promote proof.graph.json --strategy blue-green --preview --smoke smoke.json --switch-traffic",
 		"# Score release readiness from proof evidence\ntorque release score proof.graph.json --out release-score.json",
 	},
 	"torque release autopilot": {
 		"# Compose graph, gate, score, flight, agent authorization, and attestation artifacts\ntorque release autopilot proof.graph.json --key .torque/stack/keys/ed25519.json --fail-below 90 --out-dir release-autopilot",
 		"# Run torque apply first, then collect proof-backed release artifacts\ntorque release autopilot --execute --yes --chart ./chart --release api -n prod --auto-rollback --slo slo.yaml --key .torque/stack/keys/ed25519.json",
+	},
+	"torque release promote": {
+		"# Canary promotion with signed proof evidence\ntorque release promote proof.graph.json --strategy canary --steps 5,25,50,100 --slo slo.yaml --rollback-on-fail --key .torque/stack/keys/ed25519.json --out-dir release-promote-canary",
+		"# Blue/green promotion with smoke evidence\ntorque release promote proof.graph.json --strategy blue-green --preview --smoke smoke.json --switch-traffic --key .torque/stack/keys/ed25519.json --out-dir release-promote-blue-green",
+		"# Deterministic E2E traffic-state provider\ntorque release promote proof.graph.json --strategy blue-green --preview --smoke smoke.json --switch-traffic --provider file --state-out traffic-state.json --execute --yes",
 	},
 	"torque release score": {
 		"# Fail CI when a release score is below the promotion threshold\ntorque release score proof.graph.json --fail-below 90",

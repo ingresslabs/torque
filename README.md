@@ -71,6 +71,12 @@ torque release autopilot proof.graph.json \
   --key .torque/keys/proof-ed25519.json \
   --policy release-policy.yaml \
   --out-dir release-autopilot
+torque release promote proof.graph.json \
+  --strategy canary --steps 5,25,50,100 \
+  --slo slo.yaml --out-dir release-promote-canary
+torque release promote proof.graph.json \
+  --strategy blue-green --preview --smoke smoke.json \
+  --switch-traffic --out-dir release-promote-blue-green
 torque flight record proof.graph.json --out release.flight.torque
 torque agent policy check agent-request.json \
   --proof proof.graph.json --allow apply --require-gate
@@ -207,6 +213,22 @@ torque release autopilot proof.graph.json \
   --policy release-policy.yaml \
   --fail-below 90 \
   --out-dir release-autopilot
+torque release promote proof.graph.json \
+  --strategy canary \
+  --steps 5,25,50,100 \
+  --slo slo.yaml \
+  --rollback-on-fail \
+  --key .torque/keys/proof-ed25519.json \
+  --fail-below 90 \
+  --out-dir release-promote-canary
+torque release promote proof.graph.json \
+  --strategy blue-green \
+  --preview \
+  --smoke smoke.json \
+  --switch-traffic \
+  --key .torque/keys/proof-ed25519.json \
+  --fail-below 90 \
+  --out-dir release-promote-blue-green
 ```
 
 See [`docs/proof-graph.md`](docs/proof-graph.md) for the graph contract.
@@ -258,6 +280,7 @@ fallback, and review-ready outputs without touching a real cluster.
 - Proof-backed agent authorization for mutating operations.
 - Release readiness scoring from signed proof graphs and release gates.
 - Release Autopilot orchestration for graph, gate, score, flight, agent authorization, and signed verdict artifacts.
+- Proof-backed canary and blue/green promotion evidence with deterministic E2E traffic-state validation.
 - Release Flight Recorder timelines that replay and explain release evidence.
 - Auto rollback proof for failed applies and rollout SLO gates.
 - Dependency-ordered stack planning and apply runs.

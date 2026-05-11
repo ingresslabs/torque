@@ -192,6 +192,55 @@ If the apply command fails but writes proof, Autopilot still tries to produce
 the graph, gate, score, flight, agent, and attestation artifacts so the failure
 is reviewable.
 
+## Progressive Promotion
+
+`torque release promote` turns canary and blue/green traffic decisions into
+proof-backed promotion artifacts. It evaluates the proof gate and release
+score, records agent authorization, writes a promotion decision log, attaches
+that decision to a promoted proof graph, and signs the graph/attestation when a
+key is supplied.
+
+Canary promotion:
+
+```bash
+torque release promote proof.graph.json \
+  --strategy canary \
+  --steps 5,25,50,100 \
+  --analysis-window 5m \
+  --slo slo.yaml \
+  --rollback-on-fail \
+  --key .torque/keys/proof-ed25519.json \
+  --out-dir release-promote-canary
+```
+
+Blue/green promotion:
+
+```bash
+torque release promote proof.graph.json \
+  --strategy blue-green \
+  --preview \
+  --smoke smoke.json \
+  --switch-traffic \
+  --key .torque/keys/proof-ed25519.json \
+  --out-dir release-promote-blue-green
+```
+
+The default provider is `evidence`, which is non-mutating. For deterministic
+E2E tests and CI rehearsals, the `file` provider writes the final traffic state
+only after proof checks pass and `--execute --yes` is present:
+
+```bash
+torque release promote proof.graph.json \
+  --strategy blue-green \
+  --preview --smoke smoke.json --switch-traffic \
+  --provider file --state-out traffic-state.json \
+  --execute --yes
+```
+
+This gives releases a portable record of every planned traffic step without
+pretending to own a live mesh or ingress controller. Provider adapters can be
+added behind the same proof gate later.
+
 ## Release Flight Recorder
 
 `torque flight` records the proof graph as a portable release timeline that can
@@ -219,11 +268,12 @@ The script builds or reuses a Linux amd64 `torque` binary, copies it to Boole,
 recreates a full proof graph fixture, verifies signature and file hashes, checks
 HTML output, diffs previous/current graphs, runs `proof gate`, signs a release
 attestation, checks `agent policy` and `agent run`, scores the release, records
-and replays the release flight, runs `release autopilot`, proves tamper
-detection by modifying verifier evidence, then repeats
-graph/verify/diff/gate/attest/agent/score/flight/autopilot for 100 iterations
-by default. It prints a single compact JSON line suitable for CI and release
-notes.
+and replays the release flight, runs `release autopilot`, runs canary and
+blue/green `release promote`, proves tamper detection by modifying verifier
+evidence, then repeats
+graph/verify/diff/gate/attest/agent/score/flight/autopilot/promote for 100
+iterations by default. It prints a single compact JSON line suitable for CI and
+release notes.
 
 GitHub Actions exposes the same run as the manual **Proof Graph E2E** workflow.
 

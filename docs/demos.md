@@ -4,6 +4,41 @@ Text-only companion commands for the landing page demos. The animated demos live
 on the landing page; docs stay copy/paste friendly and free of GIF assets.
 
 <details open>
+<summary>Canary and blue-green release promotion</summary>
+
+```bash
+torque release promote proof.graph.json \
+  --strategy canary \
+  --steps 5,25,50,100 \
+  --analysis-window 5m \
+  --slo slo.yaml \
+  --rollback-on-fail \
+  --key .torque/stack/keys/ed25519.json \
+  --out-dir release-promote-canary
+
+torque release promote proof.graph.json \
+  --strategy blue-green \
+  --preview \
+  --smoke smoke.json \
+  --switch-traffic \
+  --key .torque/stack/keys/ed25519.json \
+  --out-dir release-promote-blue-green
+
+torque release promote proof.graph.json \
+  --strategy blue-green \
+  --preview --smoke smoke.json --switch-traffic \
+  --provider file --state-out traffic-state.json \
+  --execute --yes --format json
+```
+
+Turns canary ladders and blue/green traffic switches into proof-backed
+promotion artifacts, including gate output, release score, agent policy
+evidence, signed attestation when a key is provided, and deterministic
+traffic-state output for E2E rehearsals.
+
+</details>
+
+<details open>
 <summary>Complex DAG stack orchestration</summary>
 
 ```bash
