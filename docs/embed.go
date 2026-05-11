@@ -41,4 +41,25 @@ var (
 
 	//go:embed verifier.md
 	VerifierMD string
+
+	//go:embed apply-simulate.md
+	ApplySimulateMD string
+
+	//go:embed guardian.md
+	GuardianMD string
+
+	//go:embed incident.md
+	IncidentMD string
+
+	//go:embed contract.md
+	ContractMD string
+
+	//go:embed proof-graph.md
+	ProofGraphMD string
+
+	//go:embed secrets-verifier-evidence-spec.md
+	SecretsVerifierEvidenceSpecMD string
+
+	//go:embed security-corpus-spec.md
+	SecurityCorpusSpecMD string
 )

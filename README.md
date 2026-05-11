@@ -47,13 +47,154 @@ go install github.com/ingresslabs/torque/cmd/verifier@latest
 
 ```bash
 torque build . --tag ghcr.io/acme/api:dev --capture ./build.sqlite
-verifier --chart ./chart --release api -n prod --format json --report verify.json
+verifier --chart ./chart --release api -n prod \
+  --security-profile enterprise --secrets-report secrets.json \
+  --security-boundary-matrix \
+  --security-evidence ./torque-security-evidence \
+  --format json --report verify.json
 torque apply plan --chart ./chart --release api -n prod \
   --verify-report verify.json --build-capture ./build.sqlite \
   --github-comment --output plan.md
-torque apply --chart ./chart --release api -n prod --capture ./apply.sqlite --yes
+torque apply simulate --chart ./chart --release api -n prod \
+  --security-evidence ./torque-security-evidence \
+  --out ./torque-sim-proof
+torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json
+torque apply --chart ./chart --release api -n prod \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --yes
+torque proof graph ./apply-proof.json \
+  --attach drift-proof.json --out proof.graph.json --html proof.html
+torque proof verify proof.graph.json
+torque incident capture --release api -n prod --since 1h --out incident.torque
+torque incident replay incident.torque --lab k3s --out incident-replay-proof/
+torque contract synthesize --from incident-replay-proof/ \
+  --guardian drift-proof.json --out torque-contract.yaml
+torque contract test --contract torque-contract.yaml \
+  --from incident-replay-proof/ --guardian drift-proof.json \
+  --out contract-proof.json
 torque logs 'api-.*' -n prod --capture ./logs.sqlite --tail 100
 ```
+
+Prediction-sensitive releases can ask Torque to score rollout risk before Helm
+touches the cluster and write one JSON proof bundle with the plan, rendered
+manifest hash, rollback confidence, resource timeline, and final outcome:
+
+```bash
+torque apply --chart ./chart --release api -n prod \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --yes
+```
+
+Apply-sensitive releases can run the Live Apply Twin first: render the release,
+ask the Kubernetes API server for server-side apply dry-run behavior, attach
+security evidence, and write a replayable proof directory before prod changes:
+
+```bash
+torque apply simulate --chart ./chart --release api -n prod \
+  --slo ./slo.yaml \
+  --security-evidence ./torque-security-evidence \
+  --out ./torque-sim-proof
+torque replay ./torque-sim-proof --lab k3s
+```
+
+See [`docs/apply-simulate.md`](docs/apply-simulate.md) for the proof bundle
+contract.
+
+Runtime-sensitive releases can connect the simulation proof to live objects and
+turn drift into PR-ready evidence:
+
+```bash
+torque guardian install --namespace torque-system --mode observe
+torque guardian report --since 24h --out runtime-proof.json
+torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json
+torque guardian pr --from drift-proof.json --branch fix/runtime-drift
+```
+
+See [`docs/guardian.md`](docs/guardian.md) for Guardian runtime proof details.
+
+Incident-sensitive releases can capture a broken runtime window and turn it
+into a replayable root-cause proof:
+
+```bash
+torque incident capture --release api -n prod --since 1h --out incident.torque
+torque incident replay incident.torque --lab k3s --out incident-replay-proof/
+torque incident explain --from incident-replay-proof/ --out root-cause.json
+torque incident pr --from root-cause.json --branch fix/api-incident
+```
+
+See [`docs/incident.md`](docs/incident.md) for observe-only incident replay.
+
+Runtime Contract can turn Guardian and Incident proof into recurrence rules that
+future proof must satisfy:
+
+```bash
+torque contract synthesize \
+  --from incident-replay-proof/ \
+  --guardian drift-proof.json \
+  --out torque-contract.yaml
+torque contract test \
+  --contract torque-contract.yaml \
+  --from incident-replay-proof/ \
+  --guardian drift-proof.json \
+  --out contract-proof.json
+torque contract pr \
+  --contract torque-contract.yaml \
+  --proof contract-proof.json \
+  --branch add/api-runtime-contract
+```
+
+See [`docs/contract.md`](docs/contract.md) for Runtime Contract synthesis and
+test proof details.
+
+Rollback-sensitive releases can ask Torque to keep proof when Helm fails or a
+post-apply SLO gate is violated:
+
+```bash
+torque apply --chart ./chart --release api -n prod \
+  --require-verified verify.json \
+  --auto-rollback --slo ./slo.yaml \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --yes
+```
+
+Failed releases can turn that proof into a repair plan and PR-ready patch:
+
+```bash
+torque repair --from ./apply-proof.json --chart ./chart \
+  --branch fix/api-rollout --apply --pr-body ./repair-pr.md --yes
+torque fix --from ./torque-sim-proof --chart ./chart
+```
+
+Release-sensitive workflows can turn those proof files into a signed graph for
+review and CI verification:
+
+```bash
+torque stack keygen --out .torque/keys/proof-ed25519.json
+torque proof graph ./apply-proof.json \
+  --attach drift-proof.json \
+  --attach repair-pr.md \
+  --out proof.graph.json \
+  --html proof.html \
+  --key .torque/keys/proof-ed25519.json
+torque proof verify proof.graph.json --require-signature
+torque proof diff previous-proof.graph.json proof.graph.json
+```
+
+See [`docs/proof-graph.md`](docs/proof-graph.md) for the graph contract.
+
+Security-sensitive releases can scan source or rendered manifests before review:
+
+```bash
+torque secrets scan --scope repo --report secrets.json --mode block --flow-graph
+verifier --manifest ./rendered.yaml --security-profile enterprise \
+  --security-boundary-matrix --secret-flow-graph \
+  --secrets-report secrets.json --security-evidence ./torque-security-evidence \
+  --format json --report verify.json
+torque security benchmark --corpus ./testdata/security --report benchmark.json
+```
+
+Detector-quality claims are grounded in the synthetic corpus rules in
+[`docs/security-corpus-spec.md`](docs/security-corpus-spec.md).
 
 ## Showcase Reports
 
@@ -75,7 +216,17 @@ fallback, and review-ready outputs without touching a real cluster.
 - BuildKit cache import/export, including first-class S3 cache flags for `build` and `ship`.
 - MCP cache advisor tools for structured cache inspect, plan, and warm actions.
 - Helm release plans with Markdown, JSON, and rich HTML plan reports.
+- Live Apply Twin simulation with server-side dry-run proof, replay validation, and repair artifacts.
+- Observe-only Guardian runtime proof for drift, events, managed fields, and PR-ready repair evidence.
+- Observe-only Incident capture and replay for causal timelines, root-cause proof, and PR-ready repair evidence.
+- Runtime Contract synthesis and test proof for incident recurrence rules.
 - Verifier gates for charts, rendered manifests, and live namespaces.
+- Evidence-first secrets reports, source-to-live secret flow graphs, benchmark
+  corpus metrics, and verifier security evidence bundles.
+- Predictive apply risk scoring and proof bundles for plan-to-rollout evidence.
+- Failure-to-fix repair plans that turn proof bundles into chart patches and PR bodies.
+- Signed release proof graphs that link build, verify, dry-run, drift, rollout, rollback, and repair evidence.
+- Auto rollback proof for failed applies and rollout SLO gates.
 - Dependency-ordered stack planning and apply runs.
 - Portable SQLite evidence for builds, deploys, logs, and stack runs.
 - `torque-agent` workflows for agent-driven automation over gRPC.

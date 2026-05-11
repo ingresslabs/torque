@@ -54,6 +54,25 @@ go install github.com/ingresslabs/torque/cmd/torque@latest
     torque apply plan --chart ./chart --release my-app -n default --visualize
     ```
 
+3.  **Simulate live API behavior**:
+    ```bash
+    torque apply simulate --chart ./chart --release my-app -n default --out ./torque-sim-proof
+    torque replay ./torque-sim-proof --lab k3s
+    ```
+
+4.  **Prove runtime drift**:
+    ```bash
+    torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json
+    torque guardian pr --from drift-proof.json --branch fix/runtime-drift
+    ```
+
+5.  **Replay incident evidence**:
+    ```bash
+    torque incident capture --release api -n prod --since 1h --out incident.torque
+    torque incident replay incident.torque --lab k3s --out incident-replay-proof
+    torque incident explain --from incident-replay-proof --out root-cause.json
+    ```
+
 ---
 
 # Core Concepts
@@ -127,10 +146,16 @@ A release fails and you need to understand what changed, which resources became 
 **With torque**:
 ```bash
 torque apply plan --chart ./chart --release api -n prod --visualize
-torque apply --chart ./chart --release api -n prod --capture ./apply.sqlite --ui
-tar -czf torque-evidence.tgz ./apply.sqlite
+torque apply --chart ./chart --release api -n prod \
+  --predict --proof-bundle ./apply-proof.json \
+  --capture ./apply.sqlite --ui
+torque proof graph ./apply-proof.json \
+  --out proof.graph.json \
+  --html proof.html
+torque proof verify proof.graph.json
+tar -czf torque-evidence.tgz ./apply.sqlite ./apply-proof.json ./proof.graph.json ./proof.html
 ```
-The workflow keeps the plan artifact, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, and command inputs together as durable evidence.
+The workflow keeps the plan artifact, predictive risk score, rollback confidence, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, command inputs, and proof graph together as durable evidence.
 
 # Advanced Features
 
@@ -144,6 +169,8 @@ Command-level `torque ... --capture` flags record deploy, destroy, build, and lo
 - **RBAC**: Ensure no ClusterRoles use wildcards.
 - **PSS**: Enforce Pod Security Standards (Restricted/Baseline).
 - **Custom Rules**: Write your own Rego policies.
+- **Secret flow evidence**: block secret-like values rendered into non-Secret
+  resources and write a redaction proof.
 
 ---
 
@@ -155,6 +182,57 @@ Apply a manifest or helm chart with instant log streaming.
 **Usage**: `torque apply [flags]`
 - `--chart`: Path to helm chart.
 - `--watch`: Stream logs after apply.
+- `--predict --proof-bundle ./apply-proof.json`: Score rollout risk before apply and write a JSON bundle with plan, prediction, history, resource status, and final outcome.
+- `--auto-rollback --slo ./slo.yaml`: Roll back failed applies or violated rollout SLO gates and write rollback proof.
+
+## torque repair
+Turn a failed apply proof bundle into a repair plan, optional chart patch, and PR body.
+
+**Usage**: `torque repair --from ./apply-proof.json --chart ./chart [flags]`
+- `--apply`: Write safe generated repair templates into the chart.
+- `--branch fix/api-rollout`: Create/switch to a repair branch before writing files when the chart is in a clean git worktree.
+- `--pr-body ./repair-pr.md`: Write a Markdown PR body with root cause, evidence, patch plan, and validation commands.
+
+## torque proof
+Build, verify, and diff release proof graphs.
+
+**Usage**: `torque proof graph ./apply-proof.json [flags]`
+- `--out proof.graph.json`: Write the graph JSON artifact.
+- `--html proof.html`: Write a browser-readable report.
+- `--key .torque/keys/proof-ed25519.json`: Sign with an ed25519 key from `torque stack keygen`.
+- `--attach drift-proof.json`: Attach extra proof evidence such as Guardian drift, logs, SBOM, provenance, SLO, or repair artifacts.
+
+**Verify**: `torque proof verify proof.graph.json --require-signature`
+
+**Diff**: `torque proof diff previous-proof.graph.json current-proof.graph.json`
+
+## torque secrets scan
+Scan source files, rendered manifests, build inputs, or text artifacts for
+secret-like values without writing raw values to reports.
+
+**Usage**: `torque secrets scan --scope repo|render|build|artifact [flags]`
+- `--report secrets.json`: Write the JSON secret scan report.
+- `--mode block --fail-on high`: Fail when high-confidence findings are present.
+- `--flow-graph`: Include a redacted source-to-rendered/live-boundary-to-report flow graph.
+- `--scope render --manifest ./rendered.yaml`: Scan rendered Kubernetes objects and allow Secret boundaries.
+
+## torque security benchmark
+Run the checked-in security corpus and publish evidence-backed detector metrics.
+
+**Usage**: `torque security benchmark --corpus ./testdata/security --report benchmark.json`
+- `--corpus`: Directory containing `corpus.yaml` and fixture cases.
+- `--report benchmark.json`: Write recall, precision, false-positive, runtime, redaction, flow-graph, provenance-chain, and boundary metrics.
+- `--live-k3s-boundary-matrix --live-confirm`: Also probe a temporary live namespace and include the k3s boundary pass/fail status.
+
+## verifier security evidence
+Merge secret-flow findings into verifier output and write a review bundle.
+
+**Usage**: `verifier --chart ./chart --release api -n prod --security-profile enterprise --security-boundary-matrix --secret-flow-graph --secrets-report secrets.json --security-evidence ./torque-security-evidence`
+- `--security-profile enterprise`: Enable blocking evidence-first secret checks.
+- `--security-boundary-matrix`: Add a Secret/ConfigMap/env/log-facing boundary proof to the secrets report and evidence bundle.
+- `--secret-flow-graph`: Export `secret.flow.graph.json` with values, template, rendered-object, live-object, boundary, and report nodes.
+- `--secrets-report secrets.json`: Write the redacted secret scan report.
+- `--security-evidence ./dir`: Export manifest, verifier report, secrets report, boundary matrix, flow graph, redaction proof, and Markdown summary.
 
 ## torque stack
 Manage complex multi-component releases.

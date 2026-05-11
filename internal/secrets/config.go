@@ -8,6 +8,8 @@ const (
 	ApplyOCIPath       ApplyTo = "oci_path"
 	ApplyOCIContent    ApplyTo = "oci_content"
 	ApplyLogLine       ApplyTo = "log_line"
+	ApplySourceScalar  ApplyTo = "source_scalar"
+	ApplyRenderScalar  ApplyTo = "render_scalar"
 )
 
 type Rule struct {

@@ -28,6 +28,7 @@ func newSecretsCommand(kubeconfig, kubeContext *string) *cobra.Command {
 	cmd.AddCommand(newSecretsTestCommand())
 	cmd.AddCommand(newSecretsListCommand())
 	cmd.AddCommand(newSecretsDiscoverCommand())
+	cmd.AddCommand(newSecretsScanCommand(kubeconfig, kubeContext))
 	cmd.AddCommand(newSecretsExecCommand(kubeconfig, kubeContext))
 	decorateCommandHelp(cmd, "Secrets Flags")
 	return cmd

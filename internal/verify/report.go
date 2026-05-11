@@ -30,6 +30,7 @@ type Finding struct {
 	RuleID      string         `json:"ruleId"`
 	Severity    Severity       `json:"severity"`
 	Category    string         `json:"category,omitempty"`
+	Confidence  float64        `json:"confidence,omitempty"`
 	Message     string         `json:"message"`
 	FieldPath   string         `json:"fieldPath,omitempty"`
 	Path        string         `json:"path,omitempty"`
@@ -43,6 +44,12 @@ type Finding struct {
 	HelpURL     string         `json:"helpUrl,omitempty"`
 	Tags        []string       `json:"tags,omitempty"`
 	Evidence    map[string]any `json:"evidence,omitempty"`
+	Fix         *FindingFix    `json:"fix,omitempty"`
+}
+
+type FindingFix struct {
+	Summary   string `json:"summary,omitempty"`
+	PatchHint string `json:"patchHint,omitempty"`
 }
 
 type Summary struct {

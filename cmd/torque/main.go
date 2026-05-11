@@ -236,9 +236,16 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	lintCmd := newLintCommand(&kubeconfigPath, &kubeContext)
 	envCmd := newEnvCommand()
 	versionCmd := newVersionCommand()
+	contractCmd := newContractCommand()
+	guardianCmd := newGuardianCommand(&kubeconfigPath, &kubeContext)
+	incidentCmd := newIncidentCommand(&kubeconfigPath, &kubeContext)
 	secretsCmd := newSecretsCommand(&kubeconfigPath, &kubeContext)
+	securityCmd := newSecurityCommand(&kubeconfigPath, &kubeContext)
 	waitCmd := newWaitCommand(&kubeconfigPath, &kubeContext)
 	revertCmd := newRevertCommand(&kubeconfigPath, &kubeContext, &logLevel)
+	repairCmd := newRepairCommand()
+	replayCmd := newReplayCommand()
+	proofCmd := newProofCommand()
 	applyCmd := newApplyCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	deleteCmd := newDeleteCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	stackCmd := newStackCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
@@ -250,6 +257,9 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 		explainCmd,
 		analyzeCmd,
 		revertCmd,
+		repairCmd,
+		replayCmd,
+		proofCmd,
 		applyCmd,
 		deleteCmd,
 		stackCmd,
@@ -257,7 +267,11 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 		lintCmd,
 		logsCmd,
 		envCmd,
+		contractCmd,
+		guardianCmd,
+		incidentCmd,
 		secretsCmd,
+		securityCmd,
 		versionCmd,
 		upCmd,
 		waitCmd,
@@ -275,13 +289,34 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
   # Preview a Helm upgrade
   torque apply plan --chart ./chart --release foo
 
+  # Simulate live API behavior before applying
+  torque apply simulate --chart ./chart --release foo --out ./torque-sim-proof
+
   # Revert a release to the last known-good revision
   torque revert --release foo --namespace prod
+
+  # Turn failed apply proof into a repair plan
+  torque repair --from ./apply-proof.json --chart ./chart
+
+  # Build a signed release proof graph
+  torque proof graph ./apply-proof.json --out proof.graph.json --html proof.html --key .torque/stack/keys/ed25519.json
+
+  # Benchmark security detection with evidence
+  torque security benchmark --corpus ./testdata/security --report benchmark.json
+
+  # Prove runtime drift from a simulation proof
+  torque guardian diff --source ./torque-sim-proof --live --out drift-proof.json
+
+  # Synthesize and test runtime recurrence contracts
+  torque contract synthesize --from incident-replay-proof --guardian drift-proof.json --out torque-contract.yaml
+
+  # Capture and replay incident evidence
+  torque incident capture --release foo --namespace prod --since 1h --out incident.torque
 
   # Apply chart changes
 	torque apply --chart ./chart --release foo --namespace prod`
 	decorateCommandHelp(cmd, "Global Flags")
-	bindViper(cmd, initCmd, logsCmd, buildCmd, listCmd, lintCmd, applyCmd, deleteCmd, stackCmd)
+	bindViper(cmd, initCmd, logsCmd, buildCmd, listCmd, lintCmd, applyCmd, deleteCmd, stackCmd, repairCmd)
 
 	_ = cmd.RegisterFlagCompletionFunc("profile", cobra.FixedCompletions([]string{"dev", "ci", "secure", "remote"}, cobra.ShellCompDirectiveNoFileComp))
 	_ = cmd.RegisterFlagCompletionFunc("log-level", cobra.FixedCompletions([]string{"debug", "info", "warn", "error"}, cobra.ShellCompDirectiveNoFileComp))
@@ -302,7 +337,7 @@ Usage:
   {{.UseLine}}
 
 Subcommands:
-{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "list" "lint" "logs" "env" "secrets" "version") }}
+{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "replay" "proof" "list" "lint" "logs" "env" "contract" "guardian" "incident" "secrets" "security" "version") }}
 {{- with (indexCommand $.Commands $n) }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end }}

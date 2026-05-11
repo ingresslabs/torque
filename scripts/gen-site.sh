@@ -151,6 +151,7 @@ install -m 0644 docs/showcase/reports/verifier-report.rendered.yaml "${OUT_DIR}/
 mkdir -p "${OUT_DIR}/showcase/atlassian/reports"
 install -m 0644 docs/showcase/atlassian/*.yaml "${OUT_DIR}/showcase/atlassian/"
 install -m 0644 docs/showcase/atlassian/reports/*.html "${OUT_DIR}/showcase/atlassian/reports/"
+install -m 0644 docs/showcase/atlassian/reports/*.json "${OUT_DIR}/showcase/atlassian/reports/"
 
 echo ">> wrote:"
 ls -la "${OUT_DIR}/index.html" "${OUT_DIR}/blog.html" "${OUT_DIR}/blog-mcp-s3-cache.html" "${OUT_DIR}/blog-atlassian-torque-case-study.html" "${OUT_DIR}/docs.html" "${OUT_DIR}/index.json" "${OUT_DIR}/install.sh" "${OUT_DIR}/.nojekyll" | sed -n '1,200p'

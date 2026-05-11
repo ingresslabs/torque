@@ -1,0 +1,321 @@
+{
+  "tool": "torque-verify",
+  "engine": {
+    "name": "builtin",
+    "ruleset": "builtin@6796ad0a7958e25e298f4ee1607d2b075086bdae00a7056bfe36d002b23c4cf1"
+  },
+  "mode": "block",
+  "failOn": "high",
+  "passed": true,
+  "blocked": false,
+  "evaluatedAt": "2026-05-10T14:11:00.782301Z",
+  "inputs": [
+    {
+      "kind": "chart",
+      "chart": "/tmp/torque-atlassian/charts/release/crowd",
+      "release": "crowd",
+      "namespace": "atlassian",
+      "renderedSha256": "a1a276a997530e1d2c250af8fcc261d2e306e6fe1cac4bee648f9d6cbe2bece5"
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "bySeverity": {
+      "info": 2,
+      "low": 2,
+      "medium": 3
+    },
+    "byRule": {
+      "k8s/container_liveness_probe_required": 1,
+      "k8s/container_read_only_root_filesystem": 1,
+      "k8s/container_readiness_probe_required": 1,
+      "k8s/memory_limits_not_defined": 1,
+      "k8s/pod_fs_group_recommended": 2,
+      "k8s/service_account_token_automount_not_disabled": 1
+    },
+    "byRuleSeverity": {
+      "k8s/container_liveness_probe_required": {
+        "low": 1
+      },
+      "k8s/container_read_only_root_filesystem": {
+        "medium": 1
+      },
+      "k8s/container_readiness_probe_required": {
+        "low": 1
+      },
+      "k8s/memory_limits_not_defined": {
+        "medium": 1
+      },
+      "k8s/pod_fs_group_recommended": {
+        "info": 2
+      },
+      "k8s/service_account_token_automount_not_disabled": {
+        "medium": 1
+      }
+    },
+    "passed": true,
+    "blocked": false
+  },
+  "findings": [
+    {
+      "ruleId": "k8s/container_read_only_root_filesystem",
+      "severity": "medium",
+      "category": "Insecure Configurations",
+      "message": "Containers should set securityContext.readOnlyRootFilesystem to true to reduce the writable surface area.",
+      "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 438,
+      "location": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.securityContext.readOnlyRootFilesystem",
+      "resourceKey": "cluster/StatefulSet/crowd",
+      "expected": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.securityContext.readOnlyRootFilesystem should be true",
+      "observed": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.securityContext.readOnlyRootFilesystem is false",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd"
+      },
+      "fingerprint": "k8s/container_read_only_root_filesystem:cluster/StatefulSet/crowd:metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.securityContext.readOnlyRootFilesystem",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/crowd:7.1.5-custom-20260510",
+            "name": "crowd",
+            "resources": {
+              "requests.memory": "1G"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.securityContext.readOnlyRootFilesystem",
+        "kind": "StatefulSet",
+        "name": "crowd",
+        "serviceAccountName": "crowd",
+        "templateSource": "crowd/templates/statefulset.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/memory_limits_not_defined",
+      "severity": "medium",
+      "category": "Resource Management",
+      "message": "Memory limits should be defined for each container. This prevents potential resource exhaustion by ensuring that containers consume not more than the designated amount of memory",
+      "fieldPath": "spec.template.spec.containers.0.resources.limits",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 448,
+      "location": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}",
+      "resourceKey": "cluster/StatefulSet/crowd",
+      "expected": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.resources.limits.memory should be defined",
+      "observed": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.resources.limits.memory is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd"
+      },
+      "fingerprint": "k8s/memory_limits_not_defined:cluster/StatefulSet/crowd:metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/crowd:7.1.5-custom-20260510",
+            "name": "crowd",
+            "resources": {
+              "requests.memory": "1G"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0.resources.limits",
+        "kind": "StatefulSet",
+        "name": "crowd",
+        "serviceAccountName": "crowd",
+        "templateSource": "crowd/templates/statefulset.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/service_account_token_automount_not_disabled",
+      "severity": "medium",
+      "category": "Insecure Defaults",
+      "message": "Service Account Tokens are automatically mounted even if not necessary",
+      "fieldPath": "spec.template.spec",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 414,
+      "location": "metadata.name={{crowd}}.spec.template.spec",
+      "resourceKey": "cluster/StatefulSet/crowd",
+      "expected": "metadata.name={{crowd}}.spec.template.spec.automountServiceAccountToken should be defined and set to false",
+      "observed": "metadata.name={{crowd}}.spec.template.spec.automountServiceAccountToken is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd"
+      },
+      "fingerprint": "k8s/service_account_token_automount_not_disabled:cluster/StatefulSet/crowd:metadata.name={{crowd}}.spec.template.spec",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/crowd:7.1.5-custom-20260510",
+            "name": "crowd",
+            "resources": {
+              "requests.memory": "1G"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec",
+        "kind": "StatefulSet",
+        "name": "crowd",
+        "serviceAccountName": "crowd",
+        "templateSource": "crowd/templates/statefulset.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_liveness_probe_required",
+      "severity": "low",
+      "category": "Reliability",
+      "message": "Containers should define a livenessProbe to help Kubernetes restart unhealthy workloads.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 428,
+      "location": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.livenessProbe",
+      "resourceKey": "cluster/StatefulSet/crowd",
+      "expected": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.livenessProbe should be defined",
+      "observed": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.livenessProbe is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd"
+      },
+      "fingerprint": "k8s/container_liveness_probe_required:cluster/StatefulSet/crowd:metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.livenessProbe",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/crowd:7.1.5-custom-20260510",
+            "name": "crowd",
+            "resources": {
+              "requests.memory": "1G"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "StatefulSet",
+        "name": "crowd",
+        "serviceAccountName": "crowd",
+        "templateSource": "crowd/templates/statefulset.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/container_readiness_probe_required",
+      "severity": "low",
+      "category": "Reliability",
+      "message": "Containers should define a readinessProbe to help Kubernetes route traffic only to ready workloads.",
+      "fieldPath": "spec.template.spec.containers.0",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 428,
+      "location": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.readinessProbe",
+      "resourceKey": "cluster/StatefulSet/crowd",
+      "expected": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.readinessProbe should be defined",
+      "observed": "metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.readinessProbe is undefined",
+      "subject": {
+        "kind": "StatefulSet",
+        "name": "crowd"
+      },
+      "fingerprint": "k8s/container_readiness_probe_required:cluster/StatefulSet/crowd:metadata.name={{crowd}}.spec.template.spec.containers.name={{crowd}}.readinessProbe",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "evidence": {
+        "containers": [
+          {
+            "image": "torque.local/atlassian/crowd:7.1.5-custom-20260510",
+            "name": "crowd",
+            "resources": {
+              "requests.memory": "1G"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities.drop": [
+                "ALL"
+              ],
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "fieldPath": "spec.template.spec.containers.0",
+        "kind": "StatefulSet",
+        "name": "crowd",
+        "serviceAccountName": "crowd",
+        "templateSource": "crowd/templates/statefulset.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 344,
+      "location": "metadata.name={{crowd-shared-home}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/PersistentVolumeClaim/crowd-shared-home",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "PersistentVolumeClaim",
+        "name": "crowd-shared-home"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/PersistentVolumeClaim/crowd-shared-home:metadata.name={{crowd-shared-home}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "PersistentVolumeClaim",
+        "name": "crowd-shared-home",
+        "templateSource": "crowd/templates/shared-home-pvc.yaml"
+      }
+    },
+    {
+      "ruleId": "k8s/pod_fs_group_recommended",
+      "severity": "info",
+      "category": "Pod Security Standards",
+      "message": "Recommend setting pod securityContext.fsGroup to a non-zero GID for volume file ownership defaults.",
+      "fieldPath": "spec.securityContext.fsGroup",
+      "path": "/tmp/torque-atlassian/reports/custom-image-gated/precheck/crowd.rendered.yaml",
+      "line": 367,
+      "location": "metadata.name={{crowd}}.spec.securityContext.fsGroup",
+      "resourceKey": "cluster/Service/crowd",
+      "expected": "fsGroup should be set to a non-zero GID",
+      "observed": "fsGroup is undefined",
+      "subject": {
+        "kind": "Service",
+        "name": "crowd"
+      },
+      "fingerprint": "k8s/pod_fs_group_recommended:cluster/Service/crowd:metadata.name={{crowd}}.spec.securityContext.fsGroup",
+      "helpUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "evidence": {
+        "fieldPath": "spec.securityContext.fsGroup",
+        "kind": "Service",
+        "name": "crowd",
+        "templateSource": "crowd/templates/service.yaml"
+      }
+    }
+  ]
+}

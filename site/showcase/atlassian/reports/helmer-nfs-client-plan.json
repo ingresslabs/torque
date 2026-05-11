@@ -1,0 +1,276 @@
+{
+  "release": "nfs-client",
+  "namespace": "storage",
+  "chartVersion": "4.0.18",
+  "chartReference": "/tmp/torque-atlassian/charts/release/nfs-client",
+  "requestedChart": "/tmp/torque-atlassian/charts/release/nfs-client",
+  "valuesFiles": [
+    "/tmp/torque-atlassian/values/nfs-client.yaml"
+  ],
+  "graphNodes": [
+    {
+      "id": "cluster|clusterrole|nfs-client-nfs-subdir-external-provisioner-runner",
+      "kind": "ClusterRole",
+      "name": "nfs-client-nfs-subdir-external-provisioner-runner",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "clusterrole"
+      }
+    },
+    {
+      "id": "cluster|clusterrolebinding|run-nfs-client-nfs-subdir-external-provisioner",
+      "kind": "ClusterRoleBinding",
+      "name": "run-nfs-client-nfs-subdir-external-provisioner",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "clusterrolebinding"
+      }
+    },
+    {
+      "id": "cluster|deployment|nfs-client-nfs-subdir-external-provisioner",
+      "kind": "Deployment",
+      "name": "nfs-client-nfs-subdir-external-provisioner",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "containers": "1",
+        "kind": "deployment"
+      }
+    },
+    {
+      "id": "cluster|role|leader-locking-nfs-client-nfs-subdir-external-provisioner",
+      "kind": "Role",
+      "name": "leader-locking-nfs-client-nfs-subdir-external-provisioner",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "role"
+      }
+    },
+    {
+      "id": "cluster|rolebinding|leader-locking-nfs-client-nfs-subdir-external-provisioner",
+      "kind": "RoleBinding",
+      "name": "leader-locking-nfs-client-nfs-subdir-external-provisioner",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "rolebinding"
+      }
+    },
+    {
+      "id": "cluster|serviceaccount|nfs-client-nfs-subdir-external-provisioner",
+      "kind": "ServiceAccount",
+      "name": "nfs-client-nfs-subdir-external-provisioner",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "serviceaccount"
+      }
+    },
+    {
+      "id": "cluster|storageclass|nfs-client",
+      "kind": "StorageClass",
+      "name": "nfs-client",
+      "source": "rendered",
+      "live": true,
+      "meta": {
+        "kind": "storageclass"
+      }
+    }
+  ],
+  "graphEdges": [
+    {
+      "from": "cluster|deployment|nfs-client-nfs-subdir-external-provisioner",
+      "to": "cluster|serviceaccount|nfs-client-nfs-subdir-external-provisioner",
+      "reason": "serviceAccount"
+    }
+  ],
+  "manifestBlobs": {
+    "cluster|clusterrolebinding|run-nfs-client-nfs-subdir-external-provisioner": "# Source: nfs-subdir-external-provisioner/templates/clusterrolebinding.yaml\nkind: ClusterRoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\n  name: run-nfs-client-nfs-subdir-external-provisioner\nsubjects:\n  - kind: ServiceAccount\n    name: nfs-client-nfs-subdir-external-provisioner\n    namespace: storage\nroleRef:\n  kind: ClusterRole\n  name: nfs-client-nfs-subdir-external-provisioner-runner\n  apiGroup: rbac.authorization.k8s.io",
+    "cluster|clusterrole|nfs-client-nfs-subdir-external-provisioner-runner": "# Source: nfs-subdir-external-provisioner/templates/clusterrole.yaml\nkind: ClusterRole\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\n  name: nfs-client-nfs-subdir-external-provisioner-runner\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"nodes\"]\n    verbs: [\"get\", \"list\", \"watch\"]\n  - apiGroups: [\"\"]\n    resources: [\"persistentvolumes\"]\n    verbs: [\"get\", \"list\", \"watch\", \"create\", \"delete\"]\n  - apiGroups: [\"\"]\n    resources: [\"persistentvolumeclaims\"]\n    verbs: [\"get\", \"list\", \"watch\", \"update\"]\n  - apiGroups: [\"storage.k8s.io\"]\n    resources: [\"storageclasses\"]\n    verbs: [\"get\", \"list\", \"watch\"]\n  - apiGroups: [\"\"]\n    resources: [\"events\"]\n    verbs: [\"create\", \"update\", \"patch\"]",
+    "cluster|deployment|nfs-client-nfs-subdir-external-provisioner": "# Source: nfs-subdir-external-provisioner/templates/deployment.yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nfs-client-nfs-subdir-external-provisioner\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\nspec:\n  replicas: 1\n  strategy:\n    type: Recreate\n  selector:\n    matchLabels:\n      app: nfs-subdir-external-provisioner\n      release: nfs-client\n  template:\n    metadata:\n      annotations:\n      labels:\n        app: nfs-subdir-external-provisioner\n        release: nfs-client\n    spec:\n      serviceAccountName: nfs-client-nfs-subdir-external-provisioner\n      securityContext:\n        fsGroup: 65534\n        fsGroupChangePolicy: OnRootMismatch\n        runAsGroup: 65534\n        runAsNonRoot: true\n        runAsUser: 65534\n        seccompProfile:\n          type: RuntimeDefault\n      containers:\n        - name: nfs-subdir-external-provisioner\n          image: \"torque.local/atlassian/nfs-client:v4.0.2-custom-20260510\"\n          imagePullPolicy: IfNotPresent\n          securityContext:\n            allowPrivilegeEscalation: false\n            capabilities:\n              drop:\n              - ALL\n            runAsGroup: 65534\n            runAsNonRoot: true\n            runAsUser: 65534\n            seccompProfile:\n              type: RuntimeDefault\n          volumeMounts:\n            - name: nfs-subdir-external-provisioner-root\n              mountPath: /persistentvolumes\n          env:\n            - name: PROVISIONER_NAME\n              value: cluster.local/nfs-client-nfs-subdir-external-provisioner\n            - name: NFS_SERVER\n              value: 91.206.14.44\n            - name: NFS_PATH\n              value: /srv/k3s-nfs\n          resources:\n            limits:\n              memory: 256Mi\n            requests:\n              cpu: 20m\n              memory: 64Mi\n      volumes:\n        - name: nfs-subdir-external-provisioner-root\n          nfs:\n            server: 91.206.14.44\n            path: /srv/k3s-nfs",
+    "cluster|rolebinding|leader-locking-nfs-client-nfs-subdir-external-provisioner": "# Source: nfs-subdir-external-provisioner/templates/rolebinding.yaml\nkind: RoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\n  name: leader-locking-nfs-client-nfs-subdir-external-provisioner\nsubjects:\n  - kind: ServiceAccount\n    name: nfs-client-nfs-subdir-external-provisioner\n    namespace: storage\nroleRef:\n  kind: Role\n  name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n  apiGroup: rbac.authorization.k8s.io",
+    "cluster|role|leader-locking-nfs-client-nfs-subdir-external-provisioner": "# Source: nfs-subdir-external-provisioner/templates/role.yaml\nkind: Role\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\n  name: leader-locking-nfs-client-nfs-subdir-external-provisioner\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"endpoints\"]\n    verbs: [\"get\", \"list\", \"watch\", \"create\", \"update\", \"patch\"]",
+    "cluster|serviceaccount|nfs-client-nfs-subdir-external-provisioner": "# Source: nfs-subdir-external-provisioner/templates/serviceaccount.yaml\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\n  name: nfs-client-nfs-subdir-external-provisioner",
+    "cluster|storageclass|nfs-client": "# Source: nfs-subdir-external-provisioner/templates/storageclass.yaml\napiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  labels:\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    app: nfs-subdir-external-provisioner\n    release: nfs-client\n  name: nfs-client\n  annotations:\nprovisioner: cluster.local/nfs-client-nfs-subdir-external-provisioner\nallowVolumeExpansion: true\nreclaimPolicy: Delete\nvolumeBindingMode: Immediate\nparameters:\n  archiveOnDelete: \"true\""
+  },
+  "liveManifestBlobs": {
+    "cluster|clusterrolebinding|run-nfs-client-nfs-subdir-external-provisioner": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: run-nfs-client-nfs-subdir-external-provisioner\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: nfs-client-nfs-subdir-external-provisioner-runner\nsubjects:\n- kind: ServiceAccount\n  name: nfs-client-nfs-subdir-external-provisioner\n  namespace: storage\n",
+    "cluster|clusterrole|nfs-client-nfs-subdir-external-provisioner-runner": "apiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: nfs-client-nfs-subdir-external-provisioner-runner\nrules:\n- apiGroups:\n  - \"\"\n  resources:\n  - nodes\n  verbs:\n  - get\n  - list\n  - watch\n- apiGroups:\n  - \"\"\n  resources:\n  - persistentvolumes\n  verbs:\n  - get\n  - list\n  - watch\n  - create\n  - delete\n- apiGroups:\n  - \"\"\n  resources:\n  - persistentvolumeclaims\n  verbs:\n  - get\n  - list\n  - watch\n  - update\n- apiGroups:\n  - storage.k8s.io\n  resources:\n  - storageclasses\n  verbs:\n  - get\n  - list\n  - watch\n- apiGroups:\n  - \"\"\n  resources:\n  - events\n  verbs:\n  - create\n  - update\n  - patch\n",
+    "cluster|deployment|nfs-client-nfs-subdir-external-provisioner": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  annotations:\n    deployment.kubernetes.io/revision: \"2\"\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: nfs-client-nfs-subdir-external-provisioner\n  namespace: storage\nspec:\n  progressDeadlineSeconds: 600\n  replicas: 1\n  revisionHistoryLimit: 10\n  selector:\n    matchLabels:\n      app: nfs-subdir-external-provisioner\n      release: nfs-client\n  strategy:\n    type: Recreate\n  template:\n    metadata:\n      labels:\n        app: nfs-subdir-external-provisioner\n        release: nfs-client\n    spec:\n      containers:\n      - env:\n        - name: PROVISIONER_NAME\n          value: cluster.local/nfs-client-nfs-subdir-external-provisioner\n        - name: NFS_SERVER\n          value: 91.206.14.44\n        - name: NFS_PATH\n          value: /srv/k3s-nfs\n        image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2\n        imagePullPolicy: IfNotPresent\n        name: nfs-subdir-external-provisioner\n        resources:\n          limits:\n            memory: 256Mi\n          requests:\n            cpu: 20m\n            memory: 64Mi\n        securityContext:\n          allowPrivilegeEscalation: false\n          capabilities:\n            drop:\n            - ALL\n          runAsGroup: 65534\n          runAsNonRoot: true\n          runAsUser: 65534\n          seccompProfile:\n            type: RuntimeDefault\n        terminationMessagePath: /dev/termination-log\n        terminationMessagePolicy: File\n        volumeMounts:\n        - mountPath: /persistentvolumes\n          name: nfs-subdir-external-provisioner-root\n      dnsPolicy: ClusterFirst\n      restartPolicy: Always\n      schedulerName: default-scheduler\n      securityContext:\n        fsGroup: 65534\n        fsGroupChangePolicy: OnRootMismatch\n        runAsGroup: 65534\n        runAsNonRoot: true\n        runAsUser: 65534\n        seccompProfile:\n          type: RuntimeDefault\n      serviceAccount: nfs-client-nfs-subdir-external-provisioner\n      serviceAccountName: nfs-client-nfs-subdir-external-provisioner\n      terminationGracePeriodSeconds: 30\n      volumes:\n      - name: nfs-subdir-external-provisioner-root\n        nfs:\n          path: /srv/k3s-nfs\n          server: 91.206.14.44\n",
+    "cluster|rolebinding|leader-locking-nfs-client-nfs-subdir-external-provisioner": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n  namespace: storage\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: Role\n  name: leader-locking-nfs-client-nfs-subdir-external-provisioner\nsubjects:\n- kind: ServiceAccount\n  name: nfs-client-nfs-subdir-external-provisioner\n  namespace: storage\n",
+    "cluster|role|leader-locking-nfs-client-nfs-subdir-external-provisioner": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n  namespace: storage\nrules:\n- apiGroups:\n  - \"\"\n  resources:\n  - endpoints\n  verbs:\n  - get\n  - list\n  - watch\n  - create\n  - update\n  - patch\n",
+    "cluster|serviceaccount|nfs-client-nfs-subdir-external-provisioner": "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: nfs-client-nfs-subdir-external-provisioner\n  namespace: storage\n",
+    "cluster|storageclass|nfs-client": "allowVolumeExpansion: true\napiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  annotations:\n    meta.helm.sh/release-name: nfs-client\n    meta.helm.sh/release-namespace: storage\n  labels:\n    app: nfs-subdir-external-provisioner\n    app.kubernetes.io/managed-by: Helm\n    chart: nfs-subdir-external-provisioner-4.0.18\n    heritage: Helm\n    release: nfs-client\n  name: nfs-client\nparameters:\n  archiveOnDelete: \"true\"\nprovisioner: cluster.local/nfs-client-nfs-subdir-external-provisioner\nreclaimPolicy: Delete\nvolumeBindingMode: Immediate\n"
+  },
+  "manifestDiffs": {
+    "cluster|clusterrolebinding|run-nfs-client-nfs-subdir-external-provisioner": "--- live\n+++ desired\n@@ -1,22 +1,18 @@\n+# Source: nfs-subdir-external-provisioner/templates/clusterrolebinding.yaml\n+kind: ClusterRoleBinding\n apiVersion: rbac.authorization.k8s.io/v1\n-kind: ClusterRoleBinding\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n   name: run-nfs-client-nfs-subdir-external-provisioner\n+subjects:\n+  - kind: ServiceAccount\n+    name: nfs-client-nfs-subdir-external-provisioner\n+    namespace: storage\n roleRef:\n-  apiGroup: rbac.authorization.k8s.io\n   kind: ClusterRole\n   name: nfs-client-nfs-subdir-external-provisioner-runner\n-subjects:\n-- kind: ServiceAccount\n-  name: nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n-\n+  apiGroup: rbac.authorization.k8s.io\n",
+    "cluster|clusterrole|nfs-client-nfs-subdir-external-provisioner-runner": "--- live\n+++ desired\n@@ -1,58 +1,26 @@\n+# Source: nfs-subdir-external-provisioner/templates/clusterrole.yaml\n+kind: ClusterRole\n apiVersion: rbac.authorization.k8s.io/v1\n-kind: ClusterRole\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n   name: nfs-client-nfs-subdir-external-provisioner-runner\n rules:\n-- apiGroups:\n-  - \"\"\n-  resources:\n-  - nodes\n-  verbs:\n-  - get\n-  - list\n-  - watch\n-- apiGroups:\n-  - \"\"\n-  resources:\n-  - persistentvolumes\n-  verbs:\n-  - get\n-  - list\n-  - watch\n-  - create\n-  - delete\n-- apiGroups:\n-  - \"\"\n-  resources:\n-  - persistentvolumeclaims\n-  verbs:\n-  - get\n-  - list\n-  - watch\n-  - update\n-- apiGroups:\n-  - storage.k8s.io\n-  resources:\n-  - storageclasses\n-  verbs:\n-  - get\n-  - list\n-  - watch\n-- apiGroups:\n-  - \"\"\n-  resources:\n-  - events\n-  verbs:\n-  - create\n-  - update\n-  - patch\n-\n+  - apiGroups: [\"\"]\n+    resources: [\"nodes\"]\n+    verbs: [\"get\", \"list\", \"watch\"]\n+  - apiGroups: [\"\"]\n+    resources: [\"persistentvolumes\"]\n+    verbs: [\"get\", \"list\", \"watch\", \"create\", \"delete\"]\n+  - apiGroups: [\"\"]\n+    resources: [\"persistentvolumeclaims\"]\n+    verbs: [\"get\", \"list\", \"watch\", \"update\"]\n+  - apiGroups: [\"storage.k8s.io\"]\n+    resources: [\"storageclasses\"]\n+    verbs: [\"get\", \"list\", \"watch\"]\n+  - apiGroups: [\"\"]\n+    resources: [\"events\"]\n+    verbs: [\"create\", \"update\", \"patch\"]\n",
+    "cluster|deployment|nfs-client-nfs-subdir-external-provisioner": "--- live\n+++ desired\n@@ -1,69 +1,29 @@\n+# Source: nfs-subdir-external-provisioner/templates/deployment.yaml\n apiVersion: apps/v1\n kind: Deployment\n metadata:\n-  annotations:\n-    deployment.kubernetes.io/revision: \"2\"\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n+  name: nfs-client-nfs-subdir-external-provisioner\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n-  name: nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n spec:\n-  progressDeadlineSeconds: 600\n   replicas: 1\n-  revisionHistoryLimit: 10\n+  strategy:\n+    type: Recreate\n   selector:\n     matchLabels:\n       app: nfs-subdir-external-provisioner\n       release: nfs-client\n-  strategy:\n-    type: Recreate\n   template:\n     metadata:\n+      annotations:\n       labels:\n         app: nfs-subdir-external-provisioner\n         release: nfs-client\n     spec:\n-      containers:\n-      - env:\n-        - name: PROVISIONER_NAME\n-          value: cluster.local/nfs-client-nfs-subdir-external-provisioner\n-        - name: NFS_SERVER\n-          value: 91.206.14.44\n-        - name: NFS_PATH\n-          value: /srv/k3s-nfs\n-        image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2\n-        imagePullPolicy: IfNotPresent\n-        name: nfs-subdir-external-provisioner\n-        resources:\n-          limits:\n-            memory: 256Mi\n-          requests:\n-            cpu: 20m\n-            memory: 64Mi\n-        securityContext:\n-          allowPrivilegeEscalation: false\n-          capabilities:\n-            drop:\n-            - ALL\n-          runAsGroup: 65534\n-          runAsNonRoot: true\n-          runAsUser: 65534\n-          seccompProfile:\n-            type: RuntimeDefault\n-        terminationMessagePath: /dev/termination-log\n-        terminationMessagePolicy: File\n-        volumeMounts:\n-        - mountPath: /persistentvolumes\n-          name: nfs-subdir-external-provisioner-root\n-      dnsPolicy: ClusterFirst\n-      restartPolicy: Always\n-      schedulerName: default-scheduler\n+      serviceAccountName: nfs-client-nfs-subdir-external-provisioner\n       securityContext:\n         fsGroup: 65534\n         fsGroupChangePolicy: OnRootMismatch\n@@ -72,12 +32,38 @@\n         runAsUser: 65534\n         seccompProfile:\n           type: RuntimeDefault\n-      serviceAccount: nfs-client-nfs-subdir-external-provisioner\n-      serviceAccountName: nfs-client-nfs-subdir-external-provisioner\n-      terminationGracePeriodSeconds: 30\n+      containers:\n+        - name: nfs-subdir-external-provisioner\n+          image: \"torque.local/atlassian/nfs-client:v4.0.2-custom-20260510\"\n+          imagePullPolicy: IfNotPresent\n+          securityContext:\n+            allowPrivilegeEscalation: false\n+            capabilities:\n+              drop:\n+              - ALL\n+            runAsGroup: 65534\n+            runAsNonRoot: true\n+            runAsUser: 65534\n+            seccompProfile:\n+              type: RuntimeDefault\n+          volumeMounts:\n+            - name: nfs-subdir-external-provisioner-root\n+              mountPath: /persistentvolumes\n+          env:\n+            - name: PROVISIONER_NAME\n+              value: cluster.local/nfs-client-nfs-subdir-external-provisioner\n+            - name: NFS_SERVER\n+              value: 91.206.14.44\n+            - name: NFS_PATH\n+              value: /srv/k3s-nfs\n+          resources:\n+            limits:\n+              memory: 256Mi\n+            requests:\n+              cpu: 20m\n+              memory: 64Mi\n       volumes:\n-      - name: nfs-subdir-external-provisioner-root\n-        nfs:\n-          path: /srv/k3s-nfs\n-          server: 91.206.14.44\n-\n+        - name: nfs-subdir-external-provisioner-root\n+          nfs:\n+            server: 91.206.14.44\n+            path: /srv/k3s-nfs\n",
+    "cluster|rolebinding|leader-locking-nfs-client-nfs-subdir-external-provisioner": "--- live\n+++ desired\n@@ -1,23 +1,18 @@\n+# Source: nfs-subdir-external-provisioner/templates/rolebinding.yaml\n+kind: RoleBinding\n apiVersion: rbac.authorization.k8s.io/v1\n-kind: RoleBinding\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n   name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n+subjects:\n+  - kind: ServiceAccount\n+    name: nfs-client-nfs-subdir-external-provisioner\n+    namespace: storage\n roleRef:\n-  apiGroup: rbac.authorization.k8s.io\n   kind: Role\n   name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n-subjects:\n-- kind: ServiceAccount\n-  name: nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n-\n+  apiGroup: rbac.authorization.k8s.io\n",
+    "cluster|role|leader-locking-nfs-client-nfs-subdir-external-provisioner": "--- live\n+++ desired\n@@ -1,27 +1,14 @@\n+# Source: nfs-subdir-external-provisioner/templates/role.yaml\n+kind: Role\n apiVersion: rbac.authorization.k8s.io/v1\n-kind: Role\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n   name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n rules:\n-- apiGroups:\n-  - \"\"\n-  resources:\n-  - endpoints\n-  verbs:\n-  - get\n-  - list\n-  - watch\n-  - create\n-  - update\n-  - patch\n-\n+  - apiGroups: [\"\"]\n+    resources: [\"endpoints\"]\n+    verbs: [\"get\", \"list\", \"watch\", \"create\", \"update\", \"patch\"]\n",
+    "cluster|serviceaccount|nfs-client-nfs-subdir-external-provisioner": "--- live\n+++ desired\n@@ -1,15 +1,10 @@\n+# Source: nfs-subdir-external-provisioner/templates/serviceaccount.yaml\n apiVersion: v1\n kind: ServiceAccount\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n   name: nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n-\n",
+    "cluster|storageclass|nfs-client": "--- live\n+++ desired\n@@ -1,20 +1,17 @@\n-allowVolumeExpansion: true\n+# Source: nfs-subdir-external-provisioner/templates/storageclass.yaml\n apiVersion: storage.k8s.io/v1\n kind: StorageClass\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n-    app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n+    app: nfs-subdir-external-provisioner\n     release: nfs-client\n   name: nfs-client\n+  annotations:\n+provisioner: cluster.local/nfs-client-nfs-subdir-external-provisioner\n+allowVolumeExpansion: true\n+reclaimPolicy: Delete\n+volumeBindingMode: Immediate\n parameters:\n   archiveOnDelete: \"true\"\n-provisioner: cluster.local/nfs-client-nfs-subdir-external-provisioner\n-reclaimPolicy: Delete\n-volumeBindingMode: Immediate\n-\n"
+  },
+  "manifestTemplates": {
+    "cluster|clusterrolebinding|run-nfs-client-nfs-subdir-external-provisioner": "nfs-subdir-external-provisioner/templates/clusterrolebinding.yaml",
+    "cluster|clusterrole|nfs-client-nfs-subdir-external-provisioner-runner": "nfs-subdir-external-provisioner/templates/clusterrole.yaml",
+    "cluster|deployment|nfs-client-nfs-subdir-external-provisioner": "nfs-subdir-external-provisioner/templates/deployment.yaml",
+    "cluster|rolebinding|leader-locking-nfs-client-nfs-subdir-external-provisioner": "nfs-subdir-external-provisioner/templates/rolebinding.yaml",
+    "cluster|role|leader-locking-nfs-client-nfs-subdir-external-provisioner": "nfs-subdir-external-provisioner/templates/role.yaml",
+    "cluster|serviceaccount|nfs-client-nfs-subdir-external-provisioner": "nfs-subdir-external-provisioner/templates/serviceaccount.yaml",
+    "cluster|storageclass|nfs-client": "nfs-subdir-external-provisioner/templates/storageclass.yaml"
+  },
+  "templateSources": {
+    "nfs-subdir-external-provisioner/templates/_helpers.tpl": "{{/* vim: set filetype=mustache: */}}\n{{/*\nExpand the name of the chart.\n*/}}\n{{- define \"nfs-subdir-external-provisioner.name\" -}}\n{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" -}}\n{{- end -}}\n\n{{/*\nCreate a default fully qualified app name.\nWe truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).\nIf release name contains chart name it will be used as a full name.\n*/}}\n{{- define \"nfs-subdir-external-provisioner.fullname\" -}}\n{{- if .Values.fullnameOverride -}}\n{{- .Values.fullnameOverride | trunc 63 | trimSuffix \"-\" -}}\n{{- else -}}\n{{- $name := default .Chart.Name .Values.nameOverride -}}\n{{- if contains $name .Release.Name -}}\n{{- .Release.Name | trunc 63 | trimSuffix \"-\" -}}\n{{- else -}}\n{{- printf \"%s-%s\" .Release.Name $name | trunc 63 | trimSuffix \"-\" -}}\n{{- end -}}\n{{- end -}}\n{{- end -}}\n\n{{/*\nCreate chart name and version as used by the chart label.\n*/}}\n{{- define \"nfs-subdir-external-provisioner.chart\" -}}\n{{- printf \"%s-%s\" .Chart.Name .Chart.Version | replace \"+\" \"_\" | trunc 63 | trimSuffix \"-\" -}}\n{{- end -}}\n\n{{- define \"nfs-subdir-external-provisioner.provisionerName\" -}}\n{{- if .Values.storageClass.provisionerName -}}\n{{- printf .Values.storageClass.provisionerName -}}\n{{- else -}}\ncluster.local/{{ template \"nfs-subdir-external-provisioner.fullname\" . -}}\n{{- end -}}\n{{- end -}}\n\n{{/*\nCreate the name of the service account to use\n*/}}\n{{- define \"nfs-subdir-external-provisioner.serviceAccountName\" -}}\n{{- if .Values.serviceAccount.create -}}\n    {{ default (include \"nfs-subdir-external-provisioner.fullname\" .) .Values.serviceAccount.name }}\n{{- else -}}\n    {{ default \"default\" .Values.serviceAccount.name }}\n{{- end -}}\n{{- end -}}\n\n{{/*\nReturn the appropriate apiVersion for podSecurityPolicy.\n*/}}\n{{- define \"podSecurityPolicy.apiVersion\" -}}\n{{- if semverCompare \"\u003e=1.10-0\" .Capabilities.KubeVersion.GitVersion -}}\n{{- print \"policy/v1beta1\" -}}\n{{- else -}}\n{{- print \"extensions/v1beta1\" -}}\n{{- end -}}\n{{- end -}}\n\n{{/*\nReturn the appropriate apiVersion for podDisruptionBudget.\n*/}}\n{{- define \"podDisruptionBudget.apiVersion\" -}}\n{{- if semverCompare \"\u003e=1.21-0\" .Capabilities.KubeVersion.GitVersion -}}\n{{- print \"policy/v1\" -}}\n{{- else -}}\n{{- print \"policy/v1beta1\" -}}\n{{- end -}}\n{{- end -}}\n\n{{/*\nCommon labels\n*/}}\n{{- define \"nfs-subdir-external-provisioner.labels\" -}}\nchart: {{ template \"nfs-subdir-external-provisioner.chart\" . }}\nheritage: {{ .Release.Service }}\n{{ include \"nfs-subdir-external-provisioner.selectorLabels\" . }}\n{{- with .Values.labels }}\n{{- toYaml . | nindent 0 }}\n{{- end }}\n{{- end }}\n\n{{/*\nPod template labels\n*/}}\n{{- define \"nfs-subdir-external-provisioner.podLabels\" -}}\n{{ include \"nfs-subdir-external-provisioner.selectorLabels\" . }}\n{{- with .Values.labels }}\n{{- toYaml . | nindent 0 }}\n{{- end }}\n{{- end }}\n\n{{/*\nSelector labels\n*/}}\n{{- define \"nfs-subdir-external-provisioner.selectorLabels\" -}}\napp: {{ template \"nfs-subdir-external-provisioner.name\" . }}\nrelease: {{ .Release.Name }}\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/clusterrole.yaml": "{{- if .Values.rbac.create }}\nkind: ClusterRole\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  name: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}-runner\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"nodes\"]\n    verbs: [\"get\", \"list\", \"watch\"]\n  - apiGroups: [\"\"]\n    resources: [\"persistentvolumes\"]\n    verbs: [\"get\", \"list\", \"watch\", \"create\", \"delete\"]\n  - apiGroups: [\"\"]\n    resources: [\"persistentvolumeclaims\"]\n    verbs: [\"get\", \"list\", \"watch\", \"update\"]\n  - apiGroups: [\"storage.k8s.io\"]\n    resources: [\"storageclasses\"]\n    verbs: [\"get\", \"list\", \"watch\"]\n  - apiGroups: [\"\"]\n    resources: [\"events\"]\n    verbs: [\"create\", \"update\", \"patch\"]\n{{- if .Values.podSecurityPolicy.enabled }}\n  - apiGroups:      ['extensions']\n    resources:      ['podsecuritypolicies']\n    verbs:          ['use']\n    resourceNames:  [{{ template \"nfs-subdir-external-provisioner.fullname\" . }}]\n{{- end }}\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/clusterrolebinding.yaml": "{{- if .Values.rbac.create }}\nkind: ClusterRoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  name: run-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\nsubjects:\n  - kind: ServiceAccount\n    name: {{ template \"nfs-subdir-external-provisioner.serviceAccountName\" . }}\n    namespace: {{ .Release.Namespace }}\nroleRef:\n  kind: ClusterRole\n  name: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}-runner\n  apiGroup: rbac.authorization.k8s.io\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\nspec:\n  replicas: {{ .Values.replicaCount }}\n  strategy:\n    type: {{ .Values.strategyType }}\n  selector:\n    matchLabels:\n      {{- include \"nfs-subdir-external-provisioner.selectorLabels\" . | nindent 6 }}\n  template:\n    metadata:\n      annotations:\n      {{- with .Values.podAnnotations }}\n        {{- toYaml . | nindent 8 }}\n      {{- end }}\n      {{- if and (.Values.tolerations) (semverCompare \"\u003c1.6-0\" .Capabilities.KubeVersion.GitVersion) }}\n        scheduler.alpha.kubernetes.io/tolerations: '{{ toJson .Values.tolerations }}'\n      {{- end }}\n      labels:\n        {{- include \"nfs-subdir-external-provisioner.podLabels\" . | nindent 8 }}\n    spec:\n      serviceAccountName: {{ template \"nfs-subdir-external-provisioner.serviceAccountName\" . }}\n      securityContext:\n        {{- toYaml .Values.podSecurityContext | nindent 8 }}\n      {{- if .Values.nodeSelector }}\n      nodeSelector:\n{{ toYaml .Values.nodeSelector | indent 8 }}\n      {{- end }}\n      {{- if .Values.affinity }}\n      affinity:\n{{ toYaml .Values.affinity | indent 8 }}\n      {{- end }}\n      {{- if .Values.priorityClassName }}\n      priorityClassName: {{ .Values.priorityClassName | quote }}\n      {{- end }}\n      {{- with .Values.imagePullSecrets }}\n      imagePullSecrets:\n        {{- toYaml . | nindent 8 }}\n      {{- end }}\n      containers:\n        - name: {{ .Chart.Name }}\n          image: \"{{ .Values.image.repository }}:{{ .Values.image.tag }}\"\n          imagePullPolicy: {{ .Values.image.pullPolicy }}\n          securityContext:\n            {{- toYaml .Values.securityContext | nindent 12 }}\n          volumeMounts:\n            - name: {{ .Values.nfs.volumeName }}\n              mountPath: /persistentvolumes\n          env:\n            - name: PROVISIONER_NAME\n              value: {{ template \"nfs-subdir-external-provisioner.provisionerName\" . }}\n            - name: NFS_SERVER\n              value: {{ .Values.nfs.server }}\n            - name: NFS_PATH\n              value: {{ .Values.nfs.path }}\n            {{- if eq .Values.leaderElection.enabled false }}\n            - name: ENABLE_LEADER_ELECTION\n              value: \"false\"\n            {{- end }}\n          {{- with .Values.resources }}\n          resources:\n{{ toYaml . | indent 12 }}\n          {{- end }}\n      volumes:\n        - name: {{ .Values.nfs.volumeName }}\n{{- if .Values.buildMode }}\n          emptyDir: {}\n{{- else if .Values.nfs.mountOptions }}\n          persistentVolumeClaim:\n            claimName: pvc-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n{{- else }}\n          nfs:\n            server: {{ .Values.nfs.server }}\n            path: {{ .Values.nfs.path }}\n{{- end }}\n      {{- if and (.Values.tolerations) (semverCompare \"^1.6-0\" .Capabilities.KubeVersion.GitVersion) }}\n      tolerations:\n{{ toYaml .Values.tolerations | indent 6 }}\n      {{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/persistentvolume.yaml": "{{ if .Values.nfs.mountOptions -}}\napiVersion: v1\nkind: PersistentVolume\nmetadata:\n  name: pv-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n  labels: \n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n    nfs-subdir-external-provisioner: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}\nspec:\n  capacity:\n    storage: 10Mi\n  volumeMode: Filesystem\n  accessModes:\n    - {{ .Values.storageClass.accessModes }}\n  persistentVolumeReclaimPolicy: {{ .Values.nfs.reclaimPolicy }}\n  storageClassName: \"\"\n  {{- if .Values.nfs.mountOptions }}\n  mountOptions:\n    {{- range .Values.nfs.mountOptions }}\n    - {{ . }}\n    {{- end }}\n  {{- end }}\n  nfs:\n    server: {{ .Values.nfs.server }}\n    path: {{ .Values.nfs.path }}\n{{ end -}}\n",
+    "nfs-subdir-external-provisioner/templates/persistentvolumeclaim.yaml": "{{ if .Values.nfs.mountOptions -}}\nkind: PersistentVolumeClaim\napiVersion: v1\nmetadata:\n  name: pvc-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\nspec:\n  accessModes:\n    - {{ .Values.storageClass.accessModes }}\n  volumeMode: Filesystem\n  storageClassName: \"\"\n  selector:\n    matchLabels:\n      nfs-subdir-external-provisioner: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n  resources:\n    requests:\n      storage: 10Mi\n{{ end -}}\n",
+    "nfs-subdir-external-provisioner/templates/poddisruptionbudget.yaml": "{{- if .Values.podDisruptionBudget.enabled }}\napiVersion: {{ template \"podDisruptionBudget.apiVersion\" . }}\nkind: PodDisruptionBudget\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  name: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}\nspec:\n  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable | default 1 }}\n  selector:\n    matchLabels:\n      {{- include \"nfs-subdir-external-provisioner.selectorLabels\" . | nindent 6 }}\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/podsecuritypolicy.yaml": "{{- if .Values.podSecurityPolicy.enabled }}\napiVersion: {{ template \"podSecurityPolicy.apiVersion\" . }}\nkind: PodSecurityPolicy\nmetadata:\n  name: {{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\nspec:\n  privileged: false\n  allowPrivilegeEscalation: false\n  requiredDropCapabilities:\n    - ALL\n  volumes:\n    - 'secret'\n    - 'nfs'\n    - 'persistentVolumeClaim'\n  hostNetwork: false\n  hostIPC: false\n  hostPID: false\n  runAsUser:\n    rule: 'RunAsAny'\n  seLinux:\n    rule: 'RunAsAny'\n  supplementalGroups:\n    rule: 'RunAsAny'\n  fsGroup:\n    rule: 'RunAsAny'\n  readOnlyRootFilesystem: false\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/role.yaml": "{{- if .Values.rbac.create }}\nkind: Role\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  name: leader-locking-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"endpoints\"]\n    verbs: [\"get\", \"list\", \"watch\", \"create\", \"update\", \"patch\"]\n{{- if .Values.podSecurityPolicy.enabled }}\n  - apiGroups:      ['extensions']\n    resources:      ['podsecuritypolicies']\n    verbs:          ['use']\n    resourceNames:  [{{ template \"nfs-subdir-external-provisioner.fullname\" . }}]\n{{- end }}\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/rolebinding.yaml": "{{- if .Values.rbac.create }}\nkind: RoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  name: leader-locking-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\nsubjects:\n  - kind: ServiceAccount\n    name: {{ template \"nfs-subdir-external-provisioner.serviceAccountName\" . }}\n    namespace: {{ .Release.Namespace }}\nroleRef:\n  kind: Role\n  name: leader-locking-{{ template \"nfs-subdir-external-provisioner.fullname\" . }}\n  apiGroup: rbac.authorization.k8s.io\n{{- end }}\n",
+    "nfs-subdir-external-provisioner/templates/serviceaccount.yaml": "{{ if .Values.serviceAccount.create }}\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  {{- with .Values.serviceAccount.annotations }}\n  annotations:\n    {{- toYaml . | nindent 4 }}\n  {{- end }}\n  name: {{ template \"nfs-subdir-external-provisioner.serviceAccountName\" . }}\n{{- end -}}\n",
+    "nfs-subdir-external-provisioner/templates/storageclass.yaml": "{{ if .Values.storageClass.create -}}\napiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  labels:\n    {{- include \"nfs-subdir-external-provisioner.labels\" . | nindent 4 }}\n  name: {{ .Values.storageClass.name }}\n  annotations:\n  {{- if .Values.storageClass.defaultClass }}\n    storageclass.kubernetes.io/is-default-class: \"true\"\n  {{- end }}\n  {{- with .Values.storageClass.annotations }}\n    {{- toYaml . | nindent 4 }}\n  {{- end }}\nprovisioner: {{ template \"nfs-subdir-external-provisioner.provisionerName\" . }}\nallowVolumeExpansion: {{ .Values.storageClass.allowVolumeExpansion }}\nreclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}\nvolumeBindingMode: {{ .Values.storageClass.volumeBindingMode }}\nparameters:\n  archiveOnDelete: \"{{ .Values.storageClass.archiveOnDelete }}\"\n  {{- if .Values.storageClass.pathPattern }}\n  pathPattern: \"{{ .Values.storageClass.pathPattern }}\"\n  {{- end }}\n  {{- if .Values.storageClass.onDelete }}\n  onDelete: \"{{ .Values.storageClass.onDelete }}\"\n  {{- end }}\n{{- if .Values.nfs.mountOptions }}\nmountOptions:\n  {{- range .Values.nfs.mountOptions }}\n  - {{ . }}\n  {{- end }}\n{{- end }}\n{{ end -}}\n"
+  },
+  "changes": [
+    {
+      "resource": {
+        "group": "rbac.authorization.k8s.io",
+        "version": "v1",
+        "kind": "Role",
+        "name": "leader-locking-nfs-client-nfs-subdir-external-provisioner"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,17 +1,12 @@\n apiVersion: rbac.authorization.k8s.io/v1\n kind: Role\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n   name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n rules:\n - apiGroups:\n   - \"\"\n"
+    },
+    {
+      "resource": {
+        "group": "rbac.authorization.k8s.io",
+        "version": "v1",
+        "kind": "RoleBinding",
+        "name": "leader-locking-nfs-client-nfs-subdir-external-provisioner"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,17 +1,12 @@\n apiVersion: rbac.authorization.k8s.io/v1\n kind: RoleBinding\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n   name: leader-locking-nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n roleRef:\n   apiGroup: rbac.authorization.k8s.io\n   kind: Role\n"
+    },
+    {
+      "resource": {
+        "group": "storage.k8s.io",
+        "version": "v1",
+        "kind": "StorageClass",
+        "name": "nfs-client"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -2,12 +2,9 @@\n apiVersion: storage.k8s.io/v1\n kind: StorageClass\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n+  annotations: null\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n"
+    },
+    {
+      "resource": {
+        "group": "apps",
+        "version": "v1",
+        "kind": "Deployment",
+        "name": "nfs-client-nfs-subdir-external-provisioner"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,22 +1,14 @@\n apiVersion: apps/v1\n kind: Deployment\n metadata:\n-  annotations:\n-    deployment.kubernetes.io/revision: \"2\"\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n   name: nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n spec:\n-  progressDeadlineSeconds: 600\n   replicas: 1\n-  revisionHistoryLimit: 10\n   selector:\n     matchLabels:\n       app: nfs-subdir-external-provisioner\n@@ -25,6 +17,7 @@\n     type: Recreate\n   template:\n     metadata:\n+      annotations: null\n       labels:\n         app: nfs-subdir-external-provisioner\n         release: nfs-client\n@@ -37,7 +30,7 @@\n           value: 91.206.14.44\n         - name: NFS_PATH\n           value: /srv/k3s-nfs\n-        image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2\n+        image: torque.local/atlassian/nfs-client:v4.0.2-custom-20260510\n         imagePullPolicy: IfNotPresent\n         name: nfs-subdir-external-provisioner\n         resources:\n@@ -56,14 +49,9 @@\n           runAsUser: 65534\n           seccompProfile:\n             type: RuntimeDefault\n-        terminationMessagePath: /dev/termination-log\n-        terminationMessagePolicy: File\n         volumeMounts:\n         - mountPath: /persistentvolumes\n           name: nfs-subdir-external-provisioner-root\n-      dnsPolicy: ClusterFirst\n-      restartPolicy: Always\n-      schedulerName: default-scheduler\n       securityContext:\n         fsGroup: 65534\n         fsGroupChangePolicy: OnRootMismatch\n@@ -72,9 +60,7 @@\n         runAsUser: 65534\n         seccompProfile:\n           type: RuntimeDefault\n-      serviceAccount: nfs-client-nfs-subdir-external-provisioner\n       serviceAccountName: nfs-client-nfs-subdir-external-provisioner\n-      terminationGracePeriodSeconds: 30\n       volumes:\n       - name: nfs-subdir-external-provisioner-root\n         nfs:\n"
+    },
+    {
+      "resource": {
+        "version": "v1",
+        "kind": "ServiceAccount",
+        "name": "nfs-client-nfs-subdir-external-provisioner"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,15 +1,10 @@\n apiVersion: v1\n kind: ServiceAccount\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n   name: nfs-client-nfs-subdir-external-provisioner\n-  namespace: storage\n \n"
+    },
+    {
+      "resource": {
+        "group": "rbac.authorization.k8s.io",
+        "version": "v1",
+        "kind": "ClusterRole",
+        "name": "nfs-client-nfs-subdir-external-provisioner-runner"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,12 +1,8 @@\n apiVersion: rbac.authorization.k8s.io/v1\n kind: ClusterRole\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n"
+    },
+    {
+      "resource": {
+        "group": "rbac.authorization.k8s.io",
+        "version": "v1",
+        "kind": "ClusterRoleBinding",
+        "name": "run-nfs-client-nfs-subdir-external-provisioner"
+      },
+      "change": "update",
+      "diff": "--- live\n+++ desired\n@@ -1,12 +1,8 @@\n apiVersion: rbac.authorization.k8s.io/v1\n kind: ClusterRoleBinding\n metadata:\n-  annotations:\n-    meta.helm.sh/release-name: nfs-client\n-    meta.helm.sh/release-namespace: storage\n   labels:\n     app: nfs-subdir-external-provisioner\n-    app.kubernetes.io/managed-by: Helm\n     chart: nfs-subdir-external-provisioner-4.0.18\n     heritage: Helm\n     release: nfs-client\n"
+    }
+  ],
+  "summary": {
+    "creates": 0,
+    "updates": 7,
+    "deletes": 0,
+    "unchanged": 0
+  },
+  "warnings": [
+    "Updating cluster/nfs-client-nfs-subdir-external-provisioner Deployment (apps) will restart pods; ensure PodDisruptionBudgets allow the rollout."
+  ],
+  "desiredQuota": {
+    "namespace": "storage",
+    "desired": {
+      "cpuRequests": {
+        "value": "20m"
+      },
+      "cpuLimits": {
+        "value": "0"
+      },
+      "memoryRequests": {
+        "value": "64Mi"
+      },
+      "memoryLimits": {
+        "value": "256Mi"
+      },
+      "storage": {
+        "value": "0"
+      },
+      "pods": 1,
+      "services": 0,
+      "configmaps": 0,
+      "secrets": 0,
+      "pvcs": 0
+    }
+  },
+  "desiredQuotaByNamespace": {
+    "storage": {
+      "namespace": "storage",
+      "desired": {
+        "cpuRequests": {
+          "value": "20m"
+        },
+        "cpuLimits": {
+          "value": "0"
+        },
+        "memoryRequests": {
+          "value": "64Mi"
+        },
+        "memoryLimits": {
+          "value": "256Mi"
+        },
+        "storage": {
+          "value": "0"
+        },
+        "pods": 1,
+        "services": 0,
+        "configmaps": 0,
+        "secrets": 0,
+        "pvcs": 0
+      }
+    }
+  },
+  "clusterHost": "https://91.206.14.44:6443",
+  "installCommand": "helmer plan --chart '/tmp/torque-atlassian/charts/release/nfs-client' --release 'nfs-client' --namespace 'storage' --values '/tmp/torque-atlassian/values/nfs-client.yaml'",
+  "generatedAt": "2026-05-10T14:10:14.538884Z",
+  "offlineFallback": false
+}

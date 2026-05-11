@@ -11,6 +11,7 @@ import (
 
 	"github.com/ingresslabs/torque/internal/appconfig"
 	"github.com/ingresslabs/torque/internal/kube"
+	"github.com/ingresslabs/torque/internal/securityevidence"
 	"github.com/ingresslabs/torque/internal/telemetry"
 	"github.com/ingresslabs/torque/internal/verify"
 	cfgpkg "github.com/ingresslabs/torque/internal/verify/config"
@@ -168,6 +169,72 @@ func Run(ctx context.Context, cfg *cfgpkg.Config, baseDir string, opts Options) 
 		}
 	}
 
+	var secretReport *verify.SecretScanReport
+	if cfg.Verify.Secrets.Enabled {
+		if console != nil {
+			console.Observe(verify.Event{Type: verify.EventProgress, When: time.Now().UTC(), Phase: "secrets"})
+		}
+		if err := timer.Track("secrets", func() error {
+			var err error
+			renderedPath := ""
+			if strings.EqualFold(strings.TrimSpace(cfg.Target.Kind), "manifest") {
+				renderedPath = strings.TrimSpace(cfg.Target.Manifest)
+			}
+			secretReport, err = verify.ScanRenderedSecrets(objs, verify.SecretScanOptions{
+				Mode:           verify.Mode(strings.ToLower(strings.TrimSpace(cfg.Verify.Secrets.Mode))),
+				FailOn:         verify.Severity(strings.ToLower(strings.TrimSpace(cfg.Verify.Secrets.FailOn))),
+				Profile:        strings.ToLower(strings.TrimSpace(cfg.Verify.SecurityProfile)),
+				Source:         targetLabel,
+				Stage:          "render",
+				Surface:        "verifier.report",
+				BoundaryMatrix: cfg.Verify.SecurityBoundaryMatrix,
+				FlowGraph:      cfg.Verify.SecretFlowGraph,
+				TargetKind:     strings.ToLower(strings.TrimSpace(cfg.Target.Kind)),
+				ValuesFiles:    append([]string(nil), cfg.Target.Chart.ValuesFiles...),
+				RenderedPath:   renderedPath,
+				RenderedSource: renderedManifest,
+				EvaluatedAt:    now(),
+			})
+			if err != nil {
+				return err
+			}
+			if secretReport == nil {
+				return nil
+			}
+			for _, f := range secretReport.Findings {
+				rep.Findings = append(rep.Findings, f)
+				if console != nil {
+					ff := f
+					console.Observe(verify.Event{Type: verify.EventFinding, When: time.Now().UTC(), Finding: &ff})
+				}
+			}
+			if secretReport.Blocked {
+				rep.Blocked = true
+				rep.Passed = false
+			}
+			rep.Summary = verify.BuildSummary(rep.Findings, rep.Blocked)
+			if strings.TrimSpace(cfg.Verify.Secrets.Report) != "" {
+				w, c, err := cfgpkg.OpenOutput(errOut, cfg.Verify.Secrets.Report)
+				if err != nil {
+					return err
+				}
+				if err := verify.WriteSecretScanReport(w, secretReport); err != nil {
+					if c != nil {
+						_ = c.Close()
+					}
+					return err
+				}
+				if c != nil {
+					_ = c.Close()
+				}
+			}
+			return nil
+		}); err != nil {
+			finishConsole()
+			return err
+		}
+	}
+
 	// Source line mapping: when we have a rendered manifest (chart/namespace),
 	// write it next to the report and annotate findings with absolute line numbers.
 	// This makes SARIF consumers and the HTML report point at real files/lines.
@@ -177,7 +244,7 @@ func Run(ctx context.Context, cfg *cfgpkg.Config, baseDir string, opts Options) 
 		annotatedRenderedPath = strings.TrimSpace(cfg.Target.Manifest)
 	default:
 		rp := strings.TrimSpace(cfg.Output.Report)
-		if rp != "" && rp != "-" && strings.TrimSpace(renderedManifest) != "" {
+		if rp != "" && rp != "-" && strings.TrimSpace(renderedManifest) != "" && !cfg.Verify.Secrets.Enabled {
 			ext := filepath.Ext(rp)
 			base := strings.TrimSuffix(rp, ext)
 			if base == "" {
@@ -263,6 +330,19 @@ func Run(ctx context.Context, cfg *cfgpkg.Config, baseDir string, opts Options) 
 				}
 			}
 		})
+	}
+
+	if strings.TrimSpace(cfg.Verify.SecurityEvidence) != "" {
+		if err := timer.Track("security-evidence", func() error {
+			return securityevidence.WriteBundle(securityevidence.BundleOptions{
+				Dir:                  cfg.Verify.SecurityEvidence,
+				GeneratedAt:          now(),
+				RenderedManifestHash: verify.ManifestDigestSHA256(renderedManifest),
+			}, rep, secretReport)
+		}); err != nil {
+			finishConsole()
+			return err
+		}
 	}
 
 	if console != nil {

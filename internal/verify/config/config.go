@@ -15,6 +15,12 @@ import (
 	"github.com/ingresslabs/torque/internal/verify"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -72,6 +78,18 @@ type Rules struct {
 		Enabled bool   `yaml:"enabled,omitempty"`
 		Output  string `yaml:"output,omitempty"`
 	} `yaml:"exposure,omitempty"`
+
+	Secrets struct {
+		Enabled bool   `yaml:"enabled,omitempty"`
+		Report  string `yaml:"report,omitempty"`
+		Mode    string `yaml:"mode,omitempty"`
+		FailOn  string `yaml:"failOn,omitempty"`
+	} `yaml:"secrets,omitempty"`
+
+	SecurityProfile        string `yaml:"securityProfile,omitempty"`
+	SecurityEvidence       string `yaml:"securityEvidence,omitempty"`
+	SecurityBoundaryMatrix bool   `yaml:"securityBoundaryMatrix,omitempty"`
+	SecretFlowGraph        bool   `yaml:"secretFlowGraph,omitempty"`
 
 	FixPlan bool `yaml:"fixPlan,omitempty"`
 }
@@ -134,6 +152,8 @@ func (c *Config) ResolvePaths(baseDir string) {
 	c.Verify.Baseline.Read = resolveRelPath(baseDir, c.Verify.Baseline.Read)
 	c.Verify.Baseline.Write = resolveRelPath(baseDir, c.Verify.Baseline.Write)
 	c.Verify.Exposure.Output = resolveRelPath(baseDir, c.Verify.Exposure.Output)
+	c.Verify.Secrets.Report = resolveRelPath(baseDir, c.Verify.Secrets.Report)
+	c.Verify.SecurityEvidence = resolveRelPath(baseDir, c.Verify.SecurityEvidence)
 	c.Output.Report = resolveRelPath(baseDir, c.Output.Report)
 	c.Kube.Kubeconfig = resolveRelPath(baseDir, c.Kube.Kubeconfig)
 }
@@ -179,6 +199,31 @@ func (c *Config) Validate(baseDir string) error {
 	}
 	if strings.TrimSpace(c.Verify.Policy.Mode) == "" {
 		c.Verify.Policy.Mode = "warn"
+	}
+	if strings.TrimSpace(c.Verify.SecurityProfile) != "" {
+		c.Verify.Secrets.Enabled = true
+	}
+	if strings.TrimSpace(c.Verify.Secrets.Report) != "" {
+		c.Verify.Secrets.Enabled = true
+	}
+	if strings.TrimSpace(c.Verify.SecurityEvidence) != "" {
+		c.Verify.Secrets.Enabled = true
+	}
+	if c.Verify.SecurityBoundaryMatrix {
+		c.Verify.Secrets.Enabled = true
+	}
+	if c.Verify.SecretFlowGraph {
+		c.Verify.Secrets.Enabled = true
+	}
+	if strings.TrimSpace(c.Verify.Secrets.Mode) == "" {
+		if strings.EqualFold(strings.TrimSpace(c.Verify.SecurityProfile), "enterprise") {
+			c.Verify.Secrets.Mode = "block"
+		} else {
+			c.Verify.Secrets.Mode = "warn"
+		}
+	}
+	if strings.TrimSpace(c.Verify.Secrets.FailOn) == "" {
+		c.Verify.Secrets.FailOn = "high"
 	}
 	_ = baseDir
 	return nil
@@ -652,7 +697,90 @@ func toMap(obj any) (map[string]any, error) {
 		return m, nil
 	}
 	if runtimeObj, ok := obj.(runtime.Object); ok {
-		return runtime.DefaultUnstructuredConverter.ToUnstructured(runtimeObj)
+		m, err := runtime.DefaultUnstructuredConverter.ToUnstructured(runtimeObj)
+		if err != nil {
+			return nil, err
+		}
+		if mapValueEmpty(m["kind"]) {
+			if kind := inferKubernetesKind(obj); kind != "" {
+				m["kind"] = kind
+			}
+		}
+		if mapValueEmpty(m["apiVersion"]) {
+			if apiVersion := inferKubernetesAPIVersion(obj); apiVersion != "" {
+				m["apiVersion"] = apiVersion
+			}
+		}
+		return m, nil
 	}
 	return nil, fmt.Errorf("unsupported object type %T", obj)
+}
+
+func mapValueEmpty(v any) bool {
+	if v == nil {
+		return true
+	}
+	return strings.TrimSpace(fmt.Sprintf("%v", v)) == ""
+}
+
+func inferKubernetesKind(obj any) string {
+	switch obj.(type) {
+	case corev1.Namespace, *corev1.Namespace:
+		return "Namespace"
+	case corev1.Pod, *corev1.Pod:
+		return "Pod"
+	case corev1.Service, *corev1.Service:
+		return "Service"
+	case corev1.ConfigMap, *corev1.ConfigMap:
+		return "ConfigMap"
+	case corev1.Secret, *corev1.Secret:
+		return "Secret"
+	case appsv1.Deployment, *appsv1.Deployment:
+		return "Deployment"
+	case appsv1.DaemonSet, *appsv1.DaemonSet:
+		return "DaemonSet"
+	case appsv1.StatefulSet, *appsv1.StatefulSet:
+		return "StatefulSet"
+	case appsv1.ReplicaSet, *appsv1.ReplicaSet:
+		return "ReplicaSet"
+	case batchv1.CronJob, *batchv1.CronJob:
+		return "CronJob"
+	case batchv1.Job, *batchv1.Job:
+		return "Job"
+	case autoscalingv1.HorizontalPodAutoscaler, *autoscalingv1.HorizontalPodAutoscaler:
+		return "HorizontalPodAutoscaler"
+	case policyv1.PodDisruptionBudget, *policyv1.PodDisruptionBudget:
+		return "PodDisruptionBudget"
+	case networkingv1.Ingress, *networkingv1.Ingress:
+		return "Ingress"
+	default:
+		return ""
+	}
+}
+
+func inferKubernetesAPIVersion(obj any) string {
+	switch obj.(type) {
+	case corev1.Namespace, *corev1.Namespace,
+		corev1.Pod, *corev1.Pod,
+		corev1.Service, *corev1.Service,
+		corev1.ConfigMap, *corev1.ConfigMap,
+		corev1.Secret, *corev1.Secret:
+		return "v1"
+	case appsv1.Deployment, *appsv1.Deployment,
+		appsv1.DaemonSet, *appsv1.DaemonSet,
+		appsv1.StatefulSet, *appsv1.StatefulSet,
+		appsv1.ReplicaSet, *appsv1.ReplicaSet:
+		return "apps/v1"
+	case batchv1.CronJob, *batchv1.CronJob,
+		batchv1.Job, *batchv1.Job:
+		return "batch/v1"
+	case autoscalingv1.HorizontalPodAutoscaler, *autoscalingv1.HorizontalPodAutoscaler:
+		return "autoscaling/v1"
+	case policyv1.PodDisruptionBudget, *policyv1.PodDisruptionBudget:
+		return "policy/v1"
+	case networkingv1.Ingress, *networkingv1.Ingress:
+		return "networking.k8s.io/v1"
+	default:
+		return ""
+	}
 }

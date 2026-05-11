@@ -3,15 +3,20 @@ package helpui
 import "strings"
 
 var commandOwners = map[string][]string{
-	"torque apply":      {"internal/deploy", "internal/ui"},
-	"torque apply plan": {"internal/deploy", "internal/ui"},
-	"torque build":      {"internal/workflows/buildsvc"},
-	"torque delete":     {"internal/deploy", "internal/ui"},
-	"torque init":       {"internal/appconfig"},
-	"torque help":       {"internal/helpui"},
-	"torque logs":       {"internal/tailer"},
-	"torque secrets":    {"internal/secretstore"},
-	"torque stack":      {"internal/stack"},
+	"torque apply":          {"internal/deploy", "internal/ui"},
+	"torque apply plan":     {"internal/deploy", "internal/ui"},
+	"torque apply simulate": {"internal/deploy", "internal/deployplan"},
+	"torque build":          {"internal/workflows/buildsvc"},
+	"torque contract":       {"cmd/torque", "internal/deploy"},
+	"torque delete":         {"internal/deploy", "internal/ui"},
+	"torque init":           {"internal/appconfig"},
+	"torque guardian":       {"cmd/torque", "internal/deployplan"},
+	"torque help":           {"internal/helpui"},
+	"torque incident":       {"cmd/torque", "internal/deploy"},
+	"torque logs":           {"internal/tailer"},
+	"torque replay":         {"cmd/torque"},
+	"torque secrets":        {"internal/secretstore"},
+	"torque stack":          {"internal/stack"},
 }
 
 func ownersForCommand(path string) []string {

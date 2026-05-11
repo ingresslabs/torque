@@ -1,0 +1,38 @@
+version: v1
+cases:
+  - id: source-aws-values
+    scope: repo
+    path: source-realistic/aws
+    expectedFindings:
+      - ruleId: secret/value_aws_access_key
+        family: aws_access_key
+        fileType: yaml
+        minCount: 1
+    rawSecrets:
+      - AKIA1234567890ABCDEF
+  - id: source-github-env
+    scope: repo
+    path: source-realistic/github
+    expectedFindings:
+      - ruleId: secret/arg_value_github_token
+        family: github_token
+        fileType: env
+        minCount: 1
+    rawSecrets:
+      - ghp_1234567890abcdefghijklmnopqr
+  - id: source-false-positive-docs
+    scope: repo
+    path: source-false-positive/docs
+    fileType: yaml
+    expectedFindings: []
+    rawSecrets: []
+  - id: render-boundary-matrix
+    scope: render
+    manifest: helm-render/boundary.yaml
+    expectedFindings:
+      - ruleId: secret/value_aws_access_key
+        family: aws_access_key
+        fileType: yaml
+        minCount: 2
+    rawSecrets:
+      - AKIA1234567890ABCDEF

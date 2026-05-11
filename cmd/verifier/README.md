@@ -14,5 +14,11 @@ Common runs:
 verifier --chart ./chart --release my-app -n default
 verifier --manifest ./rendered.yaml
 verifier --namespace default --context my-context
+verifier --chart ./chart --release my-app -n prod \
+  --security-profile enterprise \
+  --security-boundary-matrix --secret-flow-graph \
+  --secrets-report secrets.json \
+  --security-evidence ./torque-security-evidence \
+  --format json --report verify.json
 verifier rules list
 ```
