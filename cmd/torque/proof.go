@@ -846,7 +846,7 @@ func finalizeProofGraph(graph *proofGraph) {
 			graph.Summary.Provenance++
 		case "runtime-drift":
 			graph.Summary.RuntimeDrift++
-		case "rollout-capture", "rollout-events", "rollout-state", "server-dry-run":
+		case "rollout-capture", "rollout-events", "rollout-state", "server-dry-run", "release-promotion", "traffic-shift", "smoke-test":
 			graph.Summary.RolloutEvidence++
 		case "logs-capture":
 			graph.Summary.LogCaptures++
@@ -1173,6 +1173,12 @@ func classifyProofFileType(path string) string {
 		return "quota-proof"
 	case strings.Contains(name, "rollout.prediction"):
 		return "rollout-prediction"
+	case strings.Contains(name, "promotion"):
+		return "release-promotion"
+	case strings.Contains(name, "traffic-state") || strings.Contains(name, "traffic.shift"):
+		return "traffic-shift"
+	case strings.Contains(name, "smoke"):
+		return "smoke-test"
 	case strings.Contains(name, "verifier") || strings.Contains(name, "verify"):
 		return "verifier-report"
 	case strings.Contains(name, "slo"):
@@ -1216,6 +1222,12 @@ func proofLabelForFile(path string) string {
 		return "Quota capacity risk"
 	case "rollout-prediction":
 		return "Rollout prediction"
+	case "release-promotion":
+		return "Release promotion decision"
+	case "traffic-shift":
+		return "Traffic shift state"
+	case "smoke-test":
+		return "Smoke test result"
 	case "verifier-report":
 		return "Verifier report"
 	case "slo-outcome":

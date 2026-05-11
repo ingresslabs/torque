@@ -247,3 +247,166 @@ func TestReleaseAutopilotBlocksLowScore(t *testing.T) {
 		t.Fatalf("expected release.score blocking check: %#v", report.Checks)
 	}
 }
+
+func TestReleasePromoteCanaryWritesProofBackedPlan(t *testing.T) {
+	dir, graphPath, keyPath := writeProofGateFixture(t, true)
+	outDir := filepath.Join(dir, "promote-canary")
+	sloPath := filepath.Join(dir, "evidence", "slo.yaml")
+
+	root := newRootCommand()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"release", "promote", graphPath,
+		"--strategy", "canary",
+		"--steps", "5,25,50,100",
+		"--analysis-window", "1m",
+		"--slo", sloPath,
+		"--rollback-on-fail",
+		"--out-dir", outDir,
+		"--key", keyPath,
+		"--fail-below", "80",
+		"--format", "json",
+	})
+	if err := root.ExecuteContext(context.Background()); err != nil {
+		t.Fatalf("release promote canary: %v\n%s", err, out.String())
+	}
+	var report releasePromotionReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("decode canary promotion: %v\n%s", err, out.String())
+	}
+	if !report.Passed || report.Strategy != "canary" || !report.Gate.Passed || report.Score.Score < 80 {
+		t.Fatalf("expected passing canary promotion: %#v", report)
+	}
+	if report.Canary == nil || len(report.Canary.Steps) != 4 || report.Canary.Steps[3].Traffic.Canary != 100 {
+		t.Fatalf("expected canary traffic ladder: %#v", report.Canary)
+	}
+	if report.AgentPolicy == nil || !report.AgentPolicy.Allowed || report.AgentRun == nil || !report.AgentRun.Authorized {
+		t.Fatalf("expected authorized promotion agent records: %#v", report)
+	}
+	if report.Attestation == nil || !report.Attestation.Verified || report.Attestation.Signature == nil {
+		t.Fatalf("expected signed promotion attestation: %#v", report.Attestation)
+	}
+	for _, path := range []string{
+		report.Artifacts.Report,
+		report.Artifacts.Decision,
+		report.Artifacts.PromotedGraph,
+		report.Artifacts.Gate,
+		report.Artifacts.Score,
+		report.Artifacts.Flight,
+		report.Artifacts.AgentRequest,
+		report.Artifacts.AgentPolicy,
+		report.Artifacts.AgentRun,
+		report.Artifacts.Attestation,
+	} {
+		if path == "" {
+			t.Fatalf("expected promotion artifact path: %#v", report.Artifacts)
+		}
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("expected promotion artifact %s: %v", path, err)
+		}
+	}
+	promoted, _, err := loadOrBuildProofGraph(report.Artifacts.PromotedGraph)
+	if err != nil {
+		t.Fatalf("load promoted graph: %v", err)
+	}
+	if !proofGraphHasType(promoted, "release-promotion") {
+		t.Fatalf("expected promoted graph to include release-promotion artifact: %#v", promoted.Artifacts)
+	}
+}
+
+func TestReleasePromoteBlueGreenExecuteFileProvider(t *testing.T) {
+	dir, graphPath, keyPath := writeProofGateFixture(t, true)
+	outDir := filepath.Join(dir, "promote-blue-green")
+	smokePath := filepath.Join(dir, "smoke.json")
+	statePath := filepath.Join(dir, "traffic-state.json")
+	if err := os.WriteFile(smokePath, []byte(`{"passed":true,"checks":["http","migration"]}`), 0o644); err != nil {
+		t.Fatalf("write smoke: %v", err)
+	}
+
+	root := newRootCommand()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"release", "promote", graphPath,
+		"--strategy", "blue-green",
+		"--preview",
+		"--smoke", smokePath,
+		"--switch-traffic",
+		"--provider", "file",
+		"--state-out", statePath,
+		"--execute",
+		"--yes",
+		"--out-dir", outDir,
+		"--key", keyPath,
+		"--fail-below", "80",
+		"--format", "json",
+	})
+	if err := root.ExecuteContext(context.Background()); err != nil {
+		t.Fatalf("release promote blue-green: %v\n%s", err, out.String())
+	}
+	var report releasePromotionReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("decode blue-green promotion: %v\n%s", err, out.String())
+	}
+	if !report.Passed || report.Strategy != "blue-green" || report.BlueGreen == nil || len(report.BlueGreen.Phases) < 3 {
+		t.Fatalf("expected passing blue-green promotion: %#v", report)
+	}
+	if report.ProviderState == nil || !report.ProviderState.Applied || report.ProviderState.FinalTraffic.Green != 100 || report.ProviderState.FinalTraffic.Blue != 0 {
+		t.Fatalf("expected applied file provider state: %#v", report.ProviderState)
+	}
+	if report.Smoke == nil || report.Smoke.SHA256 == "" {
+		t.Fatalf("expected smoke evidence: %#v", report.Smoke)
+	}
+	var state releasePromotionProviderState
+	raw, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatalf("read state: %v", err)
+	}
+	if err := json.Unmarshal(raw, &state); err != nil {
+		t.Fatalf("decode state: %v", err)
+	}
+	if !state.Applied || state.FinalTraffic.Green != 100 {
+		t.Fatalf("expected persisted green state: %#v", state)
+	}
+}
+
+func TestReleasePromoteBlocksFailedGate(t *testing.T) {
+	dir, graphPath, keyPath := writeProofGateFixture(t, false)
+	outDir := filepath.Join(dir, "promote-blocked")
+
+	root := newRootCommand()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"release", "promote", graphPath,
+		"--strategy", "canary",
+		"--steps", "10,100",
+		"--out-dir", outDir,
+		"--key", keyPath,
+		"--fail-below", "80",
+		"--format", "json",
+	})
+	if err := root.ExecuteContext(context.Background()); err == nil {
+		t.Fatalf("expected promotion to block failed gate")
+	}
+	var report releasePromotionReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("decode blocked promotion: %v\n%s", err, out.String())
+	}
+	if report.Passed {
+		t.Fatalf("expected blocked promotion report: %#v", report)
+	}
+	found := false
+	for _, check := range report.Checks {
+		if check.ID == "proof.gate" && !check.Passed {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected proof.gate blocking check: %#v", report.Checks)
+	}
+}

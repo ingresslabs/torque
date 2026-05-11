@@ -158,6 +158,13 @@ torque release score proof.graph.json --out release-score.json
 torque release autopilot proof.graph.json \
   --key .torque/keys/proof-ed25519.json \
   --out-dir release-autopilot
+torque release promote proof.graph.json \
+  --strategy canary --steps 5,25,50,100 \
+  --slo slo.yaml --rollback-on-fail \
+  --out-dir release-promote-canary
+torque release promote proof.graph.json \
+  --strategy blue-green --preview --smoke smoke.json \
+  --switch-traffic --out-dir release-promote-blue-green
 torque flight record proof.graph.json --out release.flight.torque
 torque agent policy check agent-request.json \
   --proof proof.graph.json --allow apply --require-gate
@@ -240,6 +247,19 @@ checks agent authorization, and signs a release verdict.
 - `--policy release-policy.yaml`: Evaluate a custom release policy.
 - `--fail-below 90`: Block when the readiness score is too low.
 - `--execute --yes --chart ./chart --release api -n prod`: Run `torque apply` first, then collect proof.
+
+## torque release promote
+Promote a release only after proof gate, score, flight, SLO/smoke evidence, and
+agent authorization checks pass.
+
+**Canary**: `torque release promote proof.graph.json --strategy canary --steps 5,25,50,100 --slo slo.yaml --rollback-on-fail`
+
+**Blue/green**: `torque release promote proof.graph.json --strategy blue-green --preview --smoke smoke.json --switch-traffic`
+
+- `--analysis-window 5m`: Record the per-step analysis window.
+- `--provider evidence`: Default non-mutating provider that writes promotion proof only.
+- `--provider file --execute --yes --state-out traffic-state.json`: Deterministic E2E provider that writes final traffic state after checks pass.
+- `--key .torque/keys/proof-ed25519.json`: Sign the promoted graph and promotion attestation.
 
 ## torque release score
 Score release readiness from a signed proof graph and release gate checks.
