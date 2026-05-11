@@ -31,7 +31,11 @@ DESIGN.md
 CLAUDE.md
 GEMINI.md
 .agents/
-.codex/
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/torque-usage/
+!.codex/skills/torque-usage/**
 .cursor/
 .windsurf/
 .continue/

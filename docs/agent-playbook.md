@@ -30,6 +30,15 @@ make build
 - `integration/`: live-cluster harnesses (opt-in; guarded by env/tags).
 - `docs/`: contributor docs and embedded help-ui content (see `docs/embed.go`).
 
+## Repo-Local Skills
+
+- Codex usage skill: `.codex/skills/torque-usage/SKILL.md`.
+- Claude usage skill: `.claude/skills/torque-usage/SKILL.md`.
+
+Use these when an agent needs copy/paste-safe Torque command recipes for proof
+graphs, release gates, release score, flight recorder, autopilot, progressive
+promotion, agent policy, logs, or incident evidence.
+
 ## Golden Paths
 
 ### Add a CLI flag

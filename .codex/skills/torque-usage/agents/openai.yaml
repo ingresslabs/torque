@@ -1,0 +1,7 @@
+interface:
+  display_name: "Torque Usage"
+  short_description: "Use Torque CLI proof workflows safely"
+  default_prompt: "Use $torque-usage to pick safe proof-backed CLI commands and validation steps for this repository."
+
+policy:
+  allow_implicit_invocation: true
