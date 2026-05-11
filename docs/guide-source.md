@@ -153,9 +153,17 @@ torque proof graph ./apply-proof.json \
   --out proof.graph.json \
   --html proof.html
 torque proof verify proof.graph.json
+torque proof gate proof.graph.json --out proof.gate.json
+torque release score proof.graph.json --out release-score.json
+torque release autopilot proof.graph.json \
+  --key .torque/keys/proof-ed25519.json \
+  --out-dir release-autopilot
+torque flight record proof.graph.json --out release.flight.torque
+torque agent policy check agent-request.json \
+  --proof proof.graph.json --allow apply --require-gate
 tar -czf torque-evidence.tgz ./apply.sqlite ./apply-proof.json ./proof.graph.json ./proof.html
 ```
-The workflow keeps the plan artifact, predictive risk score, rollback confidence, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, command inputs, and proof graph together as durable evidence.
+The workflow keeps the plan artifact, predictive risk score, rollback confidence, rollout timeline, resource readiness updates, logs, Helm release summary, rendered manifest, command inputs, proof graph, release gate, readiness score, flight recorder, and agent authorization record together as durable evidence.
 
 # Advanced Features
 
@@ -194,7 +202,7 @@ Turn a failed apply proof bundle into a repair plan, optional chart patch, and P
 - `--pr-body ./repair-pr.md`: Write a Markdown PR body with root cause, evidence, patch plan, and validation commands.
 
 ## torque proof
-Build, verify, and diff release proof graphs.
+Build, verify, diff, gate, and attest release proof graphs.
 
 **Usage**: `torque proof graph ./apply-proof.json [flags]`
 - `--out proof.graph.json`: Write the graph JSON artifact.
@@ -205,6 +213,51 @@ Build, verify, and diff release proof graphs.
 **Verify**: `torque proof verify proof.graph.json --require-signature`
 
 **Diff**: `torque proof diff previous-proof.graph.json current-proof.graph.json`
+
+**Gate**: `torque proof gate proof.graph.json --out proof.gate.json`
+
+**Attest**: `torque proof attest proof.graph.json --release v1.0.8 --key .torque/keys/proof-ed25519.json --out release.attestation.json`
+
+## torque agent
+Authorize AI or automation agent operations with proof-backed permissions.
+
+**Policy check**: `torque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate`
+
+**Run record**: `torque agent run agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-run.json`
+
+`agent run` is intentionally non-mutating. It records authorization for a caller
+that will invoke the write operation through its own controlled path.
+
+## torque release autopilot
+Run the release autopilot over an existing proof source or proof graph. The
+default mode is non-mutating: it builds and signs the graph, evaluates the
+release gate, writes the score, records/replays/explains the release flight,
+checks agent authorization, and signs a release verdict.
+
+**Usage**: `torque release autopilot proof.graph.json [flags]`
+- `--out-dir release-autopilot`: Write all autopilot artifacts into one directory.
+- `--key .torque/keys/proof-ed25519.json`: Sign the graph and release attestation.
+- `--policy release-policy.yaml`: Evaluate a custom release policy.
+- `--fail-below 90`: Block when the readiness score is too low.
+- `--execute --yes --chart ./chart --release api -n prod`: Run `torque apply` first, then collect proof.
+
+## torque release score
+Score release readiness from a signed proof graph and release gate checks.
+
+**Usage**: `torque release score proof.graph.json [flags]`
+- `--policy release-policy.yaml`: Evaluate a custom release policy.
+- `--pub .torque/keys/proof-ed25519.json`: Verify with an explicit trusted key.
+- `--out release-score.json`: Write machine-readable score JSON.
+- `--fail-below 90`: Exit non-zero when the score is too low for promotion.
+
+## torque flight
+Record, replay, and explain the release flight timeline from proof evidence.
+
+**Record**: `torque flight record proof.graph.json --out release.flight.torque`
+
+**Replay**: `torque flight replay release.flight.torque`
+
+**Explain**: `torque flight explain release.flight.torque`
 
 ## torque secrets scan
 Scan source files, rendered manifests, build inputs, or text artifacts for

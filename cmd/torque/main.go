@@ -246,6 +246,9 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 	repairCmd := newRepairCommand()
 	replayCmd := newReplayCommand()
 	proofCmd := newProofCommand()
+	agentCmd := newAgentCommand()
+	releaseCmd := newReleaseCommand()
+	flightCmd := newFlightCommand()
 	applyCmd := newApplyCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	deleteCmd := newDeleteCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
 	stackCmd := newStackCommand(&kubeconfigPath, &kubeContext, &logLevel, &remoteAgentAddr)
@@ -260,6 +263,9 @@ func newRootCommandWithBuildService(buildService buildsvc.Service) *cobra.Comman
 		repairCmd,
 		replayCmd,
 		proofCmd,
+		agentCmd,
+		releaseCmd,
+		flightCmd,
 		applyCmd,
 		deleteCmd,
 		stackCmd,
@@ -337,7 +343,7 @@ Usage:
   {{.UseLine}}
 
 Subcommands:
-{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "replay" "proof" "list" "lint" "logs" "env" "contract" "guardian" "incident" "secrets" "security" "version") }}
+{{- range $i, $n := (list "init" "build" "ship" "apply" "delete" "stack" "revert" "repair" "replay" "proof" "agent" "release" "flight" "list" "lint" "logs" "env" "contract" "guardian" "incident" "secrets" "security" "version") }}
 {{- with (indexCommand $.Commands $n) }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end }}

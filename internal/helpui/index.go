@@ -274,9 +274,9 @@ func BuildIndex(root *cobra.Command, includeHidden bool) Index {
 			ID:       "doc:proof-graph",
 			Kind:     "doc",
 			Title:    "Release Proof Graph",
-			Subtitle: "Signed release graph for build, verify, dry-run, drift, rollout, rollback, and repair evidence",
+			Subtitle: "Signed release graph, gate, attest, agent policy, score, autopilot, and flight recorder evidence",
 			Content:  md,
-			Tags:     []string{"doc", "proof", "graph", "signature", "verify", "diff", "evidence", "release"},
+			Tags:     []string{"doc", "proof", "graph", "signature", "verify", "diff", "gate", "attest", "agent", "score", "autopilot", "flight", "evidence", "release"},
 		})
 	}
 

@@ -1,0 +1,55 @@
+name: Proof Graph E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "Number of proof graph iterations to run on Boole"
+        required: false
+        default: "100"
+      host:
+        description: "SSH target for Boole"
+        required: false
+        default: "root@87.228.57.103"
+
+jobs:
+  boole-proof-graph:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Boole SSH key
+        env:
+          BOOLE_SSH_KEY: ${{ secrets.BOOLE_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BOOLE_SSH_KEY:-}" ]; then
+            echo "BOOLE_SSH_KEY secret is required to run Proof Graph E2E."
+            exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$BOOLE_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Run proof graph E2E on Boole
+        env:
+          BOOLE_HOST: ${{ inputs.host }}
+          RUNS: ${{ inputs.runs }}
+        run: |
+          set -euo pipefail
+          scripts/e2e-proof-graph-boole.sh | tee proof-graph-e2e.json
+          jq -e '.ok == true and .runs == (env.RUNS | tonumber) and .tamperFailureVerified == true and .agentChecks >= 1 and .releaseScore >= 80 and .flightEvents >= 10 and .autopilotPassed == true' proof-graph-e2e.json >/dev/null
+
+      - name: Upload proof graph E2E result
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof-graph-e2e-result
+          path: proof-graph-e2e.json

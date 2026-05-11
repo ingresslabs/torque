@@ -174,6 +174,8 @@ func newProofCommand() *cobra.Command {
 	cmd.AddCommand(newProofGraphCommand())
 	cmd.AddCommand(newProofVerifyCommand())
 	cmd.AddCommand(newProofDiffCommand())
+	cmd.AddCommand(newProofAttestCommand())
+	cmd.AddCommand(newProofGateCommand())
 	decorateCommandHelp(cmd, "Proof Commands")
 	return cmd
 }

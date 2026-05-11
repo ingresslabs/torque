@@ -5,6 +5,21 @@ This project publishes release assets with:
 - `*.sha256` files and `checksums-*.txt` (SHA256)
 - `*.sigstore.json` (cosign keyless bundles)
 - GitHub artifact attestations (SLSA provenance + SBOM) when supported by the repo (plan/visibility)
+- Release proof graph E2E JSON from the manual **Proof Graph E2E** workflow when a release candidate is promoted
+
+## Release Proof Gate
+
+Before tagging a release candidate, run the manual **Proof Graph E2E** workflow
+or run Boole directly:
+
+```bash
+scripts/e2e-proof-graph-boole.sh
+```
+
+Record the compact JSON output in the release notes or PR. The output includes
+the source commit, binary SHA256, graph SHA256, signed attestation SHA256,
+artifact counts, gate checks, agent policy checks, release score, flight event
+count, autopilot pass status, diff counts, and tamper-failure confirmation.
 
 ## Verify Checksums
 

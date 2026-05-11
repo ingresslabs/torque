@@ -120,8 +120,32 @@ This section is intentionally short and repetitive: AI agents do best with a sta
 ### Release Proof Graph
 
 - Purpose: top-level `torque proof` command for building, signing, verifying, and diffing release evidence graphs.
-- Key surfaces: `proof graph`, `proof verify`, `proof diff`.
-- Invariants: proof graphs store artifact paths, hashes, statuses, image digests, and optional ed25519 signatures; they do not inline raw SQLite captures, logs, manifests, or secret values.
+- Key surfaces: `proof graph`, `proof verify`, `proof diff`, `proof gate`, `proof attest`.
+- Invariants: proof graphs store artifact paths, hashes, statuses, image digests, and optional ed25519 signatures; gates evaluate policy against verified graph evidence; attestations sign compact release verdicts; proof outputs do not inline raw SQLite captures, logs, manifests, or secret values.
+
+### Agent-Safe Operations
+
+- Purpose: top-level `torque agent` command for proof-backed authorization of AI and automation operations.
+- Key surfaces: `agent policy check`, `agent run`.
+- Invariants: mutating operations require explicit allow-list permission and a passing proof gate; request release and namespace must match proof metadata when both are present; `agent run` is non-mutating and writes an authorization record only.
+
+### Release Score
+
+- Purpose: top-level `torque release` command for scoring release readiness from proof graph and gate evidence.
+- Key surfaces: `release score`, `release autopilot`.
+- Invariants: scores are derived from verified graph evidence and failed gate checks; `--fail-below` is the CI/release guard path; score output must remain machine-readable for PRs and release notes.
+
+### Release Autopilot
+
+- Purpose: compose the proof-backed release path into one artifact-producing command.
+- Key surfaces: `release autopilot`.
+- Invariants: default mode is non-mutating and operates on an existing proof source; `--execute` requires `--yes`; every run writes graph, HTML, gate, score, flight, replay, explain, agent authorization, and optional attestation artifacts before deciding pass/fail.
+
+### Release Flight Recorder
+
+- Purpose: top-level `torque flight` command for turning a proof graph into a portable release timeline.
+- Key surfaces: `flight record`, `flight replay`, `flight explain`.
+- Invariants: flight files are read-only evidence artifacts; replay validates timeline shape and graph digest; explain summarizes evidence phases without touching a cluster.
 
 ### `internal/ui`
 

@@ -191,6 +191,75 @@ func TestProofDiffReportsEvidenceChanges(t *testing.T) {
 	}
 }
 
+func TestProofAttestSignsVerifiedGraph(t *testing.T) {
+	_, graphPath, keyPath := writeProofGateFixture(t, true)
+	attestPath := filepath.Join(filepath.Dir(graphPath), "release.attestation.json")
+
+	root := newRootCommand()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"proof", "attest", graphPath, "--release", "v1.0.8", "--key", keyPath, "--out", attestPath, "--format", "json"})
+	if err := root.ExecuteContext(context.Background()); err != nil {
+		t.Fatalf("proof attest: %v\n%s", err, out.String())
+	}
+	raw, err := os.ReadFile(attestPath)
+	if err != nil {
+		t.Fatalf("read attestation: %v", err)
+	}
+	var attestation proofAttestation
+	if err := json.Unmarshal(raw, &attestation); err != nil {
+		t.Fatalf("decode attestation: %v", err)
+	}
+	if attestation.Release != "v1.0.8" || !attestation.Verified || attestation.Signature == nil || attestation.Signature.Algorithm != "ed25519" {
+		t.Fatalf("unexpected attestation: %#v", attestation)
+	}
+	if attestation.Artifacts == 0 || attestation.FilesChecked == 0 || attestation.Commit == "" {
+		t.Fatalf("attestation missing release evidence: %#v", attestation)
+	}
+}
+
+func TestProofGatePassesCompleteReleaseEvidence(t *testing.T) {
+	_, graphPath, _ := writeProofGateFixture(t, true)
+
+	root := newRootCommand()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"proof", "gate", graphPath, "--format", "json"})
+	if err := root.ExecuteContext(context.Background()); err != nil {
+		t.Fatalf("proof gate: %v\n%s", err, out.String())
+	}
+	var report proofGateReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("decode gate report: %v\n%s", err, out.String())
+	}
+	if !report.Passed || report.Summary.Failed != 0 || !report.Verification.SignatureVerified {
+		t.Fatalf("expected gate to pass: %#v", report)
+	}
+}
+
+func TestProofGateBlocksMissingSBOM(t *testing.T) {
+	_, graphPath, _ := writeProofGateFixture(t, false)
+
+	root := newRootCommand()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"proof", "gate", graphPath, "--format", "json"})
+	if err := root.ExecuteContext(context.Background()); err == nil {
+		t.Fatalf("expected proof gate to fail without SBOM")
+	}
+	var report proofGateReport
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatalf("decode gate report: %v\n%s", err, out.String())
+	}
+	check, ok := findProofGateCheck(report, "artifact.sbom")
+	if !ok || check.Passed {
+		t.Fatalf("expected missing SBOM check to block: %#v", report.Checks)
+	}
+}
+
 func writeProofTestKey(t *testing.T, dir string) string {
 	t.Helper()
 	key, err := stack.GenerateEd25519Key()
@@ -211,6 +280,154 @@ func proofGraphHasType(graph proofGraph, typ string) bool {
 		}
 	}
 	return false
+}
+
+func writeProofGateFixture(t *testing.T, complete bool) (string, string, string) {
+	t.Helper()
+	dir := t.TempDir()
+	evidenceDir := filepath.Join(dir, "evidence")
+	fixDir := filepath.Join(dir, "fixes")
+	for _, path := range []string{evidenceDir, fixDir} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", path, err)
+		}
+	}
+	capturePath := filepath.Join(evidenceDir, "apply.sqlite")
+	verifyPath := filepath.Join(evidenceDir, "verifier.report.json")
+	buildPath := filepath.Join(evidenceDir, "buildkit-capture.sqlite")
+	sloPath := filepath.Join(evidenceDir, "slo.yaml")
+	serverDryRunPath := filepath.Join(evidenceDir, "server-dry-run.json")
+	logsPath := filepath.Join(evidenceDir, "rollout-logs.sqlite")
+	driftPath := filepath.Join(dir, "drift-proof.json")
+	runtimePath := filepath.Join(dir, "runtime-events.json")
+	sbomPath := filepath.Join(evidenceDir, "sbom.cdx.json")
+	provenancePath := filepath.Join(evidenceDir, "provenance.intoto.jsonl")
+	for path, body := range map[string]string{
+		capturePath:                        "SQLite format 3\napply capture\n",
+		verifyPath:                         `{"passed":true,"status":"passed"}`,
+		buildPath:                          "SQLite format 3\nbuildkit capture\n",
+		sloPath:                            "minReadyPercent: 100\nmaxFailedResources: 0\n",
+		serverDryRunPath:                   `{"version":"v1","status":"passed","dryRun":true}`,
+		logsPath:                           "SQLite format 3\nrollout logs\n",
+		driftPath:                          `{"version":"v1","tool":"torque-guardian","generatedAt":"2026-05-11T12:00:00Z","release":"api","namespace":"prod","chart":"./chart","renderedManifestSha256":"sha256:rendered","status":"passed","blocked":false,"summary":{"resources":1,"unchanged":1},"predictedVsLive":{"version":"v1","passed":true},"managedFields":{"version":"v1"},"driftTimeline":{"version":"v1"},"eventsTimeline":{"version":"v1"},"runtimeSecretBoundary":{"version":"v1","passed":true},"rolloutAftercare":{"version":"v1","passed":true}}`,
+		runtimePath:                        `{"version":"v1","tool":"torque-guardian","generatedAt":"2026-05-11T12:00:00Z","namespace":"prod","eventsTimeline":{"version":"v1","events":[{"type":"Normal","reason":"Ready","resource":{"kind":"Deployment","namespace":"prod","name":"api"}}]},"summary":{"events":1,"warnings":0}}`,
+		filepath.Join(fixDir, "pr.md"):     "# Repair PR\n",
+		filepath.Join(fixDir, "fix.patch"): "diff --git a/chart/values.yaml b/chart/values.yaml\n",
+		provenancePath:                     `{"predicateType":"https://slsa.dev/provenance/v1"}`,
+	} {
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+	if complete {
+		if err := os.WriteFile(sbomPath, []byte(`{"bomFormat":"CycloneDX","specVersion":"1.5"}`), 0o644); err != nil {
+			t.Fatalf("write sbom: %v", err)
+		}
+	}
+	minReady := 100
+	rollback := applyRollbackProof{
+		Version:     1,
+		GeneratedAt: time.Date(2026, 5, 11, 12, 0, 0, 0, time.UTC).Format(time.RFC3339Nano),
+		Release:     "api",
+		Namespace:   "prod",
+		Chart:       "./chart",
+		Mode:        "helm-rollback",
+		Outcome:     "rolled-back",
+		Trigger: applyRollbackTrigger{
+			Source: "slo",
+			Reason: "SLO failed",
+		},
+		SLO: &applyRollbackSLO{
+			Path:            sloPath,
+			MinReadyPercent: &minReady,
+		},
+		RolledBackToRevision: 7,
+	}
+	plan := &deployPlanResult{
+		ReleaseName:    "api",
+		Namespace:      "prod",
+		ChartRef:       "./chart",
+		ChartVersion:   "0.1.0",
+		RenderedSHA256: "sha256:rendered",
+		Summary:        planSummary{Updates: 1},
+		Images: []planImageRef{{
+			Resource:  "Deployment/prod/api",
+			Container: "api",
+			Image:     "ghcr.io/acme/api@sha256:abc",
+			Digest:    "sha256:abc",
+			Pinned:    true,
+		}},
+		VerifyReports: []planVerifyReport{{
+			Path:    verifyPath,
+			Passed:  true,
+			Blocked: false,
+		}},
+		BuildProvenance: []planBuildProvenance{{
+			Source:       buildPath,
+			Digest:       "sha256:abc",
+			Tags:         []string{"ghcr.io/acme/api:e2e"},
+			Platforms:    []string{"linux/amd64"},
+			Attestations: []map[string]any{{"type": "slsa", "path": provenancePath}},
+			Referenced:   true,
+			Verdict:      "safe",
+		}},
+		GeneratedAt: time.Date(2026, 5, 11, 12, 0, 0, 0, time.UTC),
+	}
+	proof := buildApplyProofBundle(applyProofBundleInput{
+		StartedAt:        time.Date(2026, 5, 11, 12, 0, 0, 0, time.UTC),
+		Release:          "api",
+		Namespace:        "prod",
+		Chart:            "./chart",
+		Err:              os.ErrInvalid,
+		Plan:             plan,
+		CapturePath:      capturePath,
+		RollbackProof:    &rollback,
+		ResourceSnapshot: []deploy.ResourceStatus{{Kind: "Deployment", Namespace: "prod", Name: "api", Status: "Failed"}},
+	})
+	proofPath := filepath.Join(dir, "apply-proof.json")
+	if err := writeJSONFileEnsured(proofPath, proof); err != nil {
+		t.Fatalf("write apply proof: %v", err)
+	}
+	attachments := []string{driftPath, runtimePath, serverDryRunPath, logsPath, provenancePath, filepath.Join(fixDir, "pr.md")}
+	if complete {
+		attachments = append(attachments, sbomPath)
+	}
+	graph, err := buildProofGraph(proofPath, attachments)
+	if err != nil {
+		t.Fatalf("build proof graph: %v", err)
+	}
+	if !complete {
+		graph.Artifacts = filterProofArtifactsByType(graph.Artifacts, "sbom")
+	}
+	keyPath := writeProofTestKey(t, dir)
+	if err := signProofGraph(&graph, keyPath); err != nil {
+		t.Fatalf("sign graph: %v", err)
+	}
+	graphPath := filepath.Join(dir, "proof.graph.json")
+	if err := writeJSONFileEnsured(graphPath, graph); err != nil {
+		t.Fatalf("write graph: %v", err)
+	}
+	return dir, graphPath, keyPath
+}
+
+func findProofGateCheck(report proofGateReport, id string) (proofGateCheck, bool) {
+	for _, check := range report.Checks {
+		if check.ID == id {
+			return check, true
+		}
+	}
+	return proofGateCheck{}, false
+}
+
+func filterProofArtifactsByType(artifacts []proofGraphArtifact, typ string) []proofGraphArtifact {
+	var out []proofGraphArtifact
+	for _, artifact := range artifacts {
+		if artifact.Type == typ {
+			continue
+		}
+		out = append(out, artifact)
+	}
+	return out
 }
 
 func writeProofForDiff(t *testing.T, path, digest string, failed bool) {

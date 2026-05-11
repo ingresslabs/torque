@@ -104,6 +104,8 @@ var curatedExamples = map[string][]string{
 		"# Build a release proof graph and browser report\ntorque proof graph ./apply-proof.json --out proof.graph.json --html proof.html",
 		"# Sign a proof graph with an ed25519 key\ntorque proof graph ./apply-proof.json --out proof.graph.json --key .torque/stack/keys/ed25519.json",
 		"# Verify a signed graph in CI\ntorque proof verify proof.graph.json --require-signature",
+		"# Block promotion when release evidence is incomplete\ntorque proof gate proof.graph.json --out proof.gate.json",
+		"# Sign a compact release verdict for PRs and release notes\ntorque proof attest proof.graph.json --release v1.0.8 --key .torque/stack/keys/ed25519.json --out release.attestation.json",
 	},
 	"torque proof graph": {
 		"# Link apply proof, Guardian drift, and repair evidence\ntorque proof graph ./apply-proof.json --attach drift-proof.json --attach repair-pr.md --out proof.graph.json --html proof.html",
@@ -116,6 +118,54 @@ var curatedExamples = map[string][]string{
 	"torque proof diff": {
 		"# Compare evidence between two releases\ntorque proof diff previous-proof.graph.json current-proof.graph.json",
 		"# Emit diff as JSON for CI\ntorque proof diff previous-proof.graph.json current-proof.graph.json --format json",
+	},
+	"torque proof gate": {
+		"# Evaluate the built-in release gate\ntorque proof gate proof.graph.json --out proof.gate.json",
+		"# Use a custom release policy and emit JSON\ntorque proof gate proof.graph.json --policy release-policy.yaml --format json",
+	},
+	"torque proof attest": {
+		"# Sign a pasteable release verdict\ntorque proof attest proof.graph.json --release v1.0.8 --key .torque/stack/keys/ed25519.json --out release.attestation.json",
+		"# Emit the signed verdict as JSON for CI\ntorque proof attest proof.graph.json --release v1.0.8 --key .torque/stack/keys/ed25519.json --format json",
+	},
+	"torque agent": {
+		"# Check whether an agent may run a mutating operation\ntorque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate",
+		"# Write a proof-backed authorization record\ntorque agent run agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-run.json",
+	},
+	"torque agent policy": {
+		"# Evaluate proof-backed operation policy\ntorque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-policy.json",
+	},
+	"torque agent policy check": {
+		"# Authorize an apply request only when the release gate passes\ntorque agent policy check agent-request.json --proof proof.graph.json --allow apply --require-gate --format json",
+		"# Use a custom release policy for agent authorization\ntorque agent policy check agent-request.json --proof proof.graph.json --policy release-policy.yaml --allow apply --require-gate",
+	},
+	"torque agent run": {
+		"# Produce a non-mutating authorization record for the caller\ntorque agent run agent-request.json --proof proof.graph.json --allow apply --require-gate --out agent-run.json",
+		"# Build the request from flags when no request file exists\ntorque agent run --actor codex --operation apply --command 'torque apply --chart ./chart --release api -n prod' --proof proof.graph.json --allow apply --require-gate",
+	},
+	"torque release": {
+		"# Run the proof-backed release autopilot over existing evidence\ntorque release autopilot proof.graph.json --key .torque/stack/keys/ed25519.json --out-dir release-autopilot",
+		"# Score release readiness from proof evidence\ntorque release score proof.graph.json --out release-score.json",
+	},
+	"torque release autopilot": {
+		"# Compose graph, gate, score, flight, agent authorization, and attestation artifacts\ntorque release autopilot proof.graph.json --key .torque/stack/keys/ed25519.json --fail-below 90 --out-dir release-autopilot",
+		"# Run torque apply first, then collect proof-backed release artifacts\ntorque release autopilot --execute --yes --chart ./chart --release api -n prod --auto-rollback --slo slo.yaml --key .torque/stack/keys/ed25519.json",
+	},
+	"torque release score": {
+		"# Fail CI when a release score is below the promotion threshold\ntorque release score proof.graph.json --fail-below 90",
+		"# Score with an explicit trusted proof key\ntorque release score proof.graph.json --pub .torque/stack/keys/ed25519.json --out release-score.json --format json",
+	},
+	"torque flight": {
+		"# Record, replay, and explain a release flight\ntorque flight record proof.graph.json --out release.flight.torque && torque flight replay release.flight.torque && torque flight explain release.flight.torque",
+	},
+	"torque flight record": {
+		"# Record a portable release timeline from the proof graph\ntorque flight record proof.graph.json --out release.flight.torque",
+		"# Record a flight with a custom release gate policy\ntorque flight record proof.graph.json --policy release-policy.yaml --out release.flight.torque --format json",
+	},
+	"torque flight replay": {
+		"# Validate that a release flight is replayable\ntorque flight replay release.flight.torque --format json",
+	},
+	"torque flight explain": {
+		"# Summarize the evidence phases in a recorded release flight\ntorque flight explain release.flight.torque",
 	},
 	"torque guardian": {
 		"# Install observe-only Guardian RBAC and config\ntorque guardian install --namespace torque-system --mode observe",
