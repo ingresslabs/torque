@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -427,12 +426,4 @@ func renderFlightExplainText(out io.Writer, report flightExplainReport) {
 	if len(report.Phases) > 0 {
 		fmt.Fprintf(out, "Phases: %s\n", strings.Join(report.Phases, ", "))
 	}
-}
-
-func defaultFlightPath(source string) string {
-	base := strings.TrimSuffix(filepath.Base(source), filepath.Ext(source))
-	if base == "" || base == "." {
-		base = "release"
-	}
-	return base + ".flight.torque"
 }
