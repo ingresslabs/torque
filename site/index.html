@@ -398,6 +398,7 @@
       .demo:nth-child(10) { animation-delay: 0.72s; }
       .demo:nth-child(11) { animation-delay: 0.80s; }
       .demo:nth-child(12) { animation-delay: 0.88s; }
+      .demo:nth-child(13) { animation-delay: 0.96s; }
 
       .demo::after {
         content: "";
@@ -459,6 +460,239 @@
         background: #101014;
         transform-origin: center;
         transition: transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .promotion-demo {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 18px;
+        width: 100%;
+        aspect-ratio: 1200 / 620;
+        min-height: 360px;
+        padding: 24px;
+        border: 1px solid rgba(237, 241, 245, 0.12);
+        border-radius: 7px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 14% 20%, rgba(126, 218, 238, 0.18), transparent 28%),
+          radial-gradient(circle at 86% 18%, rgba(148, 229, 170, 0.14), transparent 26%),
+          linear-gradient(135deg, rgba(16, 16, 20, 0.98), rgba(7, 7, 9, 0.98));
+        isolation: isolate;
+      }
+
+      .promotion-demo::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(90deg, transparent 0 18%, rgba(237, 241, 245, 0.09) 34%, transparent 52% 100%),
+          linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px);
+        background-size: auto, 46px 46px, 46px 46px;
+        transform: translateX(-48%);
+        animation: promotion-scan 7.2s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+      }
+
+      .promotion-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      .promotion-kicker,
+      .promotion-badge,
+      .promotion-label,
+      .promotion-value,
+      .promotion-check {
+        font: 0.72rem/1.25 var(--font-mono);
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .promotion-kicker {
+        color: var(--muted-strong);
+      }
+
+      .promotion-title {
+        margin-top: 6px;
+        color: #ffffff;
+        font-size: 1.7rem;
+        line-height: 1.05;
+        font-weight: 820;
+      }
+
+      .promotion-badge {
+        flex: 0 0 auto;
+        color: #06100a;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: #94e5aa;
+        box-shadow: 0 0 28px rgba(148, 229, 170, 0.26);
+      }
+
+      .promotion-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        gap: 18px;
+        align-items: stretch;
+        min-height: 0;
+      }
+
+      .promotion-timeline,
+      .promotion-traffic {
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .promotion-timeline {
+        align-content: center;
+      }
+
+      .promotion-step {
+        position: relative;
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid rgba(237, 241, 245, 0.14);
+        border-radius: 8px;
+        background: rgba(237, 241, 245, 0.045);
+      }
+
+      .promotion-step::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #7edaee;
+        box-shadow: 0 0 18px rgba(126, 218, 238, 0.42);
+        animation: promotion-dot 6.8s ease-in-out infinite;
+      }
+
+      .promotion-step:nth-child(2)::before { animation-delay: 0.7s; }
+      .promotion-step:nth-child(3)::before { animation-delay: 1.4s; }
+      .promotion-step:nth-child(4)::before { animation-delay: 2.1s; }
+
+      .promotion-step strong {
+        display: block;
+        min-width: 0;
+        color: #ffffff;
+        font-size: 0.92rem;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .promotion-step span {
+        display: block;
+        min-width: 0;
+        color: var(--muted);
+        font: 0.72rem/1.35 var(--font-mono);
+        overflow-wrap: anywhere;
+      }
+
+      .promotion-lane {
+        display: grid;
+        grid-template-columns: 74px minmax(0, 1fr) 64px;
+        gap: 10px;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .promotion-label {
+        min-width: 0;
+        color: var(--muted-strong);
+        overflow-wrap: anywhere;
+      }
+
+      .promotion-value {
+        min-width: 0;
+        color: #ffffff;
+        text-align: right;
+      }
+
+      .promotion-bar {
+        height: 14px;
+        min-width: 0;
+        border: 1px solid rgba(237, 241, 245, 0.16);
+        border-radius: 999px;
+        background: rgba(237, 241, 245, 0.055);
+        overflow: hidden;
+      }
+
+      .promotion-fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        transform-origin: left;
+        background: linear-gradient(90deg, #7edaee, #94e5aa, #f0d27a);
+        animation: promotion-canary 6.8s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+      }
+
+      .promotion-fill.green {
+        background: linear-gradient(90deg, #94e5aa, #f7f9fb);
+        animation-name: promotion-green;
+      }
+
+      .promotion-envs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .promotion-env {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid rgba(237, 241, 245, 0.14);
+        border-radius: 8px;
+        background: rgba(237, 241, 245, 0.045);
+      }
+
+      .promotion-env.green {
+        animation: promotion-env-green 6.8s ease-in-out infinite;
+      }
+
+      .promotion-env strong,
+      .promotion-env span {
+        display: block;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .promotion-env strong {
+        color: #ffffff;
+        font-size: 0.92rem;
+        line-height: 1.15;
+      }
+
+      .promotion-env span {
+        margin-top: 5px;
+        color: var(--muted);
+        font: 0.72rem/1.35 var(--font-mono);
+      }
+
+      .promotion-checks {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .promotion-check {
+        min-width: 0;
+        padding: 9px 8px;
+        color: #e9f7ed;
+        border: 1px solid rgba(148, 229, 170, 0.26);
+        border-radius: 8px;
+        background: rgba(148, 229, 170, 0.08);
+        overflow-wrap: anywhere;
       }
 
       .demo-actions {
@@ -697,6 +931,54 @@
         }
       }
 
+      @keyframes promotion-scan {
+        0%, 18% {
+          opacity: 0;
+          transform: translateX(-48%);
+        }
+        34%, 62% {
+          opacity: 1;
+        }
+        86%, 100% {
+          opacity: 0;
+          transform: translateX(48%);
+        }
+      }
+
+      @keyframes promotion-dot {
+        0%, 100% {
+          background: #7edaee;
+          transform: scale(0.82);
+        }
+        44%, 62% {
+          background: #94e5aa;
+          transform: scale(1.18);
+        }
+      }
+
+      @keyframes promotion-canary {
+        0%, 16% { transform: scaleX(0.05); }
+        28%, 42% { transform: scaleX(0.25); }
+        54%, 68% { transform: scaleX(0.5); }
+        82%, 100% { transform: scaleX(1); }
+      }
+
+      @keyframes promotion-green {
+        0%, 50% { transform: scaleX(0.08); }
+        72%, 100% { transform: scaleX(1); }
+      }
+
+      @keyframes promotion-env-green {
+        0%, 54% {
+          border-color: rgba(237, 241, 245, 0.14);
+          box-shadow: none;
+        }
+        72%, 100% {
+          border-color: rgba(148, 229, 170, 0.46);
+          box-shadow: inset 0 0 0 1px rgba(148, 229, 170, 0.10), 0 0 28px rgba(148, 229, 170, 0.10);
+        }
+      }
+
       @keyframes architecture-press {
         0% { scale: 1.035; }
         42% { scale: 0.992; }
@@ -740,6 +1022,14 @@
         .architecture-diagrams .demo summary::after {
           display: none;
         }
+        .promotion-demo::before {
+          display: none;
+        }
+        .promotion-fill,
+        .promotion-env.green,
+        .promotion-step::before {
+          animation: none;
+        }
         .architecture-diagrams .demo img,
         .diagram-modal[open] .diagram-modal-frame,
         .diagram-modal[open] img {
@@ -774,7 +1064,8 @@
         .demo:nth-child(9),
         .demo:nth-child(10),
         .demo:nth-child(11),
-        .demo:nth-child(12) {
+        .demo:nth-child(12),
+        .demo:nth-child(13) {
           animation-delay: 0s;
         }
       }
@@ -788,6 +1079,37 @@
         .demo:nth-child(even) {
           --demo-offset-x: 0;
           --demo-tilt: 0deg;
+        }
+
+        .promotion-demo {
+          aspect-ratio: auto;
+          min-height: 560px;
+          padding: 16px;
+        }
+
+        .promotion-head,
+        .promotion-body {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .promotion-head {
+          display: grid;
+        }
+
+        .promotion-badge {
+          justify-self: start;
+        }
+
+        .promotion-title {
+          font-size: 1.35rem;
+        }
+
+        .promotion-lane {
+          grid-template-columns: 60px minmax(0, 1fr) 50px;
+        }
+
+        .promotion-checks {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
 
@@ -947,6 +1269,76 @@
 
           <div class="demos" aria-label="Demos">
             <div class="demo-grid">
+              <details class="demo proof-promotion-demo" open>
+                <summary>Canary and blue-green release promotion</summary>
+                <div class="demo-media">
+                  <div class="promotion-demo" role="img" aria-label="Animated proof-backed release promotion timeline">
+                    <div class="promotion-head">
+                      <div>
+                        <div class="promotion-kicker">torque release promote</div>
+                        <div class="promotion-title">Proof gate, traffic shift, signed verdict.</div>
+                      </div>
+                      <div class="promotion-badge">verified</div>
+                    </div>
+                    <div class="promotion-body">
+                      <div class="promotion-timeline" aria-hidden="true">
+                        <div class="promotion-step">
+                          <div>
+                            <strong>Gate</strong>
+                            <span>unsigned, drift, SBOM, SLO checks</span>
+                          </div>
+                        </div>
+                        <div class="promotion-step">
+                          <div>
+                            <strong>Canary ladder</strong>
+                            <span>5 / 25 / 50 / 100 percent</span>
+                          </div>
+                        </div>
+                        <div class="promotion-step">
+                          <div>
+                            <strong>Blue-green</strong>
+                            <span>preview, smoke, switch traffic</span>
+                          </div>
+                        </div>
+                        <div class="promotion-step">
+                          <div>
+                            <strong>Attest</strong>
+                            <span>promotion report and proof graph</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="promotion-traffic" aria-hidden="true">
+                        <div class="promotion-lane">
+                          <div class="promotion-label">canary</div>
+                          <div class="promotion-bar"><span class="promotion-fill"></span></div>
+                          <div class="promotion-value">100%</div>
+                        </div>
+                        <div class="promotion-lane">
+                          <div class="promotion-label">green</div>
+                          <div class="promotion-bar"><span class="promotion-fill green"></span></div>
+                          <div class="promotion-value">live</div>
+                        </div>
+                        <div class="promotion-envs">
+                          <div class="promotion-env">
+                            <strong>blue</strong>
+                            <span>serving baseline</span>
+                          </div>
+                          <div class="promotion-env green">
+                            <strong>green</strong>
+                            <span>smoke passed</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="promotion-checks" aria-hidden="true">
+                      <div class="promotion-check">signed</div>
+                      <div class="promotion-check">gated</div>
+                      <div class="promotion-check">scored</div>
+                      <div class="promotion-check">recorded</div>
+                    </div>
+                  </div>
+                </div>
+              </details>
               <details class="demo" open>
                 <summary>Complex DAG stack orchestration</summary>
                 <div class="demo-media">
@@ -1028,6 +1420,20 @@
             </div>
           </div>
 
+          <article class="blog-entry" aria-labelledby="blog-atlassian-title">
+            <div>
+              <h2 id="blog-atlassian-title"><a href="./blog-atlassian-torque-case-study.html">Atlassian Data Center as a Torque stack.</a></h2>
+            </div>
+            <div>
+              <p>
+                A field note on taking the Atlassian Data Center Helm charts
+                through stack orchestration, secret:// references, verifier
+                gates, Helmer plans, custom image builds, and proof-backed
+                promotion examples.
+              </p>
+            </div>
+          </article>
+
           <article class="blog-entry" aria-labelledby="blog-mcp-title">
             <div>
               <h2 id="blog-mcp-title"><a href="./blog-mcp-s3-cache.html">One Torque talking to another.</a></h2>
@@ -1038,34 +1444,6 @@
                 a shorter field note on agent-driven delivery, the symbolic
                 remote bridge, and the S3 BuildKit cache advisor path.
               </p>
-            </div>
-          </article>
-
-          <article class="blog-entry" aria-labelledby="blog-atlassian-title">
-            <div>
-              <h2 id="blog-atlassian-title"><a href="./blog-atlassian-torque-case-study.html">Atlassian Data Center as a Torque stack.</a></h2>
-            </div>
-            <div>
-              <p>
-                A field note on taking the Atlassian Data Center Helm charts
-                through Torque stack orchestration, secret:// references,
-                verifier gates, Helmer plans, and custom image builds.
-              </p>
-            </div>
-          </article>
-
-          <article class="blog-entry" aria-labelledby="blog-atlassian-title">
-            <div>
-              <div class="blog-label">Case study</div>
-              <h2 id="blog-atlassian-title">Atlassian Data Center as a Torque stack.</h2>
-            </div>
-            <div>
-              <p>
-                A field note on taking the Atlassian Data Center Helm charts
-                through Torque stack orchestration, secret:// references,
-                verifier gates, Helmer plans, and custom image builds.
-              </p>
-              <a href="./blog-atlassian-torque-case-study.html">Read the case study</a>
             </div>
           </article>
 

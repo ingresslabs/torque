@@ -6,7 +6,7 @@
     <title>Atlassian Data Center As A Torque Stack | torque</title>
     <meta
       name="description"
-      content="A Torque case study for deploying Atlassian Data Center Helm charts, moving them into a stack, replacing plaintext secrets, generating verifier and Helmer evidence, and building custom images."
+      content="A Torque case study for deploying Atlassian Data Center Helm charts, moving them into a stack, replacing plaintext secrets, generating verifier and Helmer evidence, building custom images, and promoting releases through proof-backed canary and blue-green flows."
     />
     <style>
       :root {
@@ -433,6 +433,35 @@
           <p><strong>Verifier as a hard gate.</strong> With the stack and secret provider in place, the deployment path became stricter. I used <code>verifier --mode block --fail-on high</code>, generated per-release evidence, and required that evidence before apply. The actual apply path used <code>torque apply --require-verified</code> with <code>--drift-guard</code>, so the rollout had to match the verified plan instead of silently accepting a changed render. This turns "I think this is safe" into "this exact render passed these checks." Helmer was used beside that flow to produce HTML plans for review. In practice, this is the part that makes a Torque case study different from a normal install note. The output is not just "the pods are running"; it is a bundle of stack files, rendered plans, verifier reports, and apply evidence that another operator can inspect later.</p>
 
           <p>The newer proof features push that same idea past the initial rollout. <code>torque apply simulate</code> can create a Live Apply Twin before a risky change touches the cluster. After the change, <code>torque guardian diff</code> compares that simulation proof with live Kubernetes objects, managed-field owners, events, aftercare state, and secret-boundary evidence. If a product pod later fails because an image cannot be pulled, a webhook mutates a field, a ConfigMap starts carrying secret-like data, or an operator edits a live object by hand, Guardian turns the runtime difference into evidence instead of guesswork. <code>torque incident capture</code> and <code>torque incident replay</code> then make the failure portable: resource state, events, bounded logs, root cause, and PR-ready notes can be reviewed without keeping access to the original terminal. The newest layer, <code>torque contract synthesize</code> and <code>torque contract test</code>, converts those incident and drift proofs into recurrence rules. For an Atlassian stack, that means the next deploy can prove "no image pull failure, no secret-boundary regression, no unexplained managed-field owner, and no failed aftercare" with a machine-checkable contract instead of a Slack memory.</p>
+
+          <section class="logs-examples" aria-labelledby="promotion-examples-title">
+            <h2 id="promotion-examples-title">Proof-backed promotion examples</h2>
+            <details class="log-cut" open>
+              <summary>Show examples</summary>
+              <pre><code>torque release promote ./reports/proof.graph.json \
+  --strategy canary \
+  --steps 5,25,50,100 \
+  --analysis-window 5m \
+  --slo ./reports/slo.yaml \
+  --rollback-on-fail \
+  --key .torque/stack/keys/ed25519.json \
+  --out-dir ./reports/promote-canary
+
+torque release promote ./reports/proof.graph.json \
+  --strategy blue-green \
+  --preview \
+  --smoke ./reports/smoke.json \
+  --switch-traffic \
+  --key .torque/stack/keys/ed25519.json \
+  --out-dir ./reports/promote-blue-green
+
+torque release promote ./reports/proof.graph.json \
+  --strategy blue-green \
+  --preview --smoke ./reports/smoke.json --switch-traffic \
+  --provider file --state-out ./reports/traffic-state.json \
+  --execute --yes --format json</code></pre>
+            </details>
+          </section>
 
           <p>I also built custom images for the same stack. The goal was not to fork Atlassian products or bake configuration into images. The goal was to prove that Torque could own the image build step as part of the same delivery story. The Dockerfiles pinned the upstream Atlassian, PostgreSQL, and NFS provisioner bases by digest, added only small operational changes where useful, and ran through Torque build with secret scanning enabled. The Bamboo agent image is the clearest example: it keeps the upstream agent base but adds common diagnostic and CI tools such as <code>curl</code>, <code>git</code>, <code>jq</code>, <code>openssh-client</code>, <code>tar</code>, and <code>unzip</code>. The built OCI layouts were imported into k3s containerd on both nodes and then referenced from the stack values as <code>torque.local/atlassian/...</code> images.</p>
 
