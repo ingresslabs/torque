@@ -141,7 +141,6 @@ func TestBuildIndex_IncludesAgentAndCacheDocs(t *testing.T) {
 
 	index := BuildIndex(root, false)
 	want := map[string]string{
-		"doc:mcp-server-spec":             "torque.ship.run",
 		"doc:grpc-agent":                  "-tls-client-ca",
 		"doc:enterprise-agent-operations": "mTLS-First Remote Bridge",
 		"doc:s3-build-cache":              "--s3-cache",
@@ -164,6 +163,22 @@ func TestBuildIndex_IncludesAgentAndCacheDocs(t *testing.T) {
 		}
 		if !found {
 			t.Fatalf("expected %s in help index", id)
+		}
+	}
+}
+
+func TestBuildIndex_ExcludesSpecDocs(t *testing.T) {
+	root := &cobra.Command{Use: "torque"}
+
+	index := BuildIndex(root, false)
+	blocked := map[string]struct{}{
+		"doc:mcp-server-spec":                {},
+		"doc:secrets-verifier-evidence-spec": {},
+		"doc:security-corpus-spec":           {},
+	}
+	for _, entry := range index.Entries {
+		if _, ok := blocked[entry.ID]; ok {
+			t.Fatalf("did not expect %s in help index", entry.ID)
 		}
 	}
 }
