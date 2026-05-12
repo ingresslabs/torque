@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sandboxed Docker Builds, Real Caches | torque</title>
+    <title>Sandboxing Docker like a Pro | torque</title>
     <meta
       name="description"
       content="Deep Torque engineering guide for sandboxed BuildKit builds, Docker builder topology, cache modes, S3 cache workflows, secret handling, and agent-safe build operations."
@@ -189,14 +189,18 @@
       }
 
       .inline-demo img {
-        aspect-ratio: 1200 / 720;
-        object-fit: cover;
+        aspect-ratio: 1200 / 620;
+        object-fit: contain;
       }
 
       .preface-figure figcaption,
       .inline-demo figcaption {
         color: var(--muted);
         font: 0.78rem/1.45 var(--font-mono);
+      }
+
+      .preface-figure figcaption {
+        text-align: center;
       }
 
       .article-body p {
@@ -356,7 +360,7 @@
 
       <main>
         <section class="article-hero">
-          <h1>Sandboxed Docker Builds, Real Caches</h1>
+          <h1>Sandboxing Docker like a Pro</h1>
           <p class="dek">A deep practical guide to Torque's build path: nsjail sandbox profiles, BuildKit builder topology, Docker auth boundaries, S3 cache import/export, cache warming, hermetic mode, and the failure modes that matter when agents are allowed to build images.</p>
         </section>
 
@@ -367,7 +371,7 @@
 
           <figure class="preface-figure">
             <img src="./assets/blog/torque-sandbox-venus.png" alt="OpenAI-generated ultrarealistic sandbox floating in space near Venus with sand spilling from holes" loading="lazy" />
-            <figcaption>Generated with OpenAI for the sandbox and cache preface.</figcaption>
+            <figcaption>Docker without sandbox</figcaption>
           </figure>
 
           <div class="diagram" aria-label="Torque build flow">
@@ -410,7 +414,6 @@ torque build . --sandbox --sandbox-config sandbox/linux-ci.cfg --sandbox-logs</c
 
           <figure class="inline-demo">
             <img src="./assets/demos/torque-sandbox-secrets.gif" alt="torque sandboxed build and secret handling workflow demo" loading="lazy" />
-            <figcaption>Landing page sandbox demo: build isolation, secret handling, and evidence stay visible.</figcaption>
           </figure>
 
           <h2>Cache is a correctness feature</h2>
