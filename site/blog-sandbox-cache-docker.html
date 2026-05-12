@@ -416,6 +416,20 @@ torque build . --sandbox --sandbox-config sandbox/linux-ci.cfg --sandbox-logs</c
             <img src="./assets/demos/torque-sandbox-secrets.gif" alt="torque sandboxed build and secret handling workflow demo" loading="lazy" />
           </figure>
 
+          <h2>Secret leaks are a build failure mode</h2>
+          <p>Sandboxing limits what the build process can touch. Secret-leak detection checks what the build tries to carry forward. Torque's <code>--secrets</code> guardrail has three modes: <code>warn</code>, <code>block</code>, and <code>off</code>. The default is <code>warn</code>, which keeps local iteration moving while still writing findings. Release builds should usually use <code>block</code> so secret-like values in Dockerfiles, build args, copied files, logs, cache metadata, or generated evidence stop the build before the image is published.</p>
+
+          <pre><code>torque build . \
+  --tag ghcr.io/acme/api:release \
+  --sandbox \
+  --secrets block \
+  --secrets-config security/secrets-rules.yaml \
+  --secrets-report dist/torque-secrets-report.json \
+  --capture dist/build.sqlite \
+  --push</code></pre>
+
+          <p><code>--secrets-config</code> points at the rule config for project-specific patterns and allowlists. <code>--secrets-report</code> writes a machine-readable report that can be attached to proof evidence. For repository setup, <code>torque init --secrets-provider vault --secrets-file ./secrets.dev.yaml</code> keeps secret references explicit without teaching Dockerfiles or agents the raw values.</p>
+
           <h2>Cache is a correctness feature</h2>
           <p>A fast cache that nobody trusts gets turned off. A trusted cache needs names, scope, and evidence. Torque accepts raw BuildKit cache specs with <code>--cache-from</code> and <code>--cache-to</code>, and it also provides first-class S3 flags for the common shared-cache case: <code>--s3-cache</code>, <code>--s3-cache-region</code>, <code>--s3-cache-name</code>, <code>--s3-cache-mode</code>, <code>--s3-cache-endpoint-url</code>, and <code>--s3-cache-path-style</code>.</p>
 
